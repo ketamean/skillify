@@ -1,4 +1,10 @@
 @import "tailwindcss";
+@theme {
+    --color-vibrant-green: #00ff84;
+    --color-deepteal: #002333;
+    --color-blurple: #3722d3;
+    --color-sunbeam: #ffe03d;
+}
 :root {
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
