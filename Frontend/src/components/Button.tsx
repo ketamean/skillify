@@ -1,11 +1,14 @@
 import React from "react";
 
 type ButtonSize = "small" | "medium" | "large";
+type ButtonVariant = "primary" | "secondary" | "outline";
 
 interface ButtonProps {
     size?: ButtonSize;
-    onClick?: () => void;
+    variant?: ButtonVariant;
+    onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
     disabled?: boolean;
+    className?: string;
     children: React.ReactNode;
 }
 
@@ -15,14 +18,26 @@ const sizeClasses: Record<ButtonSize, string> = {
     large: "px-6 py-3 text-lg min-w-[120px] min-h-[48px]",
 };
 
-const Button: React.FC<ButtonProps> = ({ size = "medium", onClick, disabled = false, children }) => {
+const variantClasses: Record<ButtonVariant, string> = {
+    primary: "bg-blue-500 hover:bg-blue-600 text-white",
+    secondary: "bg-gray-600 hover:bg-gray-700 text-white",
+    outline: "border border-gray-400 text-gray-700 hover:bg-gray-200",
+};
+
+const Button: React.FC<ButtonProps> = ({
+    size = "medium",
+    variant = "primary",
+    onClick,
+    disabled = false,
+    className = "",
+    children,
+}) => {
     return (
         <button
-            className={`rounded-md font-medium transition duration-200 ${sizeClasses[size]
-                } ${disabled
-                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                }`}
+            className={`rounded-md font-medium transition duration-200 
+        ${sizeClasses[size]} 
+        ${disabled ? "bg-gray-400 text-gray-700 cursor-not-allowed" : variantClasses[variant]} 
+        ${className}`}
             onClick={onClick}
             disabled={disabled}
         >
