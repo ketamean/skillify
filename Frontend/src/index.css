@@ -2,8 +2,11 @@
 @theme {
     --color-vibrant-green: #00ff84;
     --color-deepteal: #002333;
+    --color-light-teal: #8cbdb3;
     --color-blurple: #3722d3;
     --color-sunbeam: #ffe03d;
+    --color-light-green: rgb(0, 255, 132);
+    --color-white-overlay: rgba(255, 255, 255, 0.6);
 }
 :root {
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -42,7 +45,7 @@ h1 {
     line-height: 1.1;
 }
 
-button {
+/* button {
     border-radius: 8px;
     border: 1px solid transparent;
     padding: 0.6em 1.2em;
@@ -52,7 +55,7 @@ button {
     background-color: #1a1a1a;
     cursor: pointer;
     transition: border-color 0.25s;
-}
+} */
 button:hover {
     border-color: #646cff;
 }
