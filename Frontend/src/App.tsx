@@ -7,6 +7,14 @@ const router = createBrowserRouter([
     path: "/",
     element: <Homepage />,
   },
+  {
+    path: "/login",
+    element: <Login />
+  }, 
+  {
+    path: "/register",
+    element: <Register />
+  }
 ]);
 
 function App() {
@@ -14,18 +22,6 @@ function App() {
     <>
       <RouterProvider router={router} />
     </>
-  );
-}
-
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-      </Routes>
-    </Router>
   );
 }
 
