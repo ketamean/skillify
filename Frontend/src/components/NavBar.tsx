@@ -78,7 +78,7 @@ function AccountButton(props: UserProfileProps): ReactElement {
 
 export default function NavBar(props: NavBarProps): ReactElement {
     return (
-        <nav className="w-screen h-24 fixed top-0 left-0 py-4 px-4 items-center justify-center bg-deepteal grid
+        <nav className="w-screen h-24 fixed top-0 left-0 py-4 px-4 items-center justify-center bg-deepteal grid z-999
             grid-cols-4 gap-x-2
             md:grid-cols-12 md:gap-x-4">
             <div className="min-w-8 h-full flex items-center text-white!
