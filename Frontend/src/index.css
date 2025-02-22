@@ -4,6 +4,7 @@
     --color-deepteal: #002333;
     --color-blurple: #3722d3;
     --color-sunbeam: #ffe03d;
+    --color-custom-white: #fafafa;
 }
 :root {
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -31,8 +32,6 @@ a:hover {
 
 body {
     margin: 0;
-    display: flex;
-    place-items: center;
     min-width: 320px;
     min-height: 100vh;
 }
