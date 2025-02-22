@@ -7,6 +7,7 @@
     --color-sunbeam: #ffe03d;
     --color-light-green: rgb(0, 255, 132);
     --color-white-overlay: rgba(255, 255, 255, 0.6);
+    --color-custom-white: #fafafa;
 }
 :root {
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -34,8 +35,6 @@ a:hover {
 
 body {
     margin: 0;
-    display: flex;
-    place-items: center;
     min-width: 320px;
     min-height: 100vh;
 }
