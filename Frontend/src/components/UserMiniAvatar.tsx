@@ -15,11 +15,18 @@ function extractRepresentativeName(fname: string, lname: string): string {
 export default function UserMiniAvatar(props: UserAvatarProps): ReactElement {
     return (
         <div title={props.title? props.title : ""}
-            className={`flex items-center justify-center max-w-full max-h-full ${props.size? props.size : "w-12 h-12"} rounded-full ${props.avatarUrl? "" : "bg-black"}`}
+            className={`flex items-center justify-center max-w-full max-h-full ${props.size? `min-w-[${props.size}] min-h-[${props.size}] w-[${props.size}] h-[${props.size}]` : "min-w-12 min-h-12 w-12 h-12"} rounded-full ${props.avatarUrl? "" : "bg-black"}`}
         >
-            <span className="text-white font-black text-sm">
-                {extractRepresentativeName(props.fname, props.lname)}
-            </span>
+            {
+                props.avatarUrl? (
+                    <img src={props.avatarUrl} alt="" className="w-full h-full rounded-full"/>
+                ) : (
+                    <span className="text-white font-black text-sm">
+                        {extractRepresentativeName(props.fname, props.lname)}
+                    </span>
+                )
+            }
+            
         </div>
     )
 }
