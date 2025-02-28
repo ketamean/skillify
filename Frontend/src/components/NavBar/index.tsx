@@ -1,10 +1,10 @@
 import React, { ReactElement, useState } from "react";
-// import Button from "../components/Button";
-import UserMiniAvatar from "../components/UserMiniAvatar";
+import UserMiniAvatar from "../UserMiniAvatar";
 import SearchBar from "./SearchBar";
 import SearchOverlay from "./SearchOverlay";
 import SearchIcon from "./SearchIcon";
 import BurgerMenuOverlay from "./BurgerMenuOverlay";
+// export * from '.'
 interface NavBarUserInfo {
     fname: string;
     lname: string;

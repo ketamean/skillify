@@ -44,14 +44,12 @@ export default function Homepage() {
 
   return (
     <div className="min-h-screen bg-custom-white">
-      <div className="container">
-        <NavBar
-          user={{
-            fname: "Ariana", lname: "Grande",
-            avatarUrl: "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg"
-          }}
-        />
-      </div>
+      <NavBar
+        user={{
+          fname: "Ariana", lname: "Grande",
+          avatarUrl: "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg"
+        }}
+      />
       {/* Banner Section */}
       <div className="relative h-[400px] mx-auto container flex justify-center mt-24 pt-4 px-[4%]">
         <div className="relative w-full h-full">

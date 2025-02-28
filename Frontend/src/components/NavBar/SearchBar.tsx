@@ -1,7 +1,7 @@
-import { ReactElement, useState } from "react";
-import {axiosForm} from "../config/axios";
+import { FormEvent, ReactElement, useState } from "react";
+import {axiosForm} from "../../config/axios";
 import SearchIcon from "./SearchIcon";
-import getNearestParentByTagName from '../utils/getNearestParentByTagName'
+import getNearestParentByTagName from '../../utils/getNearestParentByTagName'
 interface SearchBarProps {
     onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
     disabled?: boolean;
@@ -33,10 +33,9 @@ export default function SearchBar(props: SearchBarProps): ReactElement {
             <input className="w-full h-3/4 min-h-12 text-nowrap overflow-hidden pl-4 pr-12 mt-2 rounded-full border-1
                 focus:outline-none inline relative"
                 placeholder="Search for anything..."
-                onInput={() => {
-                    const input: HTMLInputElement | null = document.querySelector("#searchContent");
+                onInput={(e: FormEvent<HTMLInputElement>) => {
+                    const input: HTMLInputElement | null = e.target as HTMLInputElement
                     if (!input) return;
-                    input.placeholder = ""
                     console.log((input.value as string).trim())
                     if ((input.value as string).trim())
                         setSearchIconState(false)
@@ -44,7 +43,6 @@ export default function SearchBar(props: SearchBarProps): ReactElement {
                         setSearchIconState(true)
                 }}
                 name="searchContent"
-                id="searchContent"
             />
             <button type='submit'
                 disabled={searchIconState}
