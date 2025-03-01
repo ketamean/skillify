@@ -28,10 +28,10 @@ export default function Footer(props: FooterProps): ReactElement {
                 ">
                     <h3>About us</h3>
                     <div className="text-sm flex flex-col gap-y-1">
-                        <p>Member 1</p>
-                        <p>Member 2</p>
-                        <p>Member 3</p>
-                        <p>Member 4</p>
+                        <p>Vo Hoang Duc</p>
+                        <p>Nguyen Ngo Ngoc Nhu</p>
+                        <p>Pham Thanh Vinh</p>
+                        <p>Truong Thanh Toan</p>
                     </div>
                 </div>
                 <div className="col-span-1 flex flex-col gap-y-1 items-start text-white!
