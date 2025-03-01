@@ -39,7 +39,9 @@ interface CourseDetailsProps {
     linkToInstructorAvatar: string;
     courseDescriptionSections?: CourseDescriptionSection[];
     instructorName: string;
-    instructorLink: string;}
+    instructorLink: string;
+    isFree: boolean;
+}
 
 interface CourseVideoSectionProps extends VideoSection {
     index: number;
@@ -132,13 +134,11 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
                 </div>
 
                 <div className="w-full px-4 md:px-40">
-                    <button type="button" className="bg-light-green text-deepteal hover:bg-vibrant-green! w-28 px-4 py-2 rounded-lg cursor-pointer text-xl font-semibold"
-                        onClick={(e) => {
-                            e.preventDefault();
-                        }}
+                    <a type="button" className="bg-light-green hover:bg-vibrant-green! w-28 px-8 py-4 rounded-lg cursor-pointer"
+                        href={props.isFree? "#" : "#"} target="_blank"
                     >
-                            Enroll
-                    </button>
+                        <span className="text-deepteal text-xl font-semibold">Enroll</span>
+                    </a>
                 </div>
             </div>
 

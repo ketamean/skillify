@@ -70,6 +70,7 @@ const data = {
     linkToInstructor: "link:to:instr",
     linkToInstructorAvatar: "link:to:instr:avatar",
     instructorName: "Angela Yu",
+    isFree: false
 }
 
 export default function CoursePage() {
@@ -93,6 +94,7 @@ export default function CoursePage() {
                     linkToInstructorAvatar={data.linkToInstructorAvatar}
                     instructorName={data.instructorName}
                     instructorLink={data.linkToInstructor}
+                    isFree={data.isFree}
                 />
             </div>
             <Footer />
