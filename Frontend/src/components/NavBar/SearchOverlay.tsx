@@ -27,8 +27,8 @@ export default function SearchOverlay(props: SearchOverlayProps): ReactElement {
         props.setState(false)
     }, [windowWidth])
     return (
-        <div className={`w-full h-screen bg-white z-20 top-0 left-0 pt-24
-            ${props.state === true? "fixed" : "hidden"}
+        <div className={`w-full h-screen bg-white z-20 top-0 left-0
+            ${props.state === true? "sticky" : "hidden"}
             md:hidden`}
         >
             <div className="h-24 px-4 bg-deepteal py-4 w-full flex flex-row items-center">

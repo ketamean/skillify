@@ -45,7 +45,7 @@ export default function NavBar(props: NavBarProps): ReactElement {
 
     return (
         <>
-            <nav className="w-screen h-24 fixed top-0 left-0 py-4 px-[4%] flex items-center bg-deepteal z-30
+            <nav className="w-full h-24 sticky top-0 left-0 py-4 px-[4%] flex items-center bg-deepteal z-30
                 gap-x-2
                 md:gap-x-4"
             >
@@ -65,16 +65,16 @@ export default function NavBar(props: NavBarProps): ReactElement {
 
                 <div className="h-full
                         hidden
-                        md:flex md:w-1/2"
+                        md:flex md:w-full md:min-w-100"
                 >
                     <SearchBar disabled={true}/>
                 </div>
 
-                <div className="flex flex-row gap-x-4 justify-end w-full
+                <div className="flex flex-row gap-x-8 justify-end w-full
                     md:justify-self-end
                 ">
                     <div title="Go to home page"
-                        className="w-fit max-h-full h-12 items-center
+                        className="w-12 max-h-full h-12 items-center
                             hidden
                             md:flex md:min-w-fit"
                     >
@@ -86,7 +86,7 @@ export default function NavBar(props: NavBarProps): ReactElement {
                     </div>
 
                     <div title="Go to instructor page"
-                        className="w-fit max-h-full h-12 items-center
+                        className="w-12 max-h-full h-12 items-center
                             hidden
                             md:flex md:min-w-fit"
                     >
