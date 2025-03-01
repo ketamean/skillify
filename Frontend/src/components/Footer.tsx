@@ -7,7 +7,7 @@ interface FooterProps {
 
 export default function Footer(props: FooterProps): ReactElement {
     return (
-        <footer className="w-full bg-deepteal flex flex-col gap-y-4 px-[4%] py-6">
+        <footer className="w-full text-white bg-deepteal flex flex-col gap-y-4 px-[4%] py-6">
             <div className="grid
                 grid-cols-[30%-40%-30%] grid-rows-2 gap-y-6
                 md:grid-cols-4 md:grid-rows-[auto_auto] md:gap-y-0"
