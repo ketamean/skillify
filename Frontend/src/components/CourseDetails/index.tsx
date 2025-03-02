@@ -35,11 +35,10 @@ interface CourseDetailsProps {
     relatedTopics: RelatedTopic[];
     numberOfEnrollments: number;
     content: VideoSection[];
-    linkToInstructor: string;
-    linkToInstructorAvatar: string;
+    linkToInstructorPage: string;
+    // linkToInstructorAvatar: string;
     courseDescriptionSections?: CourseDescriptionSection[];
     instructorName: string;
-    instructorLink: string;
     isFree: boolean;
 }
 
@@ -127,7 +126,7 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
                                 </div>
                             </div>
                             <div>
-                                Created by <a href={props.instructorLink}><span className="text-white underline hover:text-zinc-400!">{props.instructorName}</span></a>
+                                Created by <a href={props.linkToInstructorPage}><span className="text-white underline hover:text-zinc-400!">{props.instructorName}</span></a>
                             </div>
                         </div>
                     </div>
