@@ -1,8 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import Input from "../components/Input";
-import Button from "../components/Button";
-import Image from "../assets/register_login.webp";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import Image from "../../assets/register_login.webp";
 
 const Register: React.FC = () => {
     return (

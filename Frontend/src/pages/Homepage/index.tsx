@@ -1,5 +1,6 @@
 import { CourseCard } from "../../components";
-
+import NavBar from "../../components/NavBar";
+import Footer from "../../components/Footer";
 export default function Homepage() {
   const courses = [
     {
@@ -43,9 +44,15 @@ export default function Homepage() {
 
   return (
     <div className="min-h-screen bg-custom-white">
+      <NavBar
+        user={{
+          fname: "Ariana", lname: "Grande",
+          avatarUrl: "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg"
+        }}
+      />
       {/* Banner Section */}
-      <div className="relative h-[400px] mx-auto container flex justify-center">
-        <div className="relative w-[92%] h-full">
+      <div className="relative h-[400px] mx-auto container flex justify-center mt-24 pt-4 px-[4%]">
+        <div className="relative w-full h-full">
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
@@ -56,7 +63,7 @@ export default function Homepage() {
             }}
           >
             <div className="absolute inset-0 bg-deepteal/70 rounded-xl"></div>
-            <div className="relative h-full container mx-auto px-4 flex flex-col justify-center">
+            <div className="relative h-full container mx-auto px-[4%] flex flex-col justify-center">
               <h1 className="text-5xl font-bold text-white mb-6">
                 Learn Without Limits
               </h1>
@@ -73,7 +80,7 @@ export default function Homepage() {
       </div>
 
       {/* Main Contents */}
-      <main className="container mx-auto">
+      <main className="container mx-auto mt-6 px-[4%]">
         <div className="mb-8">
           <h2 className="text-deepteal text-2xl font-extrabold mb-4">
             Featured Courses
@@ -85,6 +92,8 @@ export default function Homepage() {
           </div>
         </div>
       </main>
+
+      <Footer/>
     </div>
   );
 }
