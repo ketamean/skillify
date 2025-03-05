@@ -1,8 +1,8 @@
 import express, { Express, Request, Response , Application } from 'express';
 import dotenv from 'dotenv';
-
 //For env File 
 dotenv.config();
+import supabaseInstance from './configs/database/client'
 
 const app: Application = express();
 const port = process.env.PORT || 3000;
