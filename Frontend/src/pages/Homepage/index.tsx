@@ -51,7 +51,7 @@ export default function Homepage() {
         }}
       />
       {/* Banner Section */}
-      <div className="relative h-[400px] mx-auto container flex justify-center mt-24 pt-4 px-[4%]">
+      <div className="relative h-[400px] mx-auto container flex justify-center pt-4 px-[4%]">
         <div className="relative w-full h-full">
           <div
             className="absolute inset-0 bg-cover bg-center"

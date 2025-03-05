@@ -1,11 +1,11 @@
 @import "tailwindcss";
 @theme {
-    --color-vibrant-green: #00ff84;
+    --color-vibrant-green: #22d67f;
     --color-deepteal: #002333;
     --color-light-teal: #8cbdb3;
     --color-blurple: #3722d3;
     --color-sunbeam: #ffe03d;
-    --color-light-green: rgb(0, 255, 132);
+    --color-light-green: #00ff84;
     --color-white-overlay: rgba(255, 255, 255, 0.6);
     --color-custom-white: #fafafa;
 }
