@@ -1,0 +1,2 @@
+id,created_at,instructor_id,discount_value,expiration_time,max_n_usage,code,type
+1,2025-03-05 15:46:33.372088+00,04a526eb-c671-480b-bfdf-1f58568754b3,25,2025-03-07 03:30:00+00,10,QUOCTEPHUNU,PercentageBased
