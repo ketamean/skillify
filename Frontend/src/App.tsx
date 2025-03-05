@@ -4,6 +4,8 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import CoursePage from "./pages/CoursePage";
 import CourseContentPage from "./pages/CourseContent"
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -12,7 +14,7 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />
-  }, 
+  },
   {
     path: "/register",
     element: <Register />
@@ -22,16 +24,19 @@ const router = createBrowserRouter([
     element: <CoursePage />
   },
   {
-    path: "/coursecontent",
-    element: <CourseContentPage />
+    path: "/",
+    element: <ProtectedRoute />,
+    children: [
+      { path: "/coursecontent", element: <CourseContentPage /> },
+    ],
   },
 ]);
 
 function App() {
   return (
-    <>
+    <AuthProvider>
       <RouterProvider router={router} />
-    </>
+    </AuthProvider>
   );
 
 }
