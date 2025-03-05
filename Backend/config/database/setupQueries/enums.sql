@@ -1,4 +1,6 @@
-DO $$
+CREATE OR REPLACE PROCEDURE __create_enums()
+LANGUAGE plpgsql
+AS $$
 BEGIN
     -- public.MaterialType
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'materialtype' AND typnamespace = 'public'::regnamespace) THEN
@@ -29,5 +31,5 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'useraccountstatus' AND typnamespace = 'private'::regnamespace) THEN
         CREATE TYPE "private".UserAccountStatus AS ENUM ('Unconfirmed', 'Confirmed', 'Banned');
     END IF;
-
-END$$;
+END;
+$$;
