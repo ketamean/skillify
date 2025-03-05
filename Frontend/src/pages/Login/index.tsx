@@ -1,11 +1,35 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import Image from "../../assets/register_login.webp";
 import { FaEnvelope, FaGoogle, FaMicrosoft, FaGithub } from "react-icons/fa";
-
+import { axiosForm } from "../../config/axios"
 const Login: React.FC = () => {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const handleLogin = async () => {
+        setLoading(true);
+        setError("");
+
+        axiosForm
+            .post("/api/login", { email, password })
+            .then(() => {
+                alert("Login successful!");
+                navigate("/");
+            })
+            .catch((err) => {
+                setError(err);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+
     return (
         <div className="flex justify-center items-center min-h-screen bg-gray-50 px-4">
             {/* Wrapper Container */}
@@ -27,16 +51,21 @@ const Login: React.FC = () => {
                     <div className="space-y-4 mt-6 text-left">
                         <div>
                             <label className="block text-gray-700 font-semibold mb-1">Email</label>
-                            <Input type="email" placeholder="Email" />
+                            <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="block text-gray-700 font-semibold mb-1">Password</label>
+                            <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
                         </div>
                     </div>
 
-                    {/* Sign Up Button */}
+                    {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
+                    {/* Login Button */}
                     <div className="flex justify-center mt-6">
-                        <Button size="large" onClick={() => console.log("Continue with Email")}>
+                        <Button size="large" onClick={handleLogin} disabled={loading}>
                             <span className="flex items-center gap-2">
                                 <FaEnvelope className="text-lg" />
-                                Continue with email
+                                {loading ? "Logging in..." : "Continue with Email"}
                             </span>
                         </Button>
                     </div>
@@ -49,23 +78,23 @@ const Login: React.FC = () => {
                     </div>
 
                     {/* Social Logins */}
-                    <div className="flex justify-center gap-4">
+                    <div className="flex justify-center gap-3">
                         <Button
-                            className="flex items-center gap-2 px-4 py-2 border rounded-lg shadow-sm hover:bg-gray-100"
+                            className="flex items-center gap-2"
                             onClick={() => console.log("Login with Google")}
                         >
                             <FaGoogle className="text-red-500" />
                             Google
                         </Button>
                         <Button
-                            className="flex items-center gap-2 px-4 py-2 border rounded-lg shadow-sm hover:bg-gray-100"
+                            className="flex items-center gap-2"
                             onClick={() => console.log("Login with Microsoft")}
                         >
                             <FaMicrosoft className="text-blue-500" />
                             Microsoft
                         </Button>
                         <Button
-                            className="flex items-center gap-2 px-4 py-2 border rounded-lg shadow-sm hover:bg-gray-100"
+                            className="flex items-center gap-2"
                             onClick={() => console.log("Login with GitHub")}
                         >
                             <FaGithub />

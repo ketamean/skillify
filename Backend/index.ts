@@ -1,16 +1,27 @@
-import express, { Express, Request, Response , Application } from 'express';
-import dotenv from 'dotenv';
-//For env File 
-dotenv.config();
-import supabaseInstance from './configs/database/client'
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import authRoutes from "./src/routes/authRoutes";
 
-const app: Application = express();
+const app = express();
 const port = process.env.PORT || 3000;
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Welcome to Express & TypeScript Server');
-});
+app.use(
+    cors({
+        origin: [/^http:\/\/localhost:\d+$/],
+        credentials: true,
+        allowedHeaders: ["Content-Type", "Authorization"],
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        sameSite: "strict",
+    })
+);
+
+app.use(express.json());
+app.use(cookieParser() as express.RequestHandler);
+
+app.use("/api", authRoutes);
 
 app.listen(port, () => {
-  console.log(`Server is listening at http://localhost:${port}`);
-}); 
+    console.log(`Server listening on port ${port}`);
+});
