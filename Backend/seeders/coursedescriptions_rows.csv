@@ -1,0 +1,23 @@
+id,created_at,course_id,header,content
+1,2025-03-05 15:26:48.935303+00,3,Những giá trị mang lại,"- Biết cách lập trình web from scratch
+- Học được những ***best practices***
+- Cách sử dụng *git*"
+3,2025-03-05 15:27:38.726758+00,3,Phù hợp với,"Tất cả mọi người, kể cả những người chưa biết gì về lập trình"
+4,2025-03-05 15:31:45.993216+00,3,Chuẩn đầu ra,"- Biết cách viết một website cơ bản với HTML, CSS, Javascript
+- Biết cách build một web server bằng expressjs, nodejs
+- Biết cách kết nối server với database và đánh index để truy vấn tối ưu
+- Biết cách viết và routing apis"
+5,2025-03-05 15:34:29.084274+00,4,Pre-requisite,"- Be familiar with basic, fundamental concepts, such as natural numbers, integers, real numbers, complex numbers, polinomial equations and how to solve some basic forms of them (linear and quadratic).
+- Ambitious in exploring the mysterious of maths."
+6,2025-03-05 15:37:57.628359+00,4,What you will learn,"1. Set theory and logic.
+2. Reconstruct the set of real numbers with 12 axioms.
+3. Sequence. Convergence of a sequence.
+4. Functions. Continous functions.
+5. Derivative.
+6. Integrals - Definite and Indefinite.
+7. Series."
+7,2025-03-05 15:41:04.675594+00,5,What you will learn,"1. Matrix and operations.
+1. Determinant and system of linear equations.
+1. Vector spaces.
+1. Bilinear - Scalar product and Euclidean vector spaces.
+1. Applications in A.I."

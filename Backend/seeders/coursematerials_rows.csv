@@ -1,0 +1,6 @@
+id,created_at,type,course_id,title,description
+1,2025-03-02 16:46:10.546353+00,Video,3,Tại sao lại nên học cái này?,
+2,2025-03-02 16:46:22.712826+00,Video,4,Bạn không biết nhiều như bạn nghĩ!,
+3,2025-03-02 17:29:33.896361+00,Video,5,Vector spaces and tensors,
+4,2025-03-02 17:29:51.762013+00,Video,4,Đạo hàm riêng và sự khả vi của hàm nhiều biến,
+5,2025-03-02 18:01:25.994543+00,Document,4,Tích phân mặt và ứng dụng,

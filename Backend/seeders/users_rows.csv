@@ -1,0 +1,8 @@
+id,confirmation_token,status,type
+04a526eb-c671-480b-bfdf-1f58568754b3,,Confirmed,Instructor
+0990d058-9d3a-4167-adfd-5ea8779dce73,,Confirmed,Instructor
+15cf51e8-2d08-447a-bfdd-98418dd833a3,,Confirmed,Learner
+2e2954ed-6e31-4dbf-b2df-b684d21bbc48,,Confirmed,Instructor
+4dde3fd6-d5bb-47ef-9ace-3d8c0dfa02e6,,Unconfirmed,Learner
+ac7c22d0-4a48-4dc3-80ad-b43da1ed6fff,,Confirmed,Learner
+f48859c0-e02d-4adf-af1b-6bf07a7c2bcc,,Confirmed,Learner
