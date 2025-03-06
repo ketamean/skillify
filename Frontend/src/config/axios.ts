@@ -6,7 +6,8 @@ export const axiosForm = axios.create({
     headers: {
         "Content-type": "application/json"
     },
-    timeout: 10000
+    timeout: 10000,
+    withCredentials: true,
 })
 
 export const axiosFile = axios.create({
@@ -14,5 +15,6 @@ export const axiosFile = axios.create({
     headers: {
         "Content-type": "multipart/form-data"
     },
-    timeout: 10000
+    timeout: 10000,
+    withCredentials: true,
 })
