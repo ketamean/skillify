@@ -1,7 +1,8 @@
 import axios from "axios";
 const baseURL = "http://localhost:3000"
+// const oauthServer = "http://localhost:3000/"
 
-export const axiosForm = axios.create({
+export const axiosJson = axios.create({
     baseURL: baseURL,
     headers: {
         "Content-type": "application/json"
@@ -16,3 +17,23 @@ export const axiosFile = axios.create({
     },
     timeout: 10000
 })
+
+const requestNewAccessToken = async() => {
+
+}
+
+axiosJson.interceptors.request.use(
+    // (config) => {
+    //     const token = localStorage.getItem("token");
+    //     if (token) {
+    //         config.headers.Authorization = `Bearer ${token}`;
+    //     }
+    //     return config;
+    // }
+)
+
+axiosJson.interceptors.response.use(
+    // (response) => {
+        
+    // }
+)

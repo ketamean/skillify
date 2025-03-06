@@ -83,17 +83,16 @@ export default function CoursePage() {
                 }}
             />
             <div className="h-full w-full">
-                <CourseDetails name={data.name}
+                <CourseDetails courseName={data.name}
                     shortDescription={data.shortDescription}
                     courseImageLink={data.courseImageLink}
                     numberOfEnrollments={data.numberOfEnrollments}
                     courseDescriptionSections={data.courseDescriptionSections}
                     relatedTopics={data.relatedTopics}
                     content={data.content}
-                    linkToInstructor={data.linkToInstructor}
-                    linkToInstructorAvatar={data.linkToInstructorAvatar}
+                    linkToInstructorPage={data.linkToInstructor}
+                    // linkToInstructorAvatar={data.linkToInstructorAvatar}
                     instructorName={data.instructorName}
-                    instructorLink={data.linkToInstructor}
                     isFree={data.isFree}
                 />
             </div>
