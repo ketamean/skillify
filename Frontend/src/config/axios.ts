@@ -7,7 +7,8 @@ export const axiosJson = axios.create({
     headers: {
         "Content-type": "application/json"
     },
-    timeout: 10000
+    timeout: 10000,
+    withCredentials: true,
 })
 
 export const axiosFile = axios.create({

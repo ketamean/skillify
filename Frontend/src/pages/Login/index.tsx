@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import Image from "../../assets/register_login.webp";
 import { FaEnvelope, FaGoogle, FaMicrosoft, FaGithub } from "react-icons/fa";
-import { axiosForm } from "../../config/axios"
+import { useAuth } from "../../context/AuthContext";
 const Login: React.FC = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -12,22 +12,24 @@ const Login: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
+    const { user, login } = useAuth();
+    if (user) {
+        return <Navigate to="/" replace />;
+    }
+
     const handleLogin = async () => {
         setLoading(true);
         setError("");
-
-        axiosForm
-            .post("/api/login", { email, password })
-            .then(() => {
-                alert("Login successful!");
-                navigate("/");
-            })
-            .catch((err) => {
-                setError(err);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+    
+        try {
+            await login(email, password);
+            alert("Login successful!");
+            navigate("/");
+        } catch (err: any) {
+            setError(err.message || "Login failed. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
