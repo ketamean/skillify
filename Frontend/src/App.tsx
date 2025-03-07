@@ -6,6 +6,8 @@ import CoursePage from "./pages/CoursePage";
 import CourseContentPage from "./pages/CourseContent"
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ProfilePage from "./pages/Profile";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -29,6 +31,10 @@ const router = createBrowserRouter([
     children: [
       { path: "/coursecontent", element: <CourseContentPage /> },
     ],
+  },
+  {
+    path: "/profile",
+    element: <ProfilePage />
   },
 ]);
 
