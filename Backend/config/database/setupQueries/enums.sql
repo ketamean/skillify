@@ -1,11 +1,11 @@
--- public.MaterialType
-IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'materialtype' AND typnamespace = 'public'::regnamespace) THEN
-    CREATE TYPE "public".MaterialType AS ENUM ('Quiz', 'Document', 'Video');
-END IF;
-
 -- public.CourseStatus
 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'coursestatus' AND typnamespace = 'public'::regnamespace) THEN
     CREATE TYPE "public".CourseStatus AS ENUM ('InReview', 'Published', 'Hidden');
+END IF;
+
+-- public.MaterialType
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'materialtype' AND typnamespace = 'public'::regnamespace) THEN
+    CREATE TYPE "private".MaterialType AS ENUM ('Quiz', 'Document', 'Video');
 END IF;
 
 -- private.CouponDiscountType
