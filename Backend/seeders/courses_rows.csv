@@ -1,5 +1,5 @@
 id,created_at,name,image_link,status,fee,short_description,instructor_id
-3,2025-03-04 18:16:23.931233+00,Web development,,Published,0,,0990d058-9d3a-4167-adfd-5ea8779dce73
-4,2025-03-04 18:17:12.643725+00,Calculus for beginners,,Published,59.99,,0990d058-9d3a-4167-adfd-5ea8779dce73
-5,2025-03-04 18:18:00.788236+00,Linear algebra for engineers,,Published,49.99,,0990d058-9d3a-4167-adfd-5ea8779dce73
+3,2025-03-04 18:16:23.931233+00,Web development,https://platinumlist.net/guide/wp-content/uploads/2023/03/IMG-worlds-of-adventure.webp,Published,0,Hay den day tan huong niem vui,0990d058-9d3a-4167-adfd-5ea8779dce73
+4,2025-03-04 18:17:12.643725+00,Calculus for beginners,https://www.cityguide-dubai.com/fileadmin/_processed_/3/3/csm_img-worlds-of-adventures-teaser_40e4184da1.jpg,Published,59.99,Mot bai hoc danh cho nguoi khong biet gi,0990d058-9d3a-4167-adfd-5ea8779dce73
+5,2025-03-04 18:18:00.788236+00,Linear algebra for engineers,https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTuS8AimFv-GUOXPAeo6uz-2YIl9btD5P2xzA&s,Published,49.99,,0990d058-9d3a-4167-adfd-5ea8779dce73
 6,2025-03-05 15:21:34.788719+00,The art of not giving a fak,https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTg7mODznJ8aR-1rVhOtET2J1seTG9XVx5bWw&s,Published,129.99,I do not give any fak to this description,04a526eb-c671-480b-bfdf-1f58568754b3

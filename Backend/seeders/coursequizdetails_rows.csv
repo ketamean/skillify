@@ -1,0 +1,7 @@
+id,quiz_id,question,type,choices,provided_key
+1,7,Thế nào là ma trận khả nghịch?,ConstructedResponse,,
+2,7,Công thức tính định thức của ma trận?,ConstructedResponse,,
+3,7,Hãy nêu một ứng dụng của việc sử dụng ma trận trong kinh tế,ConstructedResponse,,
+5,7,"Trong các nhận định sau, nhận định nào là đúng nhất?",MultipleChoices,"[""Cái này đúng nè"",""Sai 1"",""Sai 2"",""Sai 3""]",0
+6,8,"Dựa vào các nội dung lý thuyết đã học, hãy nêu ứng dụng của Đại số tuyến tính trong lĩnh vực Trí tuệ nhân tạo, đặc biệt là học máy.",ConstructedResponse,,
+7,8,Với những giá trị nào của tham số thực m thì hệ phương trình sau có nghiệm?,MultipleChoices,"[""m > 1"",""m < 2"",""m > 3: chọn cái này nè"",""m > 100""]",2

@@ -1,5 +1,5 @@
-id,created_at,thumbnail_link,video_link,is_public
-1,2025-03-02 17:28:15.847363+00,,a,false
-2,2025-03-02 17:28:33.663054+00,,s,true
-3,2025-03-02 17:31:33.503868+00,,d,true
-4,2025-03-02 17:31:50.472643+00,,f,false
+id,thumbnail_link,is_public,course_id,title,description,section_id,duration
+1,,false,3,Tại sao lại nên học cái này?,la vay do,3,3:50
+2,,true,4,Bạn không biết nhiều như bạn nghĩ!,y la nhu vay,1,0:24
+3,,true,5,Vector spaces and tensors,khong phai vay dau,4,7:20
+4,,false,4,Đạo hàm riêng và sự khả vi của hàm nhiều biến,a thi ra la vay,2,2:12

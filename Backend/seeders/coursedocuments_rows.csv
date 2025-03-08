@@ -1,2 +1,3 @@
-id,created_at,link
-5,2025-03-05 15:43:51.803044+00,khong co
+id,link,title,description,course_id
+1,https://nibmehub.com/opac-service/pdf/read/The%20Subtle%20Art%20of%20Not%20Giving%20a%20Fck%20A%20Counterintuitive%20Approach%20to%20Living%20a%20Good%20Life%20by%20Mark%20Manson%20(z-lib.org).pdf,The whole book,This is the pdf file of the whole book we provide to you,6
+5,https://personal.math.ubc.ca/~CLP/CLP2/combined_clp_2.pdf,Tích phân mặt và ứng dụng,Bài khó vãi không có gì để bàn thêm.,4

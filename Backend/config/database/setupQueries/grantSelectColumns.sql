@@ -1,16 +1,16 @@
 revoke select on table public.coursedescriptions from anon;
 
 grant
-select (id, course_id, header, content)
+select (id, course_id, header, content, order)
   on table public.coursedescriptions to anon;
 --------------------------------------------------------
 --------------------------------------------------------
 --------------------------------------------------------
-revoke select on table public.coursematerials from anon;
+-- revoke select on table public.coursematerials from anon;
 
-grant
-select (id, type, course_id, title, description)
-  on table public.coursematerials to anon;
+-- grant
+-- select (id, type, course_id, title, description)
+--   on table public.coursematerials to anon;
 --------------------------------------------------------
 --------------------------------------------------------
 --------------------------------------------------------
@@ -30,19 +30,27 @@ select (id, short_description, image_link, instructor_id, fee, name)
 --------------------------------------------------------
 --------------------------------------------------------
 --------------------------------------------------------
-revoke select on table public.coursestatus from anon;
-
-grant
-select (id, name)
-  on table public.coursestatus to anon;
---------------------------------------------------------
---------------------------------------------------------
---------------------------------------------------------
 revoke select on table public.coursevideos from anon;
 
 grant
-select (id, is_public, thumbnail_link, is_public)
+select
   on table public.coursevideos to anon;
+--------------------------------------------------------
+--------------------------------------------------------
+--------------------------------------------------------
+revoke select on table public.coursevideos_public from anon;
+
+grant
+select
+  on table public.coursevideos_public to anon;
+--------------------------------------------------------
+--------------------------------------------------------
+--------------------------------------------------------
+revoke select on table public.coursevideosection from anon;
+
+grant
+select
+  on table public.coursevideosection to anon;
 --------------------------------------------------------
 --------------------------------------------------------
 --------------------------------------------------------
@@ -57,11 +65,16 @@ select (id, first_name, last_name, avatar_image_link, accepted, bio)
 revoke select on table public.learnerenrolments from anon;
 
 grant
-select (id, course_id, learner_id)
+select (id, course_id)
   on table public.learnerenrolments to anon;
+--------------------------------------------------------
+--------------------------------------------------------
+--------------------------------------------------------
+revoke select on table public.learnerenrolments from authenticated;
 
-select * from learnerenrolments;
-select id from learnerenrolments;
+grant
+select (id, course_id, learner_id)
+  on table public.learnerenrolments to authenticated;
 --------------------------------------------------------
 --------------------------------------------------------
 --------------------------------------------------------
