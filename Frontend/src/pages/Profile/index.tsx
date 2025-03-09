@@ -11,52 +11,59 @@ interface UserProfile {
   role: "learner" | "instructor";
 }
 
-interface ProfilePageProps {
-  userId: string;
-}
-
-export default function ProfilePage({ userId }: ProfilePageProps) {
+export default function ProfilePage() {
   const [tab, setTab] = useState("profile");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [userData, setUserData] = useState<UserProfile | null>(null);
+  const [userId, setUserId] = useState<string | null>(null); 
 
   useEffect(() => {
     const fetchUser = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        console.error("Error fetching user:", error);
+        return;
+      }
+
+      setUserId(user.id); 
+
       try {
-        let { data: instructor, error: instructorError } = await supabase
+        let { data: instructor } = await supabase
           .from("instructors")
           .select("*")
-          .eq("id", userId)
+          .eq("id", user.id)
           .single();
 
         if (instructor) {
-          setUser({ ...instructor, role: "instructor" });
+          setUserData({ ...instructor, role: "instructor" });
           return;
         }
 
-        let { data: learner, error: learnerError } = await supabase
+        let { data: learner } = await supabase
           .from("learners")
           .select("*")
-          .eq("id", userId)
+          .eq("id", user.id)
           .single();
 
         if (learner) {
-          setUser({ ...learner, role: "learner" });
+          setUserData({ ...learner, role: "learner" });
           return;
         }
 
-        if (instructorError && learnerError) {
-          console.error("User not found in both tables");
-        }
+        console.error("User not found in both tables");
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
     };
 
     fetchUser();
-  }, [userId]);
+  }, []);
 
-  if (!user) {
+  if (!userData) {
     return <div className="text-center text-gray-500 mt-10">Loading...</div>;
   }
 
@@ -102,8 +109,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                     <textarea className="mt-1 p-2 w-full text-black border border-black rounded h-24" />
                   ) : (
                     <input className="mt-1 p-2 w-full text-black border border-black rounded" defaultValue={
-                      label === "First Name" ? user.first_name : 
-                      label === "Last Name" ? user.last_name : 
+                      label === "First Name" ? userData.first_name : 
+                      label === "Last Name" ? userData.last_name : 
                       label === "Headline" ? "Instructor at Udemy" : ""
                     } />
                     
@@ -141,8 +148,8 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
               <div className="w-40 h-40 flex items-center justify-center border border-gray-400 rounded-full bg-gray-200 overflow-hidden">
                 {selectedFile ? (
                   <img src={URL.createObjectURL(selectedFile)} alt="Preview" className="w-full h-full object-cover" />
-                ) : user.avatar_image_link ? (
-                  <img src={user.avatar_image_link} alt="Profile" className="w-full h-full object-cover" />
+                ) : userData.avatar_image_link ? (
+                  <img src={userData.avatar_image_link} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-gray-500">No file selected</span>
                 )}
@@ -154,7 +161,7 @@ export default function ProfilePage({ userId }: ProfilePageProps) {
                   {selectedFile ? selectedFile.name : "No file selected"}
                 </span>
                 <label className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 cursor-pointer">
-                  {selectedFile || user.avatar_image_link ? "Change" : "Upload image"}
+                  {selectedFile || userData.avatar_image_link ? "Change" : "Upload image"}
                   <input
                     type="file"
                     accept="image/*"
