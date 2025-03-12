@@ -118,7 +118,7 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
     async function handleCheckout() {
         try {
             const { data } = await axiosForm.post("/api/create-checkout-session", {
-                learner_id: user.user.id,
+                learner_id: user?.user?.id,
                 course_id: "3",
                 courseName: props.name,
                 price: props.isFree ? 0 : 19000,

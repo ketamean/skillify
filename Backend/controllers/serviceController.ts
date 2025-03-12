@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import stripe from "../services/stripe";
 import supabase from "../config/database/supabase";
+const DEFAULT_REDIRECT_DOMAIN = 'http://localhost:3000';
 
 export const handleStripeRedirect = async (req: Request, res: Response)  => {
     try {
@@ -25,7 +26,7 @@ export const handleStripeRedirect = async (req: Request, res: Response)  => {
             const {  metadata } = session;
             const { course_id, learner_id, client_origin } = metadata || {};
 
-            const clientOrigin = client_origin || req.headers.origin || req.headers.referer || 'http://localhost:5176';
+            const clientOrigin = client_origin || req.headers.origin || req.headers.referer;
             
             if (!course_id || !learner_id) {
                 res.status(400).json({ error: "Missing course ID or learner ID" });
@@ -56,7 +57,6 @@ export const handleStripeRedirect = async (req: Request, res: Response)  => {
 }
 
 export const createCheckoutSession =  async (req: Request, res: Response)  => {
-    const REDIRECT_DOMAIN = 'http://localhost:3000';
     try {
         const { learner_id, course_id, courseName, price, client_origin } = req.body;
 
@@ -101,8 +101,8 @@ export const createCheckoutSession =  async (req: Request, res: Response)  => {
                 course_id,
                 client_origin,
             },
-            success_url: `${REDIRECT_DOMAIN}/service/stripe?success=true&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${REDIRECT_DOMAIN}/service/stripe?canceled=true`,
+            success_url: `${DEFAULT_REDIRECT_DOMAIN}/service/stripe?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${DEFAULT_REDIRECT_DOMAIN}/service/stripe?canceled=true`,
         });
 
         res.json({ url: session.url });
