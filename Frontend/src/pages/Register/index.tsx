@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import Image from "../../assets/register_login.webp";
-import { axiosForm } from "../../config/axios"
+import { axiosJson } from "../../config/axios"
 
 const Register: React.FC = () => {
     const [fullName, setFullName] = useState("");
@@ -21,7 +21,7 @@ const Register: React.FC = () => {
         setError("");
         setMessage("");
 
-        return axiosForm
+        return axiosJson
             .post("/api/register", {
                 first_name: fullName.split(" ")[0],
                 last_name: fullName.split(" ")[1] || "",

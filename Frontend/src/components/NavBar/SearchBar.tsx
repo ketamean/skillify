@@ -1,5 +1,5 @@
 import { FormEvent, ReactElement, useState } from "react";
-import {axiosForm} from "../../config/axios";
+import { axiosJson } from "../../config/axios";
 import SearchIcon from "./SearchIcon";
 import getNearestParentByTagName from '../../utils/getNearestParentByTagName'
 interface SearchBarProps {
@@ -15,7 +15,7 @@ interface SearchBarProps {
 function defaultOnSubmit(e: React.FormEvent<HTMLFormElement>): void {
     e.preventDefault();
     console.log((e.target as HTMLFormElement).searchContent.value);
-    axiosForm
+    axiosJson
         .get(`/form?content=${(e.target as HTMLFormElement).searchContent.value}`)
         .then((res) => res)
         .catch((res) => {

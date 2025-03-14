@@ -2,49 +2,7 @@ import { ReactElement, useRef } from "react";
 import LockIcon from "./LockIcon";
 import PlayIcon from "./PlayIcon";
 import DOMPurify from 'dompurify'
-interface Video {
-    name: string;
-    duration: string;
-    visibility: boolean;
-    link?: string;
-    coverImageLink?: string;
-}
-
-// parse md to html on server side
-// fe: only sanitize
-
-interface VideoSection {
-    sectionName: string;
-    videos: Video[];
-}
-
-interface CourseDescriptionSection {
-    header: string;
-    content: string; // markdown supported, were CONVERTED to html
-}
-
-interface RelatedTopic {
-    name: string;
-    link: string;
-}
-
-interface CourseDetailsProps {
-    name: string;
-    courseImageLink: string;
-    shortDescription?: string; // the max number of characters: 180
-    relatedTopics: RelatedTopic[];
-    numberOfEnrollments: number;
-    content: VideoSection[];
-    linkToInstructorPage: string;
-    // linkToInstructorAvatar: string;
-    courseDescriptionSections?: CourseDescriptionSection[];
-    instructorName: string;
-    isFree: boolean;
-}
-
-interface CourseVideoSectionProps extends VideoSection {
-    index: number;
-}
+import { CourseVideoSectionProps, CourseDetailsProps, VideoSection } from "./types"
 
 function HTMLInjector(props: {content: string}) {
     return (
@@ -57,7 +15,7 @@ function CourseVideoSection(props: CourseVideoSectionProps) {
     const linkColor: string = "#155775";
     return (
         <div className="w-full flex flex-col gap-y-4">
-            <h3 className="bg-[#ededed] py-2 px-4 flex gap-x-2"><td><span>{props.index + 1}.</span></td>{props.sectionName}</h3>
+            <h3 className={`bg-[#ededed] py-2 px-4 flex gap-x-2 ${props.index === 0 ? 'rounded-t-xl' : ''}`}><span>{props.index + 1}.</span>{props.sectionName}</h3>
             <table className="w-full flex flex-col gap-y-4 px-4 pb-2 rounded-2xl">
                 <tbody>
                     {props.videos.map((video, index) => {
@@ -97,6 +55,7 @@ function CourseVideoSection(props: CourseVideoSectionProps) {
 }
 
 export default function CourseDetails(props: CourseDetailsProps): ReactElement {
+    // console.log(props)
     return (
         <div className="w-full h-full flex flex-col">
             {/* header */}
@@ -106,10 +65,10 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
                     md:px-40 md:flex-row md:gap-x-8">
                     <div className="w-full h-full
                         md:max-w-[350px] md:flex-none">
-                        <img className="w-full h-full" src={props.courseImageLink} title={props.name} alt={`${props.name}`} />
+                        <img className="w-full h-full" src={props.courseImageLink} title={props.courseName} alt={`${props.courseName}`} />
                     </div>
                     <div className="w-full h-full flex flex-col gap-y-4 px-6 md:px-0">
-                        <p className="font-bold text-4xl">{props.name}</p>
+                        <p className="font-bold text-4xl">{props.courseName}</p>
                         {
                             props.shortDescription?
                             <p className="font-medium text-xl">{String(props.shortDescription)}</p>
@@ -118,12 +77,18 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
                         }
                         <div className="w-full h-full px-0 flex flex-col gap-y-1">
                             <div className="w-full flex flex-row gap-x-2">
-                                <div className="w-6 h-6">
-                                    <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path fill="#ffffff" d="M144 0a80 80 0 1 1 0 160A80 80 0 1 1 144 0zM512 0a80 80 0 1 1 0 160A80 80 0 1 1 512 0zM0 298.7C0 239.8 47.8 192 106.7 192l42.7 0c15.9 0 31 3.5 44.6 9.7c-1.3 7.2-1.9 14.7-1.9 22.3c0 38.2 16.8 72.5 43.3 96c-.2 0-.4 0-.7 0L21.3 320C9.6 320 0 310.4 0 298.7zM405.3 320c-.2 0-.4 0-.7 0c26.6-23.5 43.3-57.8 43.3-96c0-7.6-.7-15-1.9-22.3c13.6-6.3 28.7-9.7 44.6-9.7l42.7 0C592.2 192 640 239.8 640 298.7c0 11.8-9.6 21.3-21.3 21.3l-213.3 0zM224 224a96 96 0 1 1 192 0 96 96 0 1 1 -192 0zM128 485.3C128 411.7 187.7 352 261.3 352l117.3 0C452.3 352 512 411.7 512 485.3c0 14.7-11.9 26.7-26.7 26.7l-330.7 0c-14.7 0-26.7-11.9-26.7-26.7z"/></svg>
-                                </div>
-                                <div>
-                                    <span>{props.numberOfEnrollments} student{props.numberOfEnrollments >= 2? "s" : ""}</span>
-                                </div>
+                                {
+                                    typeof props.numberOfEnrollments === 'number' && !isNaN(props.numberOfEnrollments)?
+                                        <>
+                                            <div className="w-6 h-6">
+                                                <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path fill="#ffffff" d="M144 0a80 80 0 1 1 0 160A80 80 0 1 1 144 0zM512 0a80 80 0 1 1 0 160A80 80 0 1 1 512 0zM0 298.7C0 239.8 47.8 192 106.7 192l42.7 0c15.9 0 31 3.5 44.6 9.7c-1.3 7.2-1.9 14.7-1.9 22.3c0 38.2 16.8 72.5 43.3 96c-.2 0-.4 0-.7 0L21.3 320C9.6 320 0 310.4 0 298.7zM405.3 320c-.2 0-.4 0-.7 0c26.6-23.5 43.3-57.8 43.3-96c0-7.6-.7-15-1.9-22.3c13.6-6.3 28.7-9.7 44.6-9.7l42.7 0C592.2 192 640 239.8 640 298.7c0 11.8-9.6 21.3-21.3 21.3l-213.3 0zM224 224a96 96 0 1 1 192 0 96 96 0 1 1 -192 0zM128 485.3C128 411.7 187.7 352 261.3 352l117.3 0C452.3 352 512 411.7 512 485.3c0 14.7-11.9 26.7-26.7 26.7l-330.7 0c-14.7 0-26.7-11.9-26.7-26.7z"/></svg>
+                                            </div>
+                                            <div>
+                                                <span>{props.numberOfEnrollments} student{props.numberOfEnrollments >= 2? "s" : ""}</span>
+                                            </div>
+                                        </> : <>{props.numberOfEnrollments}</>
+                                }
+
                             </div>
                             <div>
                                 Created by <a href={props.linkToInstructorPage}><span className="text-white underline hover:text-zinc-400!">{props.instructorName}</span></a>
@@ -172,19 +137,15 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
                         <div className="flex flex-col gap-y-4">
                             <h2>Course content</h2>
                             {/* VideoSections container */}
-                            <table className="flex flex-col border-collapse border border-deepteal">
-                                <tbody>
+                            <div className="flex flex-col border-collapse border border-deepteal rounded-xl">
                                     {props.content.map((section: VideoSection, index: number) => (
-                                        <tr className={`${index === props.content.length - 1 ? "" : ""}`}>
-                                            <CourseVideoSection
-                                                sectionName={section.sectionName}
-                                                videos={section.videos}
-                                                index={index}
-                                            />
-                                        </tr>
+                                        <CourseVideoSection
+                                            sectionName={section.sectionName}
+                                            videos={section.videos}
+                                            index={index}
+                                        />
                                     ))}
-                                </tbody>
-                            </table>
+                            </div>
                         </div>:
                         <></>
                 }
