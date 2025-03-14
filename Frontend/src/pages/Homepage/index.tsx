@@ -3,24 +3,27 @@ import NavBar from "../../components/NavBar";
 import Footer from "../../components/Footer";
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
-
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 export default function Homepage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  // if (!user) {
+  //   navigate("/register");
+  // }
   useEffect(() => {
     const fetchCourses = async () => {
-      const { data, error } = await supabase
-        .from("courses")
-        .select(`
+      const { data, error } = await supabase.from("courses").select(`
           id,
           name,
           image_link,
           fee,
           instructors:instructor_id (first_name, last_name)
         `);
-    
+
       if (error) {
         console.error("Error fetching courses:", error);
       } else {
@@ -31,17 +34,16 @@ export default function Homepage() {
           rating: 5,
           ratingCount: 1000,
           level: "Unknown",
-          instructorName: course.instructors && course.instructors.length > 0
-            ? `${course.instructors[0].first_name} ${course.instructors[0].last_name}`
-            : "Unknown Instructor",
+          instructorName:
+            course.instructors && course.instructors.length > 0
+              ? `${course.instructors[0].first_name} ${course.instructors[0].last_name}`
+              : "Unknown Instructor",
         }));
-    
+
         setCourses(formattedCourses);
       }
       setLoading(false);
     };
-    
-    
 
     fetchCourses();
   }, []);

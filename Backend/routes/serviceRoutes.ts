@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-import { handleStripeRedirect} from "../controllers/serviceController";
+// import { handleStripeRedirect} from "../controllers/serviceController";
 
-router.get("/stripe", handleStripeRedirect);
+// router.get("/stripe", handleStripeRedirect);
 export default router;
