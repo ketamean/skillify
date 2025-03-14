@@ -1,5 +1,6 @@
 import axios from "axios";
 const baseURL = "http://localhost:3000"
+import { supabase } from '../supabaseClient'
 // const oauthServer = "http://localhost:3000/"
 
 export const axiosJson = axios.create({
@@ -19,18 +20,15 @@ export const axiosFile = axios.create({
     timeout: 10000
 })
 
-const requestNewAccessToken = async() => {
-
-}
-
 axiosJson.interceptors.request.use(
-    // (config) => {
-    //     const token = localStorage.getItem("token");
-    //     if (token) {
-    //         config.headers.Authorization = `Bearer ${token}`;
-    //     }
-    //     return config;
-    // }
+    async (config) => {
+        const token = (await supabase.auth.getSession()).data.session?.access_token;
+            // i love typescript, chứ không thôi cũng không biết nên chấm làm sao cho ra access_token :))
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    }
 )
 
 axiosJson.interceptors.response.use(
