@@ -2,7 +2,7 @@ import axios from "axios";
 const baseURL = "http://localhost:3000"
 // const oauthServer = "http://localhost:3000/"
 
-export const axiosJson = axios.create({
+export const axiosForm = axios.create({
     baseURL: baseURL,
     headers: {
         "Content-type": "application/json"
@@ -23,7 +23,7 @@ const requestNewAccessToken = async() => {
 
 }
 
-axiosJson.interceptors.request.use(
+axiosForm.interceptors.request.use(
     // (config) => {
     //     const token = localStorage.getItem("token");
     //     if (token) {
@@ -33,7 +33,7 @@ axiosJson.interceptors.request.use(
     // }
 )
 
-axiosJson.interceptors.response.use(
+axiosForm.interceptors.response.use(
     // (response) => {
         
     // }

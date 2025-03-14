@@ -1,7 +1,10 @@
-import { ReactElement, useRef } from "react";
+import { ReactElement, useRef, useEffect, useState } from "react";
+import {useLocation} from 'react-router-dom';
 import LockIcon from "./LockIcon";
 import PlayIcon from "./PlayIcon";
 import DOMPurify from 'dompurify'
+import { axiosForm } from "../../config/axios";
+import {useAuth} from "../../context/AuthContext";
 interface Video {
     name: string;
     duration: string;
@@ -97,6 +100,36 @@ function CourseVideoSection(props: CourseVideoSectionProps) {
 }
 
 export default function CourseDetails(props: CourseDetailsProps): ReactElement {
+    const [message, setMessage] = useState("");
+    const user = useAuth();
+    const location = useLocation();
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const paymentStatus = params.get("payment");
+
+        if (paymentStatus === "success") {
+            setMessage("Payment Successful! You are now enrolled.")
+        } else if (paymentStatus === "error") {
+            setMessage("Payment succeeded, but an error occurred during enrollment. Please contact support.");
+        }
+    }, [location]);
+
+    async function handleCheckout() {
+        try {
+            const { data } = await axiosForm.post("/api/create-checkout-session", {
+                learner_id: user?.user?.id,
+                course_id: "3",
+                courseName: props.name,
+                price: props.isFree ? 0 : 19000,
+                client_origin: window.location.origin, 
+            });
+    
+            window.location.href = data.url;
+        } catch (error) {
+            console.error("Error creating checkout session:", error);
+        }
+    }
     return (
         <div className="w-full h-full flex flex-col">
             {/* header */}
@@ -133,11 +166,16 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
                 </div>
 
                 <div className="w-full px-4 md:px-40">
-                    <a type="button" className="bg-light-green hover:bg-vibrant-green! w-28 px-8 py-4 rounded-lg cursor-pointer"
-                        href={props.isFree? "#" : "#"} target="_blank"
+                    <button
+                        type="button"
+                        className="bg-light-green hover:bg-vibrant-green! w-28 px-8 py-4 rounded-lg cursor-pointer"
+                        onClick={handleCheckout}
                     >
-                        <span className="text-deepteal text-xl font-semibold">Enroll</span>
-                    </a>
+                        <span className="text-deepteal text-xl font-semibold">
+                            {props.isFree ? "Enroll for Free" : "Buy Now"}
+                        </span>
+                    </button>
+                    {message && <p className="text-white">{message}</p>}
                 </div>
             </div>
 

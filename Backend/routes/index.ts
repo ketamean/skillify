@@ -1,8 +1,8 @@
 import express from "express";
-import AuthRouter from './authRoutes'
-
+import "dotenv/config";
 const router = express.Router();
+import { createCheckoutSession } from "../controllers/serviceController";
 
-router.use("/auth", AuthRouter);
+router.post('/create-checkout-session', createCheckoutSession);
 
 export default router;
