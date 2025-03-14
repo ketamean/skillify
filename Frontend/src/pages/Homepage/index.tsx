@@ -1,55 +1,62 @@
 import { CourseCard } from "../../components";
 import NavBar from "../../components/NavBar";
 import Footer from "../../components/Footer";
+import { useEffect, useState } from "react";
+import { supabase } from "../../supabaseClient";
+
 export default function Homepage() {
-  const courses = [
-    {
-      imageUrl:
-        "https://vinhphamthanh.dev/posts/switch-lite-review/featured.jpg",
-      title: "The Complete Web Development Bootcamp 2024",
-      instructorName: "Dr. Angela Yu",
-      rating: 4.8,
-      ratingCount: 1200,
-      price: 19.99 as const,
-      level: "Beginner" as const,
-    },
-    {
-      imageUrl: "https://via.placeholder.com/300x200",
-      title: "Mastering React with Hooks and Context API",
-      instructorName: "John Doe",
-      rating: 4.6,
-      ratingCount: 850,
-      price: "Free" as const,
-      level: "Intermediate" as const,
-    },
-    {
-      imageUrl: "https://via.placeholder.com/300x200",
-      title: "Advanced TypeScript Programming",
-      instructorName: "Jane Smith",
-      rating: 4.9,
-      ratingCount: 650,
-      price: 29.99 as const,
-      level: "Advanced" as const,
-    },
-    {
-      imageUrl: "https://via.placeholder.com/300x200",
-      title: "UI/UX Design Fundamentals",
-      instructorName: "Mike Johnson",
-      rating: 4.7,
-      ratingCount: 920,
-      price: 24.99 as const,
-      level: "Beginner" as const,
-    },
-  ];
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      const { data, error } = await supabase
+        .from("courses")
+        .select(`
+          id,
+          name,
+          image_link,
+          fee,
+          instructors:instructor_id (first_name, last_name)
+        `);
+    
+      if (error) {
+        console.error("Error fetching courses:", error);
+      } else {
+        const formattedCourses = data.map((course) => ({
+          title: course.name,
+          imageUrl: course.image_link,
+          price: course.fee ? `$${course.fee.toFixed(2)}` : "Free",
+          rating: 5,
+          ratingCount: 1000,
+          level: "Unknown",
+          instructorName: course.instructors && course.instructors.length > 0
+            ? `${course.instructors[0].first_name} ${course.instructors[0].last_name}`
+            : "Unknown Instructor",
+        }));
+    
+        setCourses(formattedCourses);
+      }
+      setLoading(false);
+    };
+    
+    
+
+    fetchCourses();
+  }, []);
 
   return (
     <div className="min-h-screen bg-custom-white">
       <NavBar
         user={{
-          fname: "Ariana", lname: "Grande",
-          avatarUrl: "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg"
+          fname: "Ariana",
+          lname: "Grande",
+          avatarUrl:
+            "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg",
         }}
       />
+
       {/* Banner Section */}
       <div className="relative h-[400px] mx-auto container flex justify-center pt-4 px-[4%]">
         <div className="relative w-full h-full">
@@ -85,15 +92,22 @@ export default function Homepage() {
           <h2 className="text-deepteal text-2xl font-extrabold mb-4">
             Featured Courses
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {courses.map((course, index) => (
-              <CourseCard key={index} {...course} />
-            ))}
-          </div>
+
+          {loading ? (
+            <p>Loading courses...</p>
+          ) : errorMessage ? (
+            <p className="text-red-500">{errorMessage}</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {courses.map((course, index) => (
+                <CourseCard key={index} {...course} />
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
-      <Footer/>
+      <Footer />
     </div>
   );
 }
