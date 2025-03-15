@@ -6,7 +6,7 @@ import SearchIcon from "./SearchIcon";
 import BurgerMenuOverlay from "./BurgerMenuOverlay";
 import { useAuth } from "../../context/AuthContext";
 import Button from "../Button";
-// export * from '.'
+import { useNavigate } from "react-router-dom";
 interface NavBarUserInfo {
   fname: string;
   lname: string;
@@ -46,6 +46,7 @@ export default function NavBar(props: NavBarProps): ReactElement {
   const [searchOverlayState, setSearchOverlayState] = useState(false);
   const [burgerMenuState, setBurgerMenuState] = useState(false);
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   return (
     <>
       <nav
@@ -125,6 +126,16 @@ export default function NavBar(props: NavBarProps): ReactElement {
           {user && (
             <Button onClick={logout}>
               <span>Logout</span>
+            </Button>
+          )}
+
+          {!user && (
+            <Button
+              onClick={() => {
+                navigate("/login");
+              }}
+            >
+              <span>Login</span>
             </Button>
           )}
 

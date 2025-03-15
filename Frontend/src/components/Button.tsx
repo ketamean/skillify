@@ -20,10 +20,11 @@ const sizeClasses: Record<ButtonSize, string> = {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-vibrant-green text-deepteal hover:bg-vibrant-green/60 font-bold rounded-lg",
-  secondary: "bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg",
+    "bg-vibrant-green text-deepteal hover:bg-vibrant-green/60 font-bold rounded-lg hover:cursor-pointer",
+  secondary:
+    "bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg hover:cursor-pointer",
   outline:
-    "border border-gray-400 text-gray-700 hover:bg-gray-200 font-bold rounded-lg",
+    "border border-gray-400 text-gray-700 hover:bg-gray-200 font-bold rounded-lg hover:cursor-pointer",
 };
 
 const Button: React.FC<ButtonProps> = ({
