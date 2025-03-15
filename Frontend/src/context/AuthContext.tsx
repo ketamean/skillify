@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
+import { Provider } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: any;
   login: (email: string, password: string) => Promise<void>;
+  oAuthLogin: (provider: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -55,6 +57,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(data.user);
   };
 
+  const oAuthLogin = async (provider: string) => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: provider as Provider,
+    });
+    if (error) {
+      console.error("Login error:", error.message);
+      throw error;
+    }
+  };
+
   const register = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) {
@@ -70,7 +82,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading, register }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, isLoading, register, oAuthLogin }}
+    >
       {children}
     </AuthContext.Provider>
   );
