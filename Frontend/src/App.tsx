@@ -3,9 +3,11 @@ import Homepage from "./pages/Homepage";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import CoursePage from "./pages/CoursePage";
+import UploadCourseContentPage from "./pages/UploadCourseContentPage";
 import CourseContentPage from "./pages/CourseContent"
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { Toaster } from "@/components/ui/sonner"
 const router = createBrowserRouter([
   {
     path: "/",
@@ -24,6 +26,10 @@ const router = createBrowserRouter([
     element: <CoursePage id={3}/>
   },
   {
+    path: "/course/upload",
+    element: <UploadCourseContentPage />
+  },
+  {
     path: "/",
     element: <ProtectedRoute />,
     children: [
@@ -36,7 +42,10 @@ function App() {
 
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <div className="flex flex-col min-h-screen">
+        <RouterProvider router={router} />
+        <Toaster />
+      </div>
     </AuthProvider>
   );
 

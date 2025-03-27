@@ -1,7 +1,7 @@
 import { FormEvent, ReactElement, useState, useEffect } from "react"
-// import Modal from 'react-modal'
-import GoBackIcon from "./GoBackIcon";
 import SearchBar from "./SearchBar"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 interface SearchOverlayProps {
     state: boolean;
@@ -36,7 +36,7 @@ export default function SearchOverlay(props: SearchOverlayProps): ReactElement {
                     className="w-6 pr-2 aspect-square cursor-pointer"
                     onClick={() => props.setState(false)}
                 >
-                    <GoBackIcon color="white" />
+                    <FontAwesomeIcon className="text-black" icon={faArrowLeft}/>
                 </button>
                 <SearchBar
                     // onSubmit={props.onSubmit}

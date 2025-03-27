@@ -4,7 +4,8 @@ import SearchBar from "./SearchBar";
 import SearchOverlay from "./SearchOverlay";
 import SearchIcon from "./SearchIcon";
 import BurgerMenuOverlay from "./BurgerMenuOverlay";
-// export * from '.'
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBars } from "@fortawesome/free-solid-svg-icons";
 interface NavBarUserInfo {
     fname: string;
     lname: string;
@@ -19,25 +20,7 @@ interface NavBarProps {
     user: NavBarUserInfo;
 }
 
-interface BurgerMenuIconProps {
-    menuState: boolean;
-    setMenuState: (state: boolean) => void;
-}
 
-function BurgerMenuIcon(props: BurgerMenuIconProps): ReactElement {
-    return (
-        <div className="flex-col gap-y-1 h-auto cursor-pointer
-            flex relative
-            md:hidden"
-            onClick={() => props.setMenuState(true)}
-        >
-            {/* 3 horizontal lines */}
-            <div className="rounded-2xl bg-white py-0.5 px-3"></div>
-            <div className="rounded-2xl bg-white py-0.5 px-3"></div>
-            <div className="rounded-2xl bg-white py-0.5 px-3"></div>
-        </div>
-    )
-}
 
 export default function NavBar(props: NavBarProps): ReactElement {
     const [searchOverlayState, setSearchOverlayState] = useState(false);
@@ -49,9 +32,13 @@ export default function NavBar(props: NavBarProps): ReactElement {
                 gap-x-2
                 md:gap-x-4"
             >
-                <div className="min-w-fit h-full flex items-center text-white! gap-x-3">
+                <div className="min-w-fit h-full flex flex-row items-center text-white! gap-x-3">
                     {/* burger menu icon */}
-                    <BurgerMenuIcon menuState={burgerMenuState} setMenuState={setBurgerMenuState}/>
+                    <div className="relative md:hidden w-7"
+                        onClick={() => setBurgerMenuState(true)}
+                    >
+                        <FontAwesomeIcon icon={faBars} />
+                    </div>
                     
                     {/* logo */}
                     <a href="#"

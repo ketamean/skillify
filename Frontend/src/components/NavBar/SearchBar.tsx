@@ -1,7 +1,7 @@
 import { FormEvent, ReactElement, useState } from "react";
 import { axiosJson } from "../../config/axios";
-import SearchIcon from "./SearchIcon";
-import getNearestParentByTagName from '../../utils/getNearestParentByTagName'
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
 interface SearchBarProps {
     onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
     disabled?: boolean;
@@ -54,16 +54,9 @@ export default function SearchBar(props: SearchBarProps): ReactElement {
                     }
                 `}
             >
-                <SearchIcon
-                    onClick={
-                        (e: Event): void => {
-                            if (searchIconState) return
-                            // else
-                            const res: HTMLElement | null = getNearestParentByTagName(e.target as HTMLElement, 'form')
-                            if (res) (res as HTMLFormElement).submit();
-                        }
-                    }
-                    fill={searchIconState? "#868686" : "#ffffff"}
+                <FontAwesomeIcon 
+                    icon={faSearch}
+                    className={`${searchIconState? 'text-[#868686]' : 'text-white'}`}
                 />
             </button>
         </form>

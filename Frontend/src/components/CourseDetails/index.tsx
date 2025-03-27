@@ -1,8 +1,8 @@
 import { ReactElement, useRef } from "react";
-import LockIcon from "./LockIcon";
-import PlayIcon from "./PlayIcon";
 import DOMPurify from 'dompurify'
 import { CourseVideoSectionProps, CourseDetailsProps, VideoSection } from "./types"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faLock, faPlay } from "@fortawesome/free-solid-svg-icons";
 
 function HTMLInjector(props: {content: string}) {
     return (
@@ -30,11 +30,11 @@ function CourseVideoSection(props: CourseVideoSectionProps) {
                                     () => null
                             }
                         >
-                            <td className="w-6 h-full flex items-center">
+                            <td className="w-6 h-full">
                                 {
                                     video.visibility?
-                                        <PlayIcon fillColor={iconColor} strokeColor={iconColor} /> :
-                                        <LockIcon fillColor={iconColor} strokeColor={iconColor}/>
+                                        <FontAwesomeIcon icon={faPlay} className={`text-[${iconColor}] w-full aspect-square`}/> :
+                                        <FontAwesomeIcon icon={faLock} className={`text-[${iconColor}]`}/>
                                 }
                             </td>
                             <td className="w-full">
@@ -60,14 +60,14 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
         <div className="w-full h-full flex flex-col">
             {/* header */}
             <div className="bg-deepteal w-full h-full flex flex-col gap-y-8 pt-2 pb-8 px-0
-                md:py-12">
+                lg:py-12">
                 <div className="flex flex-col gap-y-8 text-white w-full h-full px-0
-                    md:px-40 md:flex-row md:gap-x-8">
+                    lg:px-40 lg:flex-row lg:gap-x-8">
                     <div className="w-full h-full
-                        md:max-w-[350px] md:flex-none">
+                        lg:max-w-[350px] lg:flex-none">
                         <img className="w-full h-full" src={props.courseImageLink} title={props.courseName} alt={`${props.courseName}`} />
                     </div>
-                    <div className="w-full h-full flex flex-col gap-y-4 px-6 md:px-0">
+                    <div className="w-full h-full flex flex-col gap-y-4 px-6 lg:px-0">
                         <p className="font-bold text-4xl">{props.courseName}</p>
                         {
                             props.shortDescription?
@@ -97,7 +97,7 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
                     </div>
                 </div>
 
-                <div className="w-full px-4 md:px-40">
+                <div className="w-full px-4 lg:px-40">
                     <a type="button" className="bg-light-green hover:bg-vibrant-green! w-28 px-8 py-4 rounded-lg cursor-pointer"
                         href={props.isFree? "#" : "#"} target="_blank"
                     >
@@ -109,7 +109,7 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
 
             {/* body */}
             <div className="text-black py-8 px-4 flex flex-col gap-y-8 text-justify
-                md:px-40">
+                lg:px-40">
 
                 {/* related topics */}
                 {

@@ -21,17 +21,34 @@ export const axiosFile = axios.create({
 })
 
 axiosJson.interceptors.request.use(
-    async (config) => {
-        const token = (await supabase.auth.getSession()).data.session?.access_token;
-            // i love typescript, chứ không thôi cũng không biết nên chấm làm sao cho ra access_token :))
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    }
+    // async (config) => {
+    //     const token = (await supabase.auth.getSession()).data.session?.access_token;
+    //         // i love typescript, chứ không thôi cũng không biết nên chấm làm sao cho ra access_token :))
+    //     if (token) {
+    //         config.headers.Authorization = `Bearer ${token}`;
+    //     }
+    //     return config;
+    // }
 )
 
 axiosJson.interceptors.response.use(
+    // (response) => {
+        
+    // }
+)
+
+axiosFile.interceptors.request.use(
+    // async (config) => {
+    //     const token = (await supabase.auth.getSession()).data.session?.access_token;
+    //         // i love typescript, chứ không thôi cũng không biết nên chấm làm sao cho ra access_token :))
+    //     if (token) {
+    //         config.headers.Authorization = `Bearer ${token}`;
+    //     }
+    //     return config;
+    // }
+)
+
+axiosFile.interceptors.response.use(
     // (response) => {
         
     // }
