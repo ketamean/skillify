@@ -105,13 +105,6 @@ const Login: React.FC = () => {
             </Button>
             <Button
               className="flex items-center gap-2"
-              onClick={() => console.log("Login with Microsoft")}
-            >
-              <FaMicrosoft className="text-blue-500" />
-              Microsoft
-            </Button>
-            <Button
-              className="flex items-center gap-2"
               onClick={() => oAuthLogin("github")}
             >
               <FaGithub />
