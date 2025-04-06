@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 interface UserProfile {
   id: string;
@@ -16,10 +17,18 @@ export default function ProfilePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [userData, setUserData] = useState<UserProfile | null>(null);
   const [avatarBlobUrl, setAvatarBlobUrl] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
     bio: "",
+  });
+  const [passwordData, setPasswordData] = useState({
+    old_password: "",
+    new_password: "",
+    confirm_password: "",
   });
 
   useEffect(() => {
@@ -28,6 +37,7 @@ export default function ProfilePage() {
 
       if (error || !user) {
         console.error("Error fetching user:", error);
+        navigate("/login");
         return;
       }
       try {
@@ -55,7 +65,7 @@ export default function ProfilePage() {
             setAvatarBlobUrl(URL.createObjectURL(data));
           }
         }
-        
+
         setFormData({
           first_name: profile.first_name || "",
           last_name: profile.last_name || "",
@@ -68,6 +78,43 @@ export default function ProfilePage() {
 
     fetchUser();
   }, []);
+  const handleChangePassword = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const email = sessionData.session?.user?.email;
+    if (!email) {
+      alert("Session expired. Please log in again.");
+      navigate("/login");
+      return;
+    }
+  
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password: passwordData.old_password,
+    });
+  
+    if (signInError) {
+      alert("Current password is incorrect.");
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: passwordData.new_password,
+    });
+
+    if (error) {
+      console.error("Password change error:", error.message);
+      alert("Failed to change password. Please try again.");
+    } else {
+      alert("Password changed successfully!");
+      await supabase.auth.signOut();
+      navigate("/login");
+    }
+  };
   const handleProfileSave = async () => {
     if (!userData) return;
 
@@ -298,6 +345,81 @@ export default function ProfilePage() {
                 Save
               </button>
             </div>
+          </div>
+        )}
+
+        {tab === "privacy" && (
+          <div className="mt-6 bg-white p-6 rounded-lg shadow-md max-w-xl">
+            <h2 className="text-xl font-bold text-black">Change Password</h2>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-black">Confirm Old Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="mt-1 p-2 pr-28 w-full border border-black text-black rounded"
+                  value={passwordData.old_password}
+                  onChange={(e) =>
+                    setPasswordData((prev) => ({ ...prev, old_password: e.target.value }))
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-purple-600 underline"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-black">New Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="mt-1 p-2 pr-28 w-full border border-black text-black rounded"
+                  value={passwordData.new_password}
+                  onChange={(e) =>
+                    setPasswordData((prev) => ({ ...prev, new_password: e.target.value }))
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-purple-600 underline"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-black">Confirm New Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="mt-1 p-2 pr-28 w-full border border-black text-black rounded"
+                  value={passwordData.confirm_password}
+                  onChange={(e) =>
+                    setPasswordData((prev) => ({ ...prev, confirm_password: e.target.value }))
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-purple-600 underline"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mt-2">
+              <strong>Warning:</strong> Changing your password will sign you out. You can then sign back in with your new password.
+            </p>
+            <button
+              onClick={handleChangePassword}
+              className="mt-6 bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+            >
+              Change Password
+            </button>
           </div>
         )}
 
