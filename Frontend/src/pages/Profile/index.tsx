@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [userData, setUserData] = useState<UserProfile | null>(null);
   const [avatarBlobUrl, setAvatarBlobUrl] = useState<string | null>(null);
+  const [avatarPath, setAvatarPath] = useState<string | null>(userData?.avatar_image_link || null);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
@@ -30,7 +31,11 @@ export default function ProfilePage() {
     new_password: "",
     confirm_password: "",
   });
-
+  useEffect(() => {
+    if (userData?.avatar_image_link) {
+      setAvatarPath(userData.avatar_image_link);
+    }
+  }, [userData]);
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -153,11 +158,12 @@ export default function ProfilePage() {
     if (!selectedFile || !userData) return;
 
     const fileExt = selectedFile.name.split(".").pop();
-    const filePath = `public/${userData.id}.${fileExt}`;
+    const newFilePath = `public/${userData.id}_${Date.now()}.${fileExt}`;
+    const oldFilePath = avatarPath;
 
     const { error: uploadError } = await supabase.storage
       .from("useravatars")
-      .upload(filePath, selectedFile, { upsert: true });
+      .upload(newFilePath, selectedFile, { upsert: true });
     if (uploadError) {
       console.error("Upload failed:", uploadError.message);
       return;
@@ -165,30 +171,44 @@ export default function ProfilePage() {
 
     const { error: dbUpdateError } = await supabase
       .from("users")
-      .update({ avatar_image_link: filePath })
+      .update({ avatar_image_link: newFilePath })
       .eq("id", userData.id);
     if (dbUpdateError) {
       console.error("Failed to update avatar in DB:", dbUpdateError.message);
     }
 
-    setTimeout(async () => {
-      const { data: file, error: downloadError } = await supabase.storage
+    console.log("Avatar updated in DB:", newFilePath);
+    console.log("Avatar current link", avatarPath);
+
+    if (oldFilePath && oldFilePath !== newFilePath) {
+      const { error: removeError } = await supabase.storage
         .from("useravatars")
-        .download(filePath);
-  
-      if (downloadError || !file) {
-        console.error("Download failed:", downloadError?.message);
-        return;
+        .remove([oldFilePath]);
+      if (removeError) {
+        console.warn("Failed to remove old avatar:", removeError.message);
+      } else {
+        console.log("Old avatar removed:", oldFilePath);
       }
-  
-      if (avatarBlobUrl) {
-        URL.revokeObjectURL(avatarBlobUrl);
-      }
-  
-      const newBlobUrl = URL.createObjectURL(file);
-      setAvatarBlobUrl(newBlobUrl);
-      setSelectedFile(null);
-    }, 500); // Small delay to avoid instant CDN caching
+    }
+
+    setAvatarPath(newFilePath);
+
+    const { data: file, error: downloadError } = await supabase.storage
+      .from("useravatars")
+      .download(newFilePath);
+
+    if (downloadError || !file) {
+      console.error("Download failed:", downloadError?.message);
+      return;
+    }
+
+    if (avatarBlobUrl) {
+      URL.revokeObjectURL(avatarBlobUrl);
+    }
+
+    const newBlobUrl = URL.createObjectURL(file);
+    setAvatarBlobUrl(newBlobUrl);
+    setSelectedFile(null);
   };
   if (!userData) {
     return <div className="text-center text-gray-500 mt-10">Loading...</div>;
