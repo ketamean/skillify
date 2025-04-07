@@ -57,14 +57,8 @@ export default function ProfilePage() {
         };
         setUserData(profile);
 
-        if (userFromDb.avatar_image_link) {
-          const { data, error } = await supabase.storage
-            .from("useravatars")
-            .download(userFromDb.avatar_image_link);
-          if (data && !error) {
-            setAvatarBlobUrl(URL.createObjectURL(data));
-          }
-        }
+        const avatarUrl = await getAvatarUrl(userFromDb.avatar_image_link);
+        setAvatarBlobUrl(avatarUrl);
 
         setFormData({
           first_name: profile.first_name || "",
@@ -78,6 +72,26 @@ export default function ProfilePage() {
 
     fetchUser();
   }, []);
+  const getAvatarUrl = async (avatarPath: string | null | undefined): Promise<string> => {
+    if (!avatarPath) {
+      return "https://ui-avatars.com/api/?name=User";
+    }
+
+    if (avatarPath.startsWith("http")) {
+      return avatarPath;
+    }
+
+    const { data, error } = await supabase.storage
+      .from("useravatars")
+      .download(avatarPath);
+
+    if (error || !data) {
+      console.error("Failed to download avatar:", error?.message);
+      return "https://ui-avatars.com/api/?name=User";
+    }
+
+    return URL.createObjectURL(data);
+  };
   const handleChangePassword = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
     const email = sessionData.session?.user?.email;
@@ -157,17 +171,24 @@ export default function ProfilePage() {
       console.error("Failed to update avatar in DB:", dbUpdateError.message);
     }
 
-    const { data: newBlob, error: downloadError } = await supabase.storage
-      .from("useravatars")
-      .download(filePath);
-    if (downloadError) {
-      console.error("Download failed:", downloadError.message);
-      return;
-    }
-
-    const freshBlobUrl = URL.createObjectURL(newBlob);
-    setAvatarBlobUrl(freshBlobUrl);
-    setSelectedFile(null);
+    setTimeout(async () => {
+      const { data: file, error: downloadError } = await supabase.storage
+        .from("useravatars")
+        .download(filePath);
+  
+      if (downloadError || !file) {
+        console.error("Download failed:", downloadError?.message);
+        return;
+      }
+  
+      if (avatarBlobUrl) {
+        URL.revokeObjectURL(avatarBlobUrl);
+      }
+  
+      const newBlobUrl = URL.createObjectURL(file);
+      setAvatarBlobUrl(newBlobUrl);
+      setSelectedFile(null);
+    }, 500); // Small delay to avoid instant CDN caching
   };
   if (!userData) {
     return <div className="text-center text-gray-500 mt-10">Loading...</div>;
@@ -306,10 +327,16 @@ export default function ProfilePage() {
                   src={
                     selectedFile
                       ? URL.createObjectURL(selectedFile)
-                      : avatarBlobUrl || "https://ui-avatars.com/api/?name=User&background=cccccc&color=ffffff"
+                      : avatarBlobUrl
+                        ? avatarBlobUrl
+                        : userData?.first_name || userData?.last_name
+                          ? `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            `${userData.first_name || ""} ${userData.last_name || ""}`.trim()
+                          )}&background=cccccc&color=ffffff`
+                          : "https://ui-avatars.com/api/?name=User&background=cccccc&color=ffffff"
                   }
                   alt="Profile"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-full border border-gray-300"
                 />
               </div>
 
