@@ -158,7 +158,7 @@ export default function ProfilePage() {
     if (!selectedFile || !userData) return;
 
     const fileExt = selectedFile.name.split(".").pop();
-    const newFilePath = `public/${userData.id}_${Date.now()}.${fileExt}`;
+    const newFilePath = `public/${userData.id}/${Date.now()}.${fileExt}`;
     const oldFilePath = avatarPath;
 
     const { error: uploadError } = await supabase.storage
