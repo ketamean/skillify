@@ -1,6 +1,57 @@
 import { Request, Response } from "express";
 import supabase from "../config/database/supabase";
 
+export const addMaterialComment = async (req: Request, res: Response): Promise<void> => {
+  const { course_id, material_id } = req.params;
+  const { content, user_id } = req.body;
+
+  if (!content || !user_id) {
+    res.status(400).json({ error: "Missing content or user_id" });
+    return;
+  }
+
+  const { data: insertData, error: insertError } = await supabase
+    .schema("private").from("coursematerialcomments")
+    .insert([
+      {
+        course_material_id: Number(material_id),
+        content,
+        commenter: user_id,
+      },
+    ])
+    .select()
+    .single();
+
+  if (insertError || !insertData) {
+    res.status(500).json({ error: insertError?.message || "Failed to insert comment" });
+    return;
+  }
+
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("first_name, last_name, avatar_image_link")
+    .eq("id", user_id)
+    .single();
+
+  if (userError || !userData) {
+    console.error("Failed to fetch user for comment:", userError);
+    res.status(500).json({ error: "Comment inserted but failed to fetch user info" });
+    return;
+  }
+
+  res.status(201).json({
+    message: "Comment added",
+    comment: {
+      id: insertData.id,
+      text: insertData.content,
+      time: new Date(insertData.created_at).toLocaleString(),
+      material_id: insertData.course_material_id,
+      user: `${userData.first_name} ${userData.last_name ?? ""}`,
+      avatar: userData.avatar_image_link || "",
+    },
+  });
+};
+
 export const getCourseContent = async (req: Request, res: Response): Promise<void> => {
   const { course_id } = req.params;
   const { data, error } = await supabase.rpc("current_user_role");
@@ -18,13 +69,12 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
     }
 
     const [sectionsData, videosData, documentsData, quizzesData, quizDetailsData] = await Promise.all([
-      supabase.from("coursevideosections").select("id, name, order").eq("course_id", course_id).order("order", { ascending: true }),
+      supabase.from("coursesections").select("id, name, order").eq("course_id", course_id).order("order", { ascending: true }),
       supabase.from("coursevideos").select("id, title, thumbnail_link, duration, section_id").eq("course_id", course_id),
       supabase.schema("private").from("coursedocuments").select("id, title, description, link").eq("course_id", course_id),
       supabase.schema("private").from("coursequizzes").select("id, title, duration, description").eq("course_id", course_id),
       supabase.schema("private").from("coursequizdetails").select("id, quiz_id, question, type, choices, provided_key")
     ]);
-    
 
     if (sectionsData.error || videosData.error || documentsData.error || quizzesData.error || quizDetailsData.error) {
       res.status(500).json({ error: "Lỗi lấy dữ liệu từ Supabase" });
@@ -37,6 +87,19 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
     const quizzes = quizzesData.data || [];
     const quizDetails = quizDetailsData.data || [];
 
+    const videoIds = videos.map((v) => v.id);
+
+    const { data: videoLinks, error: videoLinkError } = await supabase
+      .from("coursevideos_public")
+      .select("id, link")
+      .in("id", videoIds);
+    if (videoLinkError) {
+      res.status(500).json({ error: "Lỗi lấy link video" });
+      return;
+    }
+
+    const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
+
     const formattedSections = sections.map((section) => ({
       id: section.id,
       title: section.name,
@@ -44,8 +107,9 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       videos: videos
         .filter((video) => video.section_id === section.id)
         .map((video) => ({
+          id: video.id,
           title: video.title,
-          link: video.thumbnail_link,
+          link: videoLinkMap[video.id] || "",
           duration: video.duration,
         })),
     }));
@@ -66,6 +130,32 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         })),
     }));
 
+    const { data: commentData, error: commentError } = await supabase
+      .schema("private")
+      .from("coursematerialcomments")
+      .select("id, content, created_at, commenter, course_material_id")
+      .in("course_material_id", videoIds)
+      .order("created_at", { ascending: false });
+
+    const userIds = [...new Set(commentData?.map(c => c.commenter))];
+
+    const { data: userProfiles, error: userError } = await supabase
+      .from("users")
+      .select("id, first_name, last_name, avatar_image_link")
+      .in("id", userIds);
+
+    const formattedComments = commentData?.map(c => {
+      const user = userProfiles?.find(u => u.id === c.commenter);
+      return {
+        id: c.id,
+        text: c.content,
+        time: new Date(c.created_at).toLocaleString(),
+        material_id: c.course_material_id, // ← this maps directly to video.id
+        user: user ? `${user.first_name} ${user.last_name}` : "Unknown User",
+        avatar: user?.avatar_image_link || null,
+      };
+    }) || [];
+
     res.json({
       course_id: course.id,
       title: course.name,
@@ -81,6 +171,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       sections: formattedSections,
       documents: documents,
       quizzes: formattedQuizzes,
+      comments: formattedComments,
     });
 
   } catch (error) {
