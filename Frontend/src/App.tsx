@@ -7,6 +7,7 @@ import CourseContentPage from "./pages/CourseContent";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/Profile";
+import MyLearningPage from "./pages/MyLearning";
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
     path: "/profile",
     element: <ProfilePage />,
   },
+  {
+    path: "/mylearning",
+    element: <MyLearningPage />,
+  }
 ]);
 
 function App() {
