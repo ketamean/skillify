@@ -1,24 +1,34 @@
-import {useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaPlay, FaXTwitter, FaFacebook, FaLinkedin, FaLink, FaDownload } from "react-icons/fa6";
 import { FaSearch } from "react-icons/fa";
-import { useParams } from "react-router-dom"; 
+import { useParams } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 
 
 export default function CourseContentPage() {
   const [activeTab, setActiveTab] = useState("Overview");
   const [expandedSections, setExpandedSections] = useState<{ [key: number]: boolean }>({});
-  const [currentVideo, setCurrentVideo] = useState<string>("");
   const [selectedQuizIndex, setSelectedQuizIndex] = useState<number | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<{ [key: string]: number }>({});
   const [quizSubmitted, setQuizSubmitted] = useState<{ [key: number]: boolean }>({});
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const { course_id } = useParams(); 
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(-1);
+  const { course_id } = useParams();
   const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [loading, setLoading] = useState(true);
-
-  let lessonCounter = 0; 
-
+  type VideoComment = {
+    id: number;
+    user: string;
+    text: string;
+    time: string;
+    material_id: number;
+    avatar?: string | null;
+  };
+  const [comments, setComments] = useState<VideoComment[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [currentVideoId, setCurrentVideoId] = useState<number | null>(null);
+  const [avatarCache, setAvatarCache] = useState<Record<string, string>>({});
+  const videoComments = comments.filter(c => c.material_id === currentVideoId);
+  let lessonCounter = 0;
   interface CourseData {
     course_id: number;
     title: string;
@@ -36,6 +46,7 @@ export default function CourseContentPage() {
       title: string;
       order: number;
       videos: {
+        id: number;
         title: string;
         link: string;
         duration: number;
@@ -60,8 +71,36 @@ export default function CourseContentPage() {
         answer: number;
       }[];
     }[];
+    comments: {
+      id: number;
+      text: string;
+      time: string;
+      material_id: number;
+      user: string;
+      avatar?: string | null;
+    }[];
   }
-  console.log(course_id);
+  const getAvatarUrl = async (avatarPath: string | null | undefined): Promise<string> => {
+    if (!avatarPath) {
+      return "https://ui-avatars.com/api/?name=User";
+    }
+
+    if (avatarPath.startsWith("http") || avatarPath.startsWith("https")) {
+      return avatarPath;
+    }
+
+    const { data, error } = await supabase.storage
+      .from("useravatars")
+      .download(avatarPath);
+
+    if (error || !data) {
+      console.error("Failed to download avatar:", error.message);
+      return "https://ui-avatars.com/api/?name=User";
+    }
+
+    return URL.createObjectURL(data);
+  };
+
   useEffect(() => {
     const fetchCourseData = async () => {
       setLoading(true);
@@ -70,6 +109,7 @@ export default function CourseContentPage() {
         if (!response.ok) throw new Error("Failed to fetch course data");
         const data = await response.json();
         setCourseData(data);
+        setComments(data.comments || []);
         console.log(1);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu khóa học:", error);
@@ -81,135 +121,144 @@ export default function CourseContentPage() {
     fetchCourseData();
   }, [course_id]);
 
+  useEffect(() => {
+    const loadAvatars = async () => {
+      const pathsToLoad = comments
+      .map((c) => c.avatar)
+      .filter((path): path is string => typeof path === "string" && !avatarCache[path]);    
+  
+      for (const path of pathsToLoad) {
+        const url = await getAvatarUrl(path);
+        setAvatarCache((prev) => ({ ...prev, [path]: url }));
+      }
+    };
+  
+    loadAvatars();
+  }, [comments, avatarCache]);
+
   if (loading) return <p>Đang tải...</p>;
   if (!courseData) return <p>Không tìm thấy khóa học!</p>;
 
-const toggleSection = (id: number) => {
-  setExpandedSections((prev) => ({
-    ...prev,
-    [id]: !prev[id],
-  }));
-};
+  const toggleSection = (id: number) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
-const handleAnswerSelect = (quizIndex: number, questionIndex: number, answerIndex: number) => {
-  setQuizAnswers((prev) => ({
-    ...prev,
-    [`${quizIndex}-${questionIndex}`]: answerIndex,
-  }));
-};
+  const handleAnswerSelect = (quizIndex: number, questionIndex: number, answerIndex: number) => {
+    setQuizAnswers((prev) => ({
+      ...prev,
+      [`${quizIndex}-${questionIndex}`]: answerIndex,
+    }));
+  };
 
-const handleSubmitQuiz = (quizIndex: number) => {
-  setQuizSubmitted((prev) => ({
-    ...prev,
-    [quizIndex]: true,
-  }));
-};
+  const handleSubmitQuiz = (quizIndex: number) => {
+    setQuizSubmitted((prev) => ({
+      ...prev,
+      [quizIndex]: true,
+    }));
+  };
 
-const getQuizScore = (quizIndex: number) => {
-  const quiz = courseData.quizzes[quizIndex];
-  let correctCount = 0;
+  const getQuizScore = (quizIndex: number) => {
+    const quiz = courseData.quizzes[quizIndex];
+    let correctCount = 0;
 
-  quiz.questions.forEach((q, qIndex) => {
-    if (quizAnswers[`${quizIndex}-${qIndex}`] === q.answer) {
-      correctCount++;
+    quiz.questions.forEach((q, qIndex) => {
+      if (quizAnswers[`${quizIndex}-${qIndex}`] === q.answer) {
+        correctCount++;
+      }
+    });
+
+    return `${correctCount} / ${quiz.questions.length}`;
+  };
+
+  const handlePrevVideo = () => {
+    if (currentVideoIndex > 0) {
+      const newIndex = currentVideoIndex - 1;
+      setCurrentVideoIndex(newIndex);
+      setCurrentVideoId(videos[newIndex].id);
     }
-  });
+  };
 
-  return `${correctCount} / ${quiz.questions.length}`;
-};
+  const handleNextVideo = () => {
+    if (currentVideoIndex >= 0 && currentVideoIndex < videos.length - 1) {
+      const newIndex = currentVideoIndex + 1;
+      setCurrentVideoIndex(newIndex);
+      setCurrentVideoId(videos[newIndex].id);
+    }
+  };
 
-const handlePrevVideo = () => {
-  if (currentVideoIndex > 0) {
-    setCurrentVideoIndex(currentVideoIndex - 1);
-  }
-};
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !currentVideoId || !course_id) return;
 
-const handleNextVideo = () => {
-  if (currentVideoIndex < videos.length - 1) {
-    setCurrentVideoIndex(currentVideoIndex + 1);
-  }
-};
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-  // const courseData = {
-  //   course_id:6,
-  //   title: "How to Create an Online Course: The Official Udemy Course",
-  //   description:
-  //     "rickrolled",
-  //   rating: 4.6,
-  //   students: 227156,
-  //   duration: "1.5 hours",
-  //   lastUpdated: "January 2022",
-  //   skillLevel: "Beginner Level",
-  //   languages: "English",
-  //   captions: "Yes",
-  //   lectures: 32,
-  //   fullDescription:"bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla",
-  //   sections: [
-  //     {
-  //       id: 1,
-  //       title: "Introduction",
-  //       lessons: 4,
-  //       videos: [
-  //         { title: "Welcome", link: "https://www.youtube.com/watch?v=OTmJmteT7hw" },
-  //         { title: "Course Overview", link: "https://www.youtube.com/embed/dQw4w9WgXcQ" },
-  //       ],
-  //     },
-  //     {
-  //       id: 2,
-  //       title: "Getting Started",
-  //       lessons: 3,
-  //       videos: [
-  //         { title: "Setting Up", link: "https://www.youtube.com/watch?v=OTmJmteT7hw" },
-  //         { title: "Choosing Your Topic", link: "https://www.youtube.com/embed/dQw4w9WgXcQ" },
-  //       ],
-  //     },
-  //     {
-  //       id: 3,
-  //       title: "Structure Your Course",
-  //       lessons: 7,
-  //       videos: [
-  //         { title: "Course Structure Basics", link: "https://www.youtube.com/watch?v=OTmJmteT7hw" },
-  //       ],
-  //     },
-  //   ],
-  //   documents: [
-  //     {title:"The whole book", description:"This is the pdf file of the whole book we provide to you", link:"https://nibmehub.com/opac-service/pdf/read/The%20Subtle%20Art%20of%20Not%20Giving%20a%20Fck%20A%20Counterintuitive%20Approach%20to%20Living%20a%20Good%20Life%20by%20Mark%20Manson%20(z-lib.org).pdf"},
-  //     {title:"The whole book", description:"This is the pdf file of the whole book we provide to you", link:"https://nibmehub.com/opac-service/pdf/read/The%20Subtle%20Art%20of%20Not%20Giving%20a%20Fck%20A%20Counterintuitive%20Approach%20to%20Living%20a%20Good%20Life%20by%20Mark%20Manson%20(z-lib.org).pdf"},
+    if (userError || !user) {
+      alert("Please log in to post a comment.");
+      return;
+    }
 
-  //   ],
+    const response = await fetch(
+      `http://localhost:3000/api/courses/${course_id}/materials/${currentVideoId}/comments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: newComment,
+          user_id: user.id,
+        }),
+      }
+    );
 
-  //   quizzes: [
-  //     {
-  //       title: "Revision #1",
-  //       duration: "40",
-  //       question: [
-  //         {
-  //           title: "Thế nào là ma trận khả nghịch?",
-  //           choice: ["1", "2", "3", "Cái này là đáp án"],
-  //           answer: 3,
-  //         },
-  //         {
-  //           title: "Định lý nào sau đây là đúng?",
-  //           choice: ["A", "B", "C", "Đây là đáp án"],
-  //           answer: 3,
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       title: "Revision #2",
-  //       duration: "30",
-  //       question: [
-  //         {
-  //           title: "Biến nào trong JS là immutable?",
-  //           choice: ["var", "let", "const", "Không có cái nào"],
-  //           answer: 2,
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // };
+    const result = await response.json();
+    if (response.ok) {
+      setComments((prev) => [
+        {
+          id: result.comment.id,
+          text: result.comment.text,
+          time: result.comment.time,
+          user: result.comment.user,
+          avatar: result.comment.avatar,
+          material_id: currentVideoId,
+        },
+        ...prev,
+      ]);
+      setNewComment("");
+    } else {
+      console.error("Error posting comment:", result.error);
+      alert("Failed to post comment. Please try again.");
+    }
+  };
 
-  const videos = courseData.sections.flatMap(section => section.videos);
+  const toEmbedUrl = (url: string | null | undefined): string | undefined => {
+    if (!url) return undefined;
+  
+    try {
+      const parsed = new URL(url);
+  
+      if (parsed.hostname.includes("youtube.com") && parsed.pathname === "/watch") {
+        const videoId = parsed.searchParams.get("v");
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : undefined;
+      }
+  
+      if (parsed.hostname === "youtu.be") {
+        const videoId = parsed.pathname.slice(1); // remove leading '/'
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : undefined;
+      }
+  
+      return undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const videos = courseData?.sections.flatMap(section => section.videos) || [];
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-gray-100 text-black">
@@ -231,42 +280,51 @@ const handleNextVideo = () => {
       {/* Main Content */}
       <div className="flex flex-col md:flex-row w-full">
         <div className="md:w-2/3 p-6 text-black">
-          <div className="relative w-full aspect-video flex items-center">
-            <button 
-              className="absolute left-0 bg-gray-700 text-white px-3 py-2 rounded-l disabled:opacity-50"
-              onClick={handlePrevVideo}
-              disabled={currentVideoIndex === 0}
-            >
-              ❮ Prev
-            </button>            
-            <iframe
-              className="w-full h-full"
-              src={videos[currentVideoIndex].link.replace("watch?v=", "embed/")}
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-            <button 
-              className="absolute right-0 bg-gray-700 text-white px-3 py-2 rounded-r disabled:opacity-50"
-              onClick={handleNextVideo}
-              disabled={currentVideoIndex === videos.length - 1}
-            >
-              Next ❯
-            </button>
+          <div className="relative w-full aspect-video flex items-center justify-center bg-black text-white">
+            {currentVideoIndex >= 0 &&
+              videos[currentVideoIndex] &&
+              videos[currentVideoIndex].link ? (
+              <>
+                <button
+                  className="absolute left-0 bg-gray-700 text-white px-3 py-2 rounded-l disabled:opacity-50"
+                  onClick={handlePrevVideo}
+                  disabled={currentVideoIndex === 0}
+                >
+                  ❮ Prev
+                </button>
+
+                <iframe
+                  className="w-full h-full"
+                  src={toEmbedUrl(videos[currentVideoIndex]?.link)}
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+
+                <button
+                  className="absolute right-0 bg-gray-700 text-white px-3 py-2 rounded-r disabled:opacity-50"
+                  onClick={handleNextVideo}
+                  disabled={currentVideoIndex === videos.length - 1}
+                >
+                  Next ❯
+                </button>
+              </>
+            ) : (
+              <p className="text-gray-400 text-sm">🎬 Select a lesson to begin watching</p>
+            )}
           </div>
-          
           {/* Navigation Tabs */}
           <div className="flex items-center justify-around mt-4 border-b text-black">
             <button className="px-4 py-2 text-gray-700 hover:text-purple-600"><FaSearch /></button>
-            {["Overview", "Documents", "Quizzes"].map((tab) => (
+            {["Overview", "Documents", "Quizzes", "Q&A"].map((tab) => (
               <button
                 key={tab}
                 className={`px-4 py-2 ${activeTab === tab ? 'text-purple-600 font-bold' : 'text-gray-700 hover:text-purple-600'}`}
                 onClick={() => setActiveTab(tab)}
               >
                 {tab}
-              </button>            ))}
+              </button>))}
           </div>
           <h3 className="mt-2 text-black">{courseData.description}</h3>
           <div className="flex items-center mt-2 text-sm text-gray-700 text-black border-b pb-4">
@@ -275,44 +333,44 @@ const handleNextVideo = () => {
 
           {/* Additional Course Details */}
           {activeTab === "Overview" && (
-          <div className="mt-4">
-            <div className="mt-2 pt-2 pb-2 text-black border-b">
-              <div className="grid grid-cols-3 gap-4 mt-2 text-sm text-gray-600 text-black">
-              <h3 className="text-lg font-semibold text-black">By the numbers</h3>
-                <div>
-                  <p><strong>Skill level:</strong> {courseData.skillLevel}</p>
-                  <p><strong>Students:</strong> {courseData.students}</p>
-                  <p><strong>Languages:</strong> {courseData.languages}</p>
-                  <p><strong>Captions:</strong> {courseData.captions}</p>
+            <div className="mt-4">
+              <div className="mt-2 pt-2 pb-2 text-black border-b">
+                <div className="grid grid-cols-3 gap-4 mt-2 text-sm text-gray-600 text-black">
+                  <h3 className="text-lg font-semibold text-black">By the numbers</h3>
+                  <div>
+                    <p><strong>Skill level:</strong> {courseData.skillLevel}</p>
+                    <p><strong>Students:</strong> {courseData.students}</p>
+                    <p><strong>Languages:</strong> {courseData.languages}</p>
+                    <p><strong>Captions:</strong> {courseData.captions}</p>
+                  </div>
+                  <div>
+                    <p><strong>Lectures:</strong> {courseData.lectures}</p>
+                  </div>
                 </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mt-4 pb-4 text-sm text-gray-600 text-black border-b">
+                <h3 className="text-lg font-semibold mt-2 text-black">Features</h3>
+                <p className="text-sm text-gray-600 mt-2 text-black">Available on iOS and Android</p>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mt-4 pb-4 text-sm text-gray-600 text-black border-b">
+                <h3 className="text-lg font-semibold mt-2 col-span-1 text-black">Description</h3>
+                <p className="text-sm text-gray-600 mt-2 text-black col-span-2" dangerouslySetInnerHTML={{ __html: courseData.fullDescription.replace(/\n/g, '<br/>') }}></p>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mt-4 pb-4 text-sm text-gray-600 text-black">
+                <h3 className="text-lg font-semibold mt-4">Instructor</h3>
                 <div>
-                  <p><strong>Lectures:</strong> {courseData.lectures}</p>
+                  <button className="text-sm text-gray-600 text-black ">Udemy Instructor Team - Official Udemy Instructor Account</button>
+                  <div className="flex space-x-4 mt-2">
+                    <button className="text-gray-600"><FaXTwitter size={20} /></button>
+                    <button className="text-gray-600"><FaFacebook size={20} /></button>
+                    <button className="text-gray-600"><FaLinkedin size={20} /></button>
+                    <button className="text-gray-600"><FaLink size={20} /></button>
+                  </div>
+                  <p className="text-sm text-gray-600 text-black">The Udemy Instructor Team has one passion: Udemy's instructors! We'll work with you to help you create an online course—along the way, we'll also help you become an integral member of the Udemy community, a promotional whiz, a teaching star, and an all-around amazing instructor. We're excited to help you succeed on Udemy!</p>
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4 mt-4 pb-4 text-sm text-gray-600 text-black border-b">
-              <h3 className="text-lg font-semibold mt-2 text-black">Features</h3>
-              <p className="text-sm text-gray-600 mt-2 text-black">Available on iOS and Android</p>
-            </div>
-            <div className="grid grid-cols-3 gap-4 mt-4 pb-4 text-sm text-gray-600 text-black border-b">
-              <h3 className="text-lg font-semibold mt-2 col-span-1 text-black">Description</h3>
-              <p className="text-sm text-gray-600 mt-2 text-black col-span-2" dangerouslySetInnerHTML={{ __html: courseData.fullDescription.replace(/\n/g, '<br/>') }}></p>
-            </div>
-            <div className="grid grid-cols-3 gap-4 mt-4 pb-4 text-sm text-gray-600 text-black">
-              <h3 className="text-lg font-semibold mt-4">Instructor</h3>
-              <div>
-              <button className="text-sm text-gray-600 text-black ">Udemy Instructor Team - Official Udemy Instructor Account</button>
-              <div className="flex space-x-4 mt-2">
-                <button className="text-gray-600"><FaXTwitter size={20} /></button>
-                <button className="text-gray-600"><FaFacebook size={20} /></button>
-                <button className="text-gray-600"><FaLinkedin size={20} /></button>
-                <button className="text-gray-600"><FaLink size={20} /></button>
-              </div>
-              <p className="text-sm text-gray-600 text-black">The Udemy Instructor Team has one passion: Udemy's instructors! We'll work with you to help you create an online course—along the way, we'll also help you become an integral member of the Udemy community, a promotional whiz, a teaching star, and an all-around amazing instructor. We're excited to help you succeed on Udemy!</p>
-              </div>
-            </div>
-          </div>
-        )}
+          )}
 
           {activeTab === "Documents" && (
             <div className="mt-4">
@@ -333,7 +391,7 @@ const handleNextVideo = () => {
           {activeTab === "Quizzes" && (
             <div className="mt-4">
               <h3 className="text-lg font-semibold">Quizzes</h3>
-              
+
               {courseData.quizzes.map((quiz, quizIndex) => (
                 <div key={quizIndex} className="mt-4 p-4 border rounded-lg bg-white">
                   <h3 className="font-medium">{quiz.title} ({quiz.duration} mins)</h3>
@@ -374,7 +432,7 @@ const handleNextVideo = () => {
                       )}
                     </>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => setSelectedQuizIndex(quizIndex)}
                       className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
                     >
@@ -387,29 +445,86 @@ const handleNextVideo = () => {
           )}
 
 
+          {activeTab === "Q&A" && (
+            <div className="mt-4">
+              <h3 className="text-lg font-semibold mb-2 text-black">Q&A / Discussion</h3>
+
+              {!currentVideoId ? (
+                <p className="text-sm text-gray-500 italic">🎬 Click on a video to leave comments or ask questions</p>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <textarea
+                      className="w-full p-2 border rounded-md text-black"
+                      placeholder="Ask a question or leave a comment..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      rows={3}
+                    />
+                    <button
+                      onClick={handleAddComment}
+                      className="mt-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                    >
+                      Post Comment
+                    </button>
+                  </div>
+
+                  {videoComments.length === 0 ? (
+                    <p className="text-sm text-gray-500">No comments for this video yet.</p>
+                  ) : (
+                    <ul className="space-y-4">
+                      {videoComments.map((comment) => (
+                        <li key={comment.id} className="border p-3 rounded bg-white flex items-start space-x-3">
+                          <img
+                            src={
+                              comment.avatar
+                                ? avatarCache[comment.avatar] || "https://ui-avatars.com/api/?name=" + encodeURIComponent(comment.user)
+                                : "https://ui-avatars.com/api/?name=" + encodeURIComponent(comment.user)
+                            }
+                            alt={comment.user}
+                            className="w-10 h-10 rounded-full border border-gray-300 object-cover"
+                          />
+                          <div>
+                            <div className="text-sm font-semibold">{comment.user}</div>
+                            <div className="text-gray-700">{comment.text}</div>
+                            <div className="text-xs text-gray-500 mt-1">{comment.time}</div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
 
         </div>
         <div className="md:w-1/3 p-4 text-black sticky top-0 self-start border-l h-screen">
-        <div className="flex justify-between items-center border-b pb-2">
+          <div className="flex justify-between items-center border-b pb-2">
             <h3 className="text-lg font-semibold">Course content</h3>
           </div>
           {courseData.sections.map((section) => (
             <div key={section.id} className="mt-2 border-b pb-2">
               <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleSection(section.id)}>
-                <h3 className="font-medium">Section {section.order+1}: {section.title}</h3>
+                <h3 className="font-medium">Section {section.order + 1}: {section.title}</h3>
                 <button className="text-xl">{expandedSections[section.id] ? "▲" : "▼"}</button>
               </div>
 
               {expandedSections[section.id] && (
                 <div className="mt-2 pl-4">
                   {section.videos.map((video, idx) => {
-                    lessonCounter++; 
+                    lessonCounter++;
                     return (
                       <div key={idx} className="mt-1 flex items-center">
-                        <input type="checkbox" className="mr-2"/>
+                        <input type="checkbox" className="mr-2" />
                         <button
-                          onClick={() => setCurrentVideo(video.link.replace("watch?v=", "embed/"))}
+                          onClick={() => {
+                            const index = videos.findIndex(v => v.id === video.id);
+                            setCurrentVideoIndex(index);
+                            setCurrentVideoId(video.id);
+                          }}
+
                           className="text-purple-600 underline text-left w-full"
                         >
                           {lessonCounter}. {video.title}
