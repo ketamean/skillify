@@ -6,6 +6,7 @@ interface UserAvatarProps {
     lname: string;
     avatarUrl?: string;
     title?: string;
+    onClick?: () => void;
 }
 
 function extractRepresentativeName(fname: string, lname: string): string {
@@ -16,6 +17,7 @@ export default function UserMiniAvatar(props: UserAvatarProps): ReactElement {
     return (
         <div title={props.title? props.title : ""}
             className={`flex items-center justify-center max-w-full max-h-full ${props.size? `min-w-[${props.size}] min-h-[${props.size}] w-[${props.size}] h-[${props.size}]` : "min-w-12 min-h-12 w-12 h-12"} rounded-full ${props.avatarUrl? "" : "bg-black"}`}
+            onClick={props.onClick}
         >
             {
                 props.avatarUrl? (

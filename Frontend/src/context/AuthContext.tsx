@@ -12,21 +12,48 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const avatarCache = new Map<string, string>();
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const fetchUserProfile = async (id: string) => {
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, email, first_name, last_name, avatar_image_link, bio, type")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching user profile:", error.message);
+      return null;
+    }
+    const avatarBlobUrl = await getAvatarUrl(data.avatar_image_link);
+
+    return {
+      id: data.id,
+      email: data.email,
+      fname: data.first_name,
+      lname: data.last_name,
+      bio: data.bio,
+      is_instructor: data.type,
+      avatar_url: avatarBlobUrl,
+    };
+  };
 
   useEffect(() => {
     const checkUser = async () => {
       setIsLoading(true);
       const { data, error } = await supabase.auth.getSession();
-      console.log("getting users");
-      if (error) {
-        console.error("Error fetching session:", error.message);
+      if (error || !data?.session?.user) {
+        console.error("Error fetching session:", error?.message);
+        setUser(null);
+        setIsLoading(false);
+        return;
       }
 
-      setUser(data?.session?.user || null);
+      const profile = await fetchUserProfile(data.session.user.id);
+      setUser(profile);
       setIsLoading(false);
     };
 
@@ -35,7 +62,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Auth state changed:", event, session);
-        setUser(session?.user || null);
+        (async () => {
+          if (session?.user) {
+            const profile = await fetchUserProfile(session.user.id);
+            setUser(profile);
+          } else {
+            setUser(null);
+          }
+        })();
       },
     );
 
@@ -54,7 +88,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Login error:", error.message);
       throw error;
     }
-    setUser(data.user);
+    const profile = await fetchUserProfile(data.user.id);
+    setUser(profile);
   };
 
   const oAuthLogin = async (provider: string) => {
@@ -73,14 +108,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Register error:", error.message);
       throw error;
     }
-    setUser(data.user);
+    if (data.user) {
+      const profile = await fetchUserProfile(data.user.id);
+      setUser(profile);
+    }
   };
 
   const logout = async () => {
+    avatarCache.clear();
     await supabase.auth.signOut();
     setUser(null);
   };
 
+  const getAvatarUrl = async (avatarPath: string | null | undefined): Promise<string> => {
+    if (!avatarPath) {
+      return "https://ui-avatars.com/api/?name=User&background=cccccc&color=ffffff";
+    }
+  
+    if (avatarPath.startsWith("http")) {
+      return avatarPath;
+    }
+  
+    if (avatarCache.has(avatarPath)) {
+      return avatarCache.get(avatarPath)!;
+    }
+
+    const { data, error } = await supabase.storage
+      .from("useravatars")
+      .download(avatarPath);
+  
+    if (error || !data) {
+      console.error("Failed to download avatar:", error?.message);
+      return "https://ui-avatars.com/api/?name=User&background=cccccc&color=ffffff";
+    }
+  
+    const blobUrl = URL.createObjectURL(data);
+    avatarCache.set(avatarPath, blobUrl);
+    return blobUrl;
+  };
+  
   return (
     <AuthContext.Provider
       value={{ user, login, logout, isLoading, register, oAuthLogin }}
