@@ -8,7 +8,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/Profile";
 import MyLearningPage from "./pages/MyLearning";
-
+import ChatBot from "./components/ChatBot";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -46,7 +46,10 @@ const router = createBrowserRouter([
 function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <>
+        <RouterProvider router={router} />
+        <ChatBot />
+      </>
     </AuthProvider>
   );
 }

@@ -6,7 +6,8 @@
   "scripts": {
     "test": "npm run test",
     "dev": "nodemon index.ts",
-    "gen-embed": "tsx ./scripts/generateEmbedding.ts"
+    "gen-embed": "tsx ./scripts/generateEmbedding.ts",
+    "test-embed": "tsx ./scripts/testEmbedding.ts"
   },
   "repository": {
     "type": "git",

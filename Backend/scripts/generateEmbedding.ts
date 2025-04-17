@@ -37,7 +37,7 @@ async function generateEmbedding() {
           taskType: "SEMANTIC_SIMILARITY",
         },
       });
-      const result = response.embeddings[0].values;
+      const result = response.embeddings?.[0].values;
 
       const error = await supabase
         .from("courses")
@@ -68,7 +68,7 @@ async function simpleEmbed() {
     },
   });
   const data = response.embeddings;
-  console.log("Embedding result:", data[0].values);
+  console.log("Embedding result:", data?.[0].values);
 }
 
 // simpleEmbed();
