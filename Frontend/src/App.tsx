@@ -29,7 +29,9 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <ProtectedRoute />,
-    children: [{ path: "/coursecontent/:course_id", element: <CourseContentPage /> }],
+    children: [
+      { path: "/coursecontent/:course_id", element: <CourseContentPage /> },
+    ],
   },
   {
     path: "/profile",
@@ -38,7 +40,7 @@ const router = createBrowserRouter([
   {
     path: "/mylearning",
     element: <MyLearningPage />,
-  }
+  },
 ]);
 
 function App() {
