@@ -63,7 +63,7 @@ export default function NavBar(props: NavBarProps): ReactElement {
 
           {/* logo */}
           <a
-            href="#"
+            href="/"
             className="text-decoration-none! text-white! font-bold! text-2xl! hover:text-white! hover:no-underline!"
           >
             <span>Skillify</span>
