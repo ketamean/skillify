@@ -44,7 +44,7 @@ async function generateEmbedding() {
         .update({ embedding: result })
         .eq("id", course.id);
 
-      if (error.error == null) {
+      if (error.error != null) {
         console.error(
           `Error updating embedding for course ID ${course.id}:`,
           error,
