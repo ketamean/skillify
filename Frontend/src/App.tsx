@@ -8,6 +8,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/Profile";
 import MyLearningPage from "./pages/MyLearning";
+import InstructorCouponPage from "./pages/InstructorCouponPage";
 
 const router = createBrowserRouter([
   {
@@ -23,7 +24,7 @@ const router = createBrowserRouter([
     element: <Register />,
   },
   {
-    path: "/course",
+    path: "/course/:courseId",
     element: <CoursePage />,
   },
   {
@@ -38,6 +39,10 @@ const router = createBrowserRouter([
   {
     path: "/mylearning",
     element: <MyLearningPage />,
+  },
+  {
+    path: "/instructor/coupons",
+    element: <InstructorCouponPage />,
   }
 ]);
 

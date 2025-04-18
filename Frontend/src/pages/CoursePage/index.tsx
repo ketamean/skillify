@@ -1,5 +1,8 @@
 import NavBar from "../../components/NavBar";
 import Footer from "../../components/Footer";
+import { useParams } from "react-router-dom";
+import { supabase } from "../../supabaseClient";
+import { useEffect, useState } from "react";
 import CourseDetails from "../../components/CourseDetails";
 
 const data = {
@@ -74,27 +77,70 @@ const data = {
 }
 
 export default function CoursePage() {
+    const { courseId } = useParams();
+    const [course, setCourse] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        const fetchCourse = async () => {
+            const { data, error } = await supabase
+                .from("courses")
+                .select(`
+                id,
+                name,
+                short_description,
+                image_link,
+                fee,
+                instructor_id,
+                users (
+                    first_name,
+                    last_name
+                )
+                `)
+                .eq("id", courseId)
+                .single();
+            if (error) {
+                console.error("Failed to fetch course", error.message);
+            } else {
+                setCourse(data);
+            }
+
+            setLoading(false);
+        };
+
+        fetchCourse();
+    }, [courseId]);
     return (
         <>
             <NavBar
                 user={{
-                fname: "Ariana", lname: "Grande",
-                avatarUrl: "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg"
+                    fname: "Ariana", lname: "Grande",
+                    avatarUrl: "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg"
                 }}
             />
             <div className="h-full w-full">
-                <CourseDetails courseName={data.name}
-                    shortDescription={data.shortDescription}
-                    courseImageLink={data.courseImageLink}
-                    numberOfEnrollments={data.numberOfEnrollments}
-                    courseDescriptionSections={data.courseDescriptionSections}
-                    relatedTopics={data.relatedTopics}
-                    content={data.content}
-                    linkToInstructorPage={data.linkToInstructor}
-                    // linkToInstructorAvatar={data.linkToInstructorAvatar}
-                    instructorName={data.instructorName}
-                    isFree={data.isFree}
-                />
+                {loading ? (
+                    <p className="text-center mt-10">Loading course...</p>
+                ) : course ? (
+                    <CourseDetails
+                        courseId={course.id}
+                        courseName={course.name}
+                        shortDescription={course.short_description}
+                        courseImageLink={course.image_link}
+                        numberOfEnrollments={course.number_of_enrollments}
+                        instructorName={
+                            course.users?.first_name
+                                ? `${course.users.first_name}${course.users.last_name ? ` ${course.users.last_name}` : ""}`
+                                : "Unknown"
+                        }
+                        linkToInstructorPage={`/instructor/${course.instructor_id}`}
+                        courseDescriptionSections={[]}
+                        relatedTopics={[]}
+                        content={[]}
+                        fee={course.fee}
+                    />
+                ) : (
+                    <p className="text-center mt-10 text-red-600">Course not found.</p>
+                )}
             </div>
             <Footer />
         </>
