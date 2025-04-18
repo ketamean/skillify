@@ -7,7 +7,10 @@ export const handleStripeRedirect = async (req: Request, res: Response) => {
   try {
     const { success, canceled, session_id } = req.query;
     if (canceled) {
-      res.status(400).json({ error: "Payment was canceled." });
+      const clientOrigin = req.query.client_origin || req.headers.origin || req.headers.referer;
+      const course_id = req.query.course_id;
+
+      res.redirect(`${clientOrigin}/course/${course_id}?payment=canceled`);
       return;
     }
     if (success) {
@@ -23,8 +26,16 @@ export const handleStripeRedirect = async (req: Request, res: Response) => {
       }
 
       const { metadata } = session;
-      const { course_id, learner_id, client_origin } = metadata || {};
+      const { course_id, learner_id, client_origin, couponCode } = metadata || {};
+      if (couponCode) {
+        const { error: rpcError } = await supabase.rpc('increment_coupon_usage_by_code', {
+          input_code: couponCode,
+        });
 
+        if (rpcError) {
+          console.error("RPC increment failed:", rpcError.message);
+        }
+      }
       const clientOrigin =
         client_origin || req.headers.origin || req.headers.referer;
 
@@ -44,14 +55,14 @@ export const handleStripeRedirect = async (req: Request, res: Response) => {
         .select();
       if (error) {
         console.error("Supabase insert error:", error.message);
-        res.redirect(`${clientOrigin}/course?payment=error`);
+        res.redirect(`${clientOrigin}/course/${course_id}?payment=error`);
         return;
       }
       if (data) {
         console.log("Order stored successfully.", data);
       }
 
-      res.redirect(`${clientOrigin}/course?payment=success`);
+      res.redirect(`${clientOrigin}/course/${course_id}?payment=success`);
     }
   } catch (error) {
     console.error("Error verifying payment:", error);
@@ -61,7 +72,7 @@ export const handleStripeRedirect = async (req: Request, res: Response) => {
 
 export const createCheckoutSession = async (req: Request, res: Response) => {
   try {
-    const { learner_id, course_id, courseName, price, client_origin } =
+    const { learner_id, course_id, courseName, price, client_origin, couponCode } =
       req.body;
 
     if (!learner_id || !course_id) {
@@ -96,7 +107,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
             product_data: {
               name: courseName || "Course",
             },
-            unit_amount: price,
+            unit_amount: Math.round(price),
           },
           quantity: 1,
         },
@@ -106,9 +117,10 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
         learner_id,
         course_id,
         client_origin,
+        ...(couponCode && { couponCode }) // include only if applied
       },
       success_url: `${DEFAULT_REDIRECT_DOMAIN}/service/stripe?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${DEFAULT_REDIRECT_DOMAIN}/service/stripe?canceled=true`,
+      cancel_url: `${DEFAULT_REDIRECT_DOMAIN}/service/stripe?canceled=true&course_id=${course_id}&client_origin=${encodeURIComponent(client_origin)}`
     });
 
     res.json({ url: session.url });
