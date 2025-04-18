@@ -21,40 +21,148 @@ export const getInstructorCoupons = async (req: Request, res: Response): Promise
             .or(`expiration_time.lt.${now},n_used.gte.max_n_usage`)
             .eq('status', 'InUse');
 
-        const { data, error } = await supabase
+        // Fetch coupons directly assigned to instructor
+        const { data: instructorCouponLinks, error: linkError } = await supabase
             .schema('private')
             .from('instructorcoupons')
             .select(`
-            coupons (
-                id,
-                code,
-                discount_type,
-                discount_value,
-                max_n_usage,
-                n_used,
-                expiration_time,
-                status
-            ),
-            instructor_id
-        `)
+                coupons (
+                    id,
+                    code,
+                    discount_type,
+                    discount_value,
+                    max_n_usage,
+                    n_used,
+                    expiration_time,
+                    status,
+                    coupon_type
+                ),
+                instructor_id
+            `)
             .eq('instructor_id', instructorId);
-        if (error) {
-            console.error('Error fetching coupons:', error.message);
+
+        if (linkError || !instructorCouponLinks) {
+            console.error('Error fetching instructor coupons:', linkError?.message);
             res.status(500).json({ error: 'Failed to fetch instructor coupons' });
             return;
         }
 
-        const coupons = data?.map((entry) => entry.coupons) || [];
-        res.status(200).json(coupons);
+        const instructorCoupons = instructorCouponLinks.map(link => ({
+            ...link.coupons,
+            coupon_type: (link.coupons as any).coupon_type,
+            course_name: null // no course name
+        }));
+
+        // Fetch course-specific coupons
+        const { data: courseCouponLinks, error: courseError } = await supabase
+            .schema('private')
+            .from('coursecoupons')
+            .select('id, course_id');
+
+        if (courseError) {
+            console.error('Error fetching course coupons:', courseError.message);
+            res.status(500).json({ error: 'Failed to fetch course coupons' });
+            return;
+        }
+
+        // Fetch all courses (instructor's only)
+        const { data: instructorCourses, error: courseFetchError } = await supabase
+            .from('courses')
+            .select('id, name')
+            .eq('instructor_id', instructorId);
+
+        if (courseFetchError) {
+            console.error('Error fetching instructor courses:', courseFetchError.message);
+            res.status(500).json({ error: 'Failed to fetch courses' });
+            return;
+        }
+
+        // Fetch all coupons that are course-specific
+        const courseCouponIds = courseCouponLinks.map(link => link.id);
+        const { data: courseCoupons, error: couponError } = await supabase
+            .schema('private')
+            .from('coupons')
+            .select('*')
+            .in('id', courseCouponIds);
+
+        if (couponError) {
+            console.error('Error fetching course-specific coupons:', couponError.message);
+            res.status(500).json({ error: 'Failed to fetch coupons' });
+            return;
+        }
+
+        // Merge course name
+        const courseCouponsWithNames = courseCoupons.map(coupon => {
+            const link = courseCouponLinks.find(l => l.id === coupon.id);
+            const course = instructorCourses.find(c => c.id === link?.course_id);
+            return {
+                ...coupon,
+                course_id: link?.course_id ?? null, 
+                course_name: course?.name ?? null
+            };
+        });
+
+        // Combine both results
+        const allCoupons = [...instructorCoupons, ...courseCouponsWithNames];
+
+        res.status(200).json(allCoupons);
     } catch (error) {
-        console.error('Error fetching instructor coupons:', error);
-        res.status(500).json({ error: 'Failed to fetch instructor coupons' });
+        console.error('Error fetching all instructor coupons:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// export const getInstructorSpecificCoupons = async (req: Request, res: Response): Promise<void> => {
+//     const { instructorId } = req.params; 
+
+//     try {
+//         const now = new Date().toISOString();
+
+//         await supabase
+//             .schema('private')
+//             .from('coupons')
+//             .update({ status: 'OutOfUse' })
+//             .or(`expiration_time.lt.${now},n_used.gte.max_n_usage`)
+//             .eq('status', 'InUse');
+
+//             const { data: instructorCouponLinks, error }  = await supabase
+//             .schema('private')
+//             .from('instructorcoupons')
+//             .select(`
+//             coupons (
+//                 id,
+//                 code,
+//                 discount_type,
+//                 discount_value,
+//                 max_n_usage,
+//                 n_used,
+//                 expiration_time,
+//                 status,
+//                 coupon_type
+//             ),
+//             instructor_id
+//         `)
+//             .eq('instructor_id', instructorId);
+//         if (error) {
+//             console.error('Error fetching coupons:', error.message);
+//             res.status(500).json({ error: 'Failed to fetch instructor coupons' });
+//             return;
+//         }
+
+//         const flatCoupons = instructorCouponLinks.map(link => ({
+//             ...link.coupons,
+//             instructor_id: link.instructor_id
+//         }));
+        
+//         res.status(200).json(flatCoupons);
+//     } catch (error) {
+//         console.error('Error fetching instructor coupons:', error);
+//         res.status(500).json({ error: 'Failed to fetch instructor coupons' });
+//     }
+// };
 export const createCoupon = async (req: Request, res: Response): Promise<void> => {
     const {
         code,
-        description,
         discount_type,
         discount_value,
         coupon_type,
@@ -84,19 +192,27 @@ export const createCoupon = async (req: Request, res: Response): Promise<void> =
         res.status(400).json({ error: error?.message || 'Failed to create coupon' });
         return;
     }
+    // if (coupon_type === 'ParticularInstructor' && instructor_id) {
+    //     const { error: insertError } = await supabase
+    //         .schema('private')
+    //         .from('instructorcoupons')
+    //         .insert([{ id: coupon.id, instructor_id }]);
+
+    //     if (insertError) {
+    //         console.error('Instructor_Coupon insert error:', JSON.stringify(insertError, null, 2));
+    //         res.status(500).json({ error: insertError.message });
+    //         return;
+    //     }
+    // }
     if (coupon_type === 'ParticularInstructor' && instructor_id) {
-        const { error: insertError } = await supabase
-            .schema('private')
-            .from('instructorcoupons')
-            .insert([{ id: coupon.id, instructor_id }]);
-
-        if (insertError) {
-            console.error('Instructor_Coupon insert error:', JSON.stringify(insertError, null, 2));
-            res.status(500).json({ error: insertError.message });
-            return;
-        }
+        await supabase.schema('private').from('instructorcoupons').insert([
+            { id: coupon.id, instructor_id }
+        ]);
+    } else if (coupon_type === 'ParticularCourse' && course_id) {
+        await supabase.schema('private').from('coursecoupons').insert([
+            { id: coupon.id, course_id }
+        ]);
     }
-
     res.status(201).json(coupon);
 };
 export const updateCoupon = async (req: Request, res: Response): Promise<void> => {
@@ -208,7 +324,14 @@ export const applyCoupon = async (req: Request, res: Response): Promise<void> =>
     }
 
     if (coupon.coupon_type === 'ParticularCourse') {
-        if (coupon.course_id !== course_id) {
+        const { data: link } = await supabase
+        .schema('private')
+        .from('coursecoupons')
+        .select('id')
+        .eq('id', coupon.id)
+        .eq('course_id', course_id)
+        .maybeSingle();
+        if (!link) {
             res.status(400).json({ message: 'Coupon not valid for this course' });
             return;
         }

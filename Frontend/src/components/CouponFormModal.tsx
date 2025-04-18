@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../supabaseClient';
 interface Coupon {
     id: string;
     code: string;
@@ -9,7 +10,9 @@ interface Coupon {
     max_n_usage: number;
     n_used: number;
     expiration_time: string;
-    status: string;
+    status?: string;
+    coupon_type: 'ParticularCourse' | 'ParticularInstructor' | 'Universal';
+    course_id?: string;
 }
 
 interface CouponFormModalProps {
@@ -33,27 +36,57 @@ const CouponFormModal: React.FC<CouponFormModalProps> = ({
     const [maxUsage, setMaxUsage] = useState(1);
     const [expirationTime, setExpirationTime] = useState('');
     const [formErrors, setFormErrors] = useState<string[]>([]);
+    const [couponType, setCouponType] = useState<'ParticularInstructor' | 'ParticularCourse' | 'Universal'>('ParticularInstructor');
+    const [courseId, setCourseId] = useState('');
+    const [courses, setCourses] = useState<{ id: string; name: string }[]>([]);
 
     const { user } = useAuth();
 
     const modalRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (mode === 'edit' && initialData) {
+        const loadCourses = async () => {
+            const { data, error } = await supabase
+                .from('courses')
+                .select('id, name')
+                .eq('instructor_id', user?.id)
+                .order('name', { ascending: true });
+    
+            if (error) {
+                console.error('Error fetching courses:', error.message);
+                return [];
+            }
+    
+            return data || [];
+        };
+    
+        const applyInitialData = async () => {
+            if (!initialData) return;
+        
             setCode(initialData.code);
-            setDiscountType(initialData.discount_type as any);
+            setDiscountType(initialData.discount_type as 'PercentageBased' | 'ValueBased');
             setDiscountValue(initialData.discount_value);
             setMaxUsage(initialData.max_n_usage);
             setExpirationTime(initialData.expiration_time?.slice(0, 16));
-        } else {
-            setCode('');
-            setDiscountType('PercentageBased');
-            setDiscountValue(0);
-            setMaxUsage(1);
-            setExpirationTime('');
+            setCouponType(initialData.coupon_type);
+        
+            if (initialData.coupon_type === 'ParticularCourse') {
+                const loadedCourses = await loadCourses();
+                setCourses(loadedCourses);
+            
+                setCourseId(String(initialData.course_id ?? ''));
+            }
+            
+            
+        };
+    
+        if (isOpen && mode === 'edit') {
+            applyInitialData();
+        } else if (isOpen && couponType === 'ParticularCourse' && mode === 'create') {
+            loadCourses().then(setCourses);
         }
-    }, [initialData, mode]);
-
+    }, [initialData, isOpen, mode, couponType, user]);
+    
     // Detect outside click
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -90,6 +123,9 @@ const CouponFormModal: React.FC<CouponFormModalProps> = ({
         if (!expirationTime) errors.push('Expiration time is required.');
         if (new Date(expirationTime) <= new Date())
             errors.push('Expiration time must be in the future.');
+        if (couponType === 'ParticularCourse' && !courseId) {
+            errors.push('You must select a course for this coupon.');
+        }
 
         if (errors.length > 0) {
             setFormErrors(errors);
@@ -99,14 +135,21 @@ const CouponFormModal: React.FC<CouponFormModalProps> = ({
         setFormErrors([]);
 
         try {
-            const payload = {
+            const payload: any = {
                 code,
                 discount_type: discountType,
                 discount_value: discountValue,
                 max_n_usage: maxUsage,
                 expiration_time: expirationTime,
+                coupon_type: couponType,
+                instructor_id: user.id,
             };
-
+            if (couponType === 'ParticularInstructor') {
+                payload.instructor_id = user.id;
+            }
+            if (couponType === 'ParticularCourse') {
+                payload.course_id = courseId;
+            }
             if (mode === 'edit' && initialData) {
                 const res = await axios.put(`/api/coupons/${initialData.id}`, payload);
 
@@ -118,11 +161,12 @@ const CouponFormModal: React.FC<CouponFormModalProps> = ({
                     alert('Failed to update coupon.');
                 }
             } else {
-                const res = await axios.post('/api/coupons', {
-                    ...payload,
-                    coupon_type: 'ParticularInstructor',
-                    instructor_id: user.id,
-                });
+                // const res = await axios.post('/api/coupons', {
+                //     ...payload,
+                //     coupon_type: couponType,
+                //     instructor_id: user.id,
+                // });
+                const res = await axios.post('/api/coupons', payload);
 
                 if (res.status === 201) {
                     alert('Coupon created!');
@@ -141,7 +185,7 @@ const CouponFormModal: React.FC<CouponFormModalProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-transparent">
             <div
                 ref={modalRef}
-                className="relative bg-white/80 border border-gray-300 backdrop-blur-xl rounded-xl shadow-lg max-w-2xl w-full p-8"
+                className="relative bg-white/80 border border-gray-300 backdrop-blur-xl rounded-xl shadow-lg max-w-2xl w-full p-8 max-h-screen overflow-y-auto"
             >
                 <button
                     onClick={onClose}
@@ -216,6 +260,36 @@ const CouponFormModal: React.FC<CouponFormModalProps> = ({
                             className="w-full border rounded-md px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>
+                    <div>
+                        <label className="block font-medium mb-1">Scope</label>
+                        <select
+                            value={couponType}
+                            onChange={(e) => setCouponType(e.target.value as any)}
+                            className="w-full border rounded-md px-4 py-2 bg-white"
+                        >
+                            <option value="ParticularInstructor">All My Courses</option>
+                            <option value="ParticularCourse">One Specific Course</option>
+                        </select>
+                    </div>
+
+                    {couponType === 'ParticularCourse' && (
+                        <div>
+                            <label className="block font-medium mb-1">Select Course</label>
+                            <select
+                                value={courseId}
+                                onChange={(e) => setCourseId(e.target.value)}
+                                className="w-full border rounded-md px-4 py-2 bg-white"
+                            >
+                                <option value="">-- Select a Course --</option>
+                                {courses.map(course => (
+                                    <option key={course.id} value={String(course.id)}>
+                                        {course.name}
+                                    </option>
+                                ))}
+
+                            </select>
+                        </div>
+                    )}
 
                     <button
                         type="submit"

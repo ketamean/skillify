@@ -14,6 +14,9 @@ interface Coupon {
     n_used: number;
     expiration_time: string;
     status: string;
+    coupon_type: 'ParticularCourse' | 'ParticularInstructor' | 'Universal';
+    course_name?: string;
+    course_id?: string; 
 }
 
 const InstructorCouponPage: React.FC = () => {
@@ -96,6 +99,7 @@ const InstructorCouponPage: React.FC = () => {
                                     <th className="p-4">Usage</th>
                                     <th className="p-4">Expires</th>
                                     <th className="p-4">Status</th>
+                                    <th className="p-4">Scope</th>
                                     <th className="p-4 text-center">Actions</th>
                                 </tr>
                             </thead>
@@ -106,7 +110,7 @@ const InstructorCouponPage: React.FC = () => {
                                         <td className="p-4">
                                             {coupon.discount_type === 'PercentageBased'
                                                 ? `${coupon.discount_value}%`
-                                                : `$${coupon.discount_value}`}
+                                                : `${coupon.discount_value}đ`}
                                         </td>
                                         <td className="p-4">
                                             {coupon.n_used} / {coupon.max_n_usage}
@@ -128,6 +132,11 @@ const InstructorCouponPage: React.FC = () => {
                                             >
                                                 {coupon.status?.replace(/([A-Z])/g, ' $1').trim()}
                                             </span>
+                                        </td>
+                                        <td className="p-4">
+                                            {coupon.coupon_type === 'ParticularCourse'
+                                                ? `Only for ${coupon.course_name?.toUpperCase() || 'one course'}`
+                                                : 'All Courses'}
                                         </td>
                                         <td className="p-4 text-center align-middle">
                                             <div className="inline-flex items-center justify-center gap-4">

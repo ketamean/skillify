@@ -107,7 +107,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
             product_data: {
               name: courseName || "Course",
             },
-            unit_amount: price,
+            unit_amount: Math.round(price),
           },
           quantity: 1,
         },

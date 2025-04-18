@@ -168,7 +168,7 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
                 if (data.discount_type === 'PercentageBased') {
                     price = price * (1 - data.discount_value / 100);
                 } else if (data.discount_type === 'ValueBased') {
-                    price = Math.max(0, 19000 - data.discount_value);
+                    price = Math.max(0, props.fee - data.discount_value);
                 }
 
                 setDiscountedPrice(price);
@@ -183,6 +183,11 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
 
     async function handleCheckout() {
         try {
+            const priceToCheck = discountedPrice ?? props.fee;
+            if (priceToCheck < 13000) {
+                alert("Stripe requires a minimum charge of 13,000đ");
+                return;
+            }    
             const { data } = await axiosForm.post("/api/create-checkout-session", {
                 learner_id: user?.user?.id,
                 course_id: courseId,
