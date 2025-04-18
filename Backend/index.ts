@@ -25,6 +25,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api", router);  
 app.use("/service", serviceRouter);  
 app.use('/api/coupons', couponRoutes);
+
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });

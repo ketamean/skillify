@@ -75,7 +75,7 @@ export default function NavBar(props: NavBarProps): ReactElement {
                         hidden
                         md:flex md:w-full md:min-w-100"
         >
-          <SearchBar disabled={true} />
+          <SearchBar disabled={false} />
         </div>
 
         <div

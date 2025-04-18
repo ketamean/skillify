@@ -2,9 +2,56 @@ import NavBar from "../../components/NavBar";
 import Footer from "../../components/Footer";
 import { useEffect, useState } from "react";
 import { axiosForm } from "../../config/axios";
-import { supabase } from "../../supabaseClient";
+import { useLocation } from "react-router-dom";
+import { CourseCard } from "../../components/CourseCard";
+
+interface CourseResult {
+  id: string;
+  name: string;
+  short_description: string;
+  image_link: string;
+  fee: number;
+  instructor_name?: string;
+  rating?: number;
+  rating_count?: number;
+  level?: "Beginner" | "Intermediate" | "Advanced";
+}
 
 export default function SearchPage() {
+const [searchResults, setSearchResults] = useState<CourseResult[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const location = useLocation();
+  
+  // Extract query from URL search params
+  const queryParams = new URLSearchParams(location.search);
+  const query = queryParams.get("query") || "";
+
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (!query) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await axiosForm.post("/api/search", {
+          query: query
+        });
+        
+        setSearchResults(response.data);
+      } catch (err: any) {
+        setError(err.response?.data?.error || "Failed to fetch search results");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSearchResults();
+  }, [query]);
   return (
     <div className="min-h-screen bg-custom-white">
       <NavBar
@@ -33,7 +80,7 @@ export default function SearchPage() {
             <div className="bg-red-100 text-red-700 p-4 rounded-lg">
               {error}
             </div>
-          ) : searchResults.length === 0 ? (
+          ) : searchResults.length == 0 ? (
             <div className="text-center py-12">
               <h2 className="text-xl font-semibold mb-2">No courses found</h2>
               <p className="text-gray-600 mb-6">
@@ -42,8 +89,17 @@ export default function SearchPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {searchResults.map((course, index) => (
-                <CourseCard key={index} {...course} />
+              {searchResults.map((course) => (
+                <CourseCard
+key={course.id}
+                  imageUrl={course.image_link}
+                  title={course.name}
+                  instructorName={course.instructor_name || "Instructor"}
+                  rating={course.rating || 4.5}
+                  ratingCount={course.rating_count || 100}
+                  price={course.fee === 0 ? "Free" : course.fee}
+                  level={course.level || "Beginner"}
+                />
               ))}
             </div>
           )}

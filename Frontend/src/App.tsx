@@ -8,6 +8,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/Profile";
 import MyLearningPage from "./pages/MyLearning";
+import SearchPage from "./pages/SearchPage";
 
 import ChatBot from "./components/ChatBot";
 import InstructorCouponPage from "./pages/InstructorCouponPage";
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
   {
     path: "/course/:courseId",
     element: <CoursePage />,
+  },
+  {
+    path: "/search",
+    element: <SearchPage />,
   },
   {
     path: "/",

@@ -13,7 +13,7 @@ export const searchCourses = async (
   if (!searchQuery) {
     return res.status(400).json({ error: "Search query is required" });
   }
-
+  console.log("Received search query:", searchQuery);
   try {
     const queryEmbeddingResponse = await genAI.models.embedContent({
       model: "text-embedding-004",
@@ -25,7 +25,7 @@ export const searchCourses = async (
 
     const { data, error } = await supabase.rpc("match_courses", {
       query_embedding: queryEmbeddingResponse.embeddings?.[0].values,
-      similarity_threshold: 0.8,
+      match_threshold: 0.75,
       match_count: 20,
     });
 
@@ -35,7 +35,7 @@ export const searchCourses = async (
     }
 
     if (!data || data.length === 0) {
-      return res.status(404).json({ message: "No courses found" });
+      return res.status(200).json([]);
     }
 
     const courses = data.map((course: any) => ({
