@@ -8,6 +8,8 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/Profile";
 import MyLearningPage from "./pages/MyLearning";
+
+import ChatBot from "./components/ChatBot";
 import InstructorCouponPage from "./pages/InstructorCouponPage";
 
 const router = createBrowserRouter([
@@ -30,7 +32,9 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <ProtectedRoute />,
-    children: [{ path: "/coursecontent/:course_id", element: <CourseContentPage /> }],
+    children: [
+      { path: "/coursecontent/:course_id", element: <CourseContentPage /> },
+    ],
   },
   {
     path: "/profile",
@@ -49,7 +53,10 @@ const router = createBrowserRouter([
 function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <>
+        <RouterProvider router={router} />
+        <ChatBot />
+      </>
     </AuthProvider>
   );
 }

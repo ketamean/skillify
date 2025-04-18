@@ -5,7 +5,9 @@
   "main": "index.ts",
   "scripts": {
     "test": "npm run test",
-    "dev": "nodemon index.ts"
+    "dev": "nodemon index.ts",
+    "gen-embed": "tsx ./scripts/generateEmbedding.ts",
+    "test-embed": "tsx ./scripts/testEmbedding.ts"
   },
   "repository": {
     "type": "git",
@@ -17,6 +19,7 @@
     "url": "https://github.com/ketamean/skillify/issues"
   },
   "dependencies": {
+    "@google/genai": "^0.8.0",
     "@supabase/supabase-js": "^2.49.1",
     "@types/pg": "^8.11.11",
     "cookie-parser": "^1.4.7",
@@ -33,6 +36,7 @@
     "@types/express": "^5.0.0",
     "nodemon": "^3.1.9",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   }
 }
