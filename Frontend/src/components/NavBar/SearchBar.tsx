@@ -1,7 +1,8 @@
 import { FormEvent, ReactElement, useState } from "react";
-import {axiosForm} from "../../config/axios";
 import SearchIcon from "./SearchIcon";
 import getNearestParentByTagName from '../../utils/getNearestParentByTagName'
+import { useNavigate } from "react-router-dom";
+
 interface SearchBarProps {
     onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
     disabled?: boolean;
@@ -12,23 +13,23 @@ interface SearchBarProps {
     enabledButtonColor?: string;
 }
 
-function defaultOnSubmit(e: React.FormEvent<HTMLFormElement>): void {
-    e.preventDefault();
-    console.log((e.target as HTMLFormElement).searchContent.value);
-    axiosForm
-        .get(`/form?content=${(e.target as HTMLFormElement).searchContent.value}`)
-        .then((res) => res)
-        .catch((res) => {
-            console.error(res);
-            alert(res);
-        })
-}
-
 export default function SearchBar(props: SearchBarProps): ReactElement {
     const [searchIconState, setSearchIconState] = useState<boolean>(props.disabled? true : false);
+    const navigate = useNavigate();
+
+    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const searchValue = (e.target as HTMLFormElement).searchContent.value.trim();
+        
+        if (searchValue) {
+            // Redirect to search page with query parameter
+            navigate(`/search?query=${encodeURIComponent(searchValue)}`);
+        }
+    };
+
     return (
         <form className={`w-full max-w-full h-full max-h-full relative focus:outline-none focus:border-none items-center ${props.textColor? `text-[${props.textColor}]!` : "text-white!"}`}
-            onSubmit={props.onSubmit? props.onSubmit : defaultOnSubmit}
+            onSubmit={props.onSubmit? props.onSubmit : handleSearch}
         >
             <input className="w-full h-3/4 min-h-12 text-nowrap overflow-hidden pl-4 pr-12 mt-2 rounded-full border-1
                 focus:outline-none inline relative"
@@ -36,7 +37,6 @@ export default function SearchBar(props: SearchBarProps): ReactElement {
                 onInput={(e: FormEvent<HTMLInputElement>) => {
                     const input: HTMLInputElement | null = e.target as HTMLInputElement
                     if (!input) return;
-                    console.log((input.value as string).trim())
                     if ((input.value as string).trim())
                         setSearchIconState(false)
                     else
