@@ -21,7 +21,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { Material } from "../pages/UploadCourseContentPage/types"
+import { Material } from "../pages/CourseEdit/types"
 import DraggableListItem from './DraggableListItem'
 interface DraggableListProps {
     // sensors: SensorDescriptor<any>[],
