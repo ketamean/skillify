@@ -29,6 +29,11 @@ export default function CourseContentPage() {
   const [avatarCache, setAvatarCache] = useState<Record<string, string>>({});
   const videoComments = comments.filter(c => c.material_id === currentVideoId);
   let lessonCounter = 0;
+  const [quizStartedAt, setQuizStartedAt] = useState<{ [key: number]: Date }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [user_id, setUserId] = useState<string | null>(null);
+
+
   interface CourseData {
     course_id: number;
     title: string;
@@ -71,6 +76,10 @@ export default function CourseContentPage() {
         answer: number;
       }[];
     }[];
+    quizResults: {
+      quiz_id: number;
+      score: string; 
+    }[];
     comments: {
       id: number;
       text: string;
@@ -100,17 +109,24 @@ export default function CourseContentPage() {
 
     return URL.createObjectURL(data);
   };
-
+    
   useEffect(() => {
     const fetchCourseData = async () => {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user) {
+        console.error("Error getting user:", userError);
+        setLoading(false);
+        return;
+      }
+      setUserId(userData.user.id);
+
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:3000/api/courses/${course_id}`);
+        const response = await fetch(`http://localhost:3000/api/courses/${course_id}?user_id=${userData.user.id}`);
         if (!response.ok) throw new Error("Failed to fetch course data");
         const data = await response.json();
         setCourseData(data);
         setComments(data.comments || []);
-        console.log(1);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu khóa học:", error);
       } finally {
@@ -150,13 +166,6 @@ export default function CourseContentPage() {
     setQuizAnswers((prev) => ({
       ...prev,
       [`${quizIndex}-${questionIndex}`]: answerIndex,
-    }));
-  };
-
-  const handleSubmitQuiz = (quizIndex: number) => {
-    setQuizSubmitted((prev) => ({
-      ...prev,
-      [quizIndex]: true,
     }));
   };
 
@@ -235,6 +244,98 @@ export default function CourseContentPage() {
       alert("Failed to post comment. Please try again.");
     }
   };
+
+const hasSubmitted = (quizIndex: number) => {
+  const quizId = courseData?.quizzes[quizIndex]?.id;
+  return courseData?.quizResults?.some(r => r.quiz_id === quizId);
+};
+
+const getSavedScore = (quizIndex: number) => {
+  const quizId = courseData?.quizzes[quizIndex]?.id;
+  const result = courseData?.quizResults?.find(r => r.quiz_id === quizId);
+  return result?.score || "";
+};
+
+
+
+
+
+const handleSubmitQuiz = async (quizIndex: number) => {
+  setIsSubmitting(true);
+  try {
+    const quiz = courseData.quizzes[quizIndex];
+  let correctCount = 0;
+  type AnswerPayload = {
+    question_id: number;
+    provided_key: number | undefined;
+    answer_text: string;
+    is_correct: boolean;
+  };
+
+const answers: AnswerPayload[] = [];
+  const startedAt = quizStartedAt[quizIndex] || new Date(); 
+  const submittedAt = new Date();
+
+  quiz.questions.forEach((q, qIndex) => {
+    const userAnswer = quizAnswers[`${quizIndex}-${qIndex}`];
+    const isCorrect = userAnswer === q.answer;
+    if (isCorrect) correctCount++;
+
+    answers.push({
+      question_id: q.id,
+      provided_key: userAnswer,
+      answer_text: q.choices?.[userAnswer] || "", 
+      is_correct: isCorrect,
+    });
+  });
+
+  const score = correctCount;
+  const scoreString = `${correctCount}/${quiz.questions.length}`;
+  const existingIndex = courseData.quizResults.findIndex(r => r.quiz_id === quiz.id);
+
+  if (existingIndex !== -1) {
+    courseData.quizResults[existingIndex].score = scoreString;
+  } else {
+    courseData.quizResults.push({ quiz_id: quiz.id, score: scoreString });
+  }
+
+
+  try {
+    const payload = {
+      user_id,
+      quiz_id: quiz.id,
+      started_at: startedAt.toISOString(),
+      submitted_at: submittedAt.toISOString(),
+      score,
+      answers,
+    };
+
+    const res = await fetch(`http://localhost:3000/api/quizzes/${quiz.id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error("Lỗi khi gửi bài");
+    const data = await res.json();
+    console.log("Gửi bài thành công:", data);
+  } catch (error) {
+    console.error("Gửi bài thất bại:", error);
+  }
+
+  setQuizSubmitted((prev) => ({
+    ...prev,
+    [quizIndex]: true,
+  }));
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setIsSubmitting(false);
+  }
+
+};
 
   const toEmbedUrl = (url: string | null | undefined): string | undefined => {
     if (!url) return undefined;
@@ -396,7 +497,13 @@ export default function CourseContentPage() {
                 <div key={quizIndex} className="mt-4 p-4 border rounded-lg bg-white">
                   <h3 className="font-medium">{quiz.title} ({quiz.duration} mins)</h3>
 
-                  {selectedQuizIndex === quizIndex ? (
+                  {hasSubmitted(quizIndex) ? (
+                      <p className="mt-2 text-green-600 font-medium">
+                      You already completed this quiz! ✅<br />
+                      Score: {getQuizScore(quizIndex)}
+                    </p>
+                    
+                    ) : selectedQuizIndex === quizIndex ? (
                     <>
                       {quiz.questions.map((q, qIndex) => (
                         <div key={qIndex} className="mt-2">
@@ -422,8 +529,12 @@ export default function CourseContentPage() {
                       ))}
 
                       {!quizSubmitted[quizIndex] ? (
-                        <button onClick={() => handleSubmitQuiz(quizIndex)} className="mt-4 px-4 py-2 bg-purple-600 text-white rounded">
-                          Submit
+                        <button
+                          onClick={() => handleSubmitQuiz(quizIndex)}
+                          className="mt-4 px-4 py-2 bg-purple-600 text-white rounded"
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? "Đang gửi..." : "Submit"}
                         </button>
                       ) : (
                         <p className="mt-2 text-green-600 font-medium">
@@ -432,8 +543,15 @@ export default function CourseContentPage() {
                       )}
                     </>
                   ) : (
-                    <button
-                      onClick={() => setSelectedQuizIndex(quizIndex)}
+                    <button 
+                    onClick={() => {
+                      setQuizStartedAt((prev) => ({
+                        ...prev,
+                        [quizIndex]: new Date(),
+                      }));
+                      setSelectedQuizIndex(quizIndex);
+                    }}
+                    
                       className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
                     >
                       Làm bài
