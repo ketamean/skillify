@@ -101,7 +101,7 @@ function SortableItem(props: SortableItemProps) {
         <div
             onClick={(e) => props.onClick(e)}
             ref={setNodeRef} {...attributes} style={ dragItemStyle } key={props.id}
-            className={`${isDragging? 'z-1000' : 'z-10'} border-l-3 flex flex-row  ${props.selected? 'border-green-900' : 'border-light-green hover:bg-green-200 hover:border-mint'} rounded-xl ${props.selected? 'bg-green-300' : 'bg-tea-green'} w-full p-2 select-none cursor-pointer`}
+            className={`${isDragging? 'z-1000' : 'z-10'} border-l-3 flex flex-row  ${props.selected? 'border-green-900' : 'border-light-green hover:bg-green-200 hover:border-mint'} rounded-xl ${props.selected? 'bg-green-300' : 'bg-green-100'} w-full p-2 select-none cursor-pointer`}
         >
             <p className="w-full max-w-full text-wrap truncate font-bold">
                 {props.title}

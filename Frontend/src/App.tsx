@@ -42,9 +42,9 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       { path: "/coursecontent/:course_id", element: <CourseContentPage /> },
-      { path: "/course/upload", element: <CourseEdit /> },
     ],
   },
+  { path: "/course/upload", element: <CourseEdit /> },
   {
     path: "/profile",
     element: <ProfilePage />,
