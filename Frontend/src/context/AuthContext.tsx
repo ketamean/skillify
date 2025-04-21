@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchUserProfile = async (id: string) => {
     const { data, error } = await supabase
       .from("users")
-      .select("id, email, first_name, last_name, avatar_image_link, bio, type")
+      .select("id, email, first_name, last_name, avatar_image_link, bio")
       .eq("id", id)
       .single();
 
@@ -36,7 +36,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       fname: data.first_name,
       lname: data.last_name,
       bio: data.bio,
-      is_instructor: data.type,
       avatar_url: avatarBlobUrl,
     };
   };
@@ -70,7 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(null);
           }
         })();
-      },
+      }
     );
 
     return () => {
@@ -120,15 +119,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
   };
 
-  const getAvatarUrl = async (avatarPath: string | null | undefined): Promise<string> => {
+  const getAvatarUrl = async (
+    avatarPath: string | null | undefined
+  ): Promise<string> => {
     if (!avatarPath) {
       return "https://ui-avatars.com/api/?name=User&background=cccccc&color=ffffff";
     }
-  
+
     if (avatarPath.startsWith("http")) {
       return avatarPath;
     }
-  
+
     if (avatarCache.has(avatarPath)) {
       return avatarCache.get(avatarPath)!;
     }
@@ -136,17 +137,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data, error } = await supabase.storage
       .from("useravatars")
       .download(avatarPath);
-  
+
     if (error || !data) {
       console.error("Failed to download avatar:", error?.message);
       return "https://ui-avatars.com/api/?name=User&background=cccccc&color=ffffff";
     }
-  
+
     const blobUrl = URL.createObjectURL(data);
     avatarCache.set(avatarPath, blobUrl);
     return blobUrl;
   };
-  
+
   return (
     <AuthContext.Provider
       value={{ user, login, logout, isLoading, register, oAuthLogin }}
