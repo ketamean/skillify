@@ -153,13 +153,15 @@ export default function NavBar(props: NavBarProps): ReactElement {
             >
               <SearchIcon onClick={() => setSearchOverlayState(true)} />
             </div>
-            <UserMiniAvatar
-              fname={user?.fname || "F"}
-              lname={user?.lname || "L"}
-              title="View basic settings"
-              avatarUrl={user?.avatar_url}
-              onClick={() => navigate("/profile")}
-            />
+            {user && (
+              <UserMiniAvatar
+                fname={user?.fname || "F"}
+                lname={user?.lname || "L"}
+                title="View basic settings"
+                avatarUrl={user?.avatar_url}
+                onClick={() => navigate("/profile")}
+              />
+            )}
           </div>
         </div>
       </nav>
