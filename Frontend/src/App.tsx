@@ -14,6 +14,9 @@ import QuizDetailPage from "./pages/MyQuiz/QuizDetailPage";
 
 import ChatBot from "./components/ChatBot";
 import InstructorCouponPage from "./pages/InstructorCouponPage";
+import CourseEdit from "./pages/CourseEdit";
+
+import { Toaster } from "@/components/ui/sonner"
 
 const router = createBrowserRouter([
   {
@@ -43,6 +46,7 @@ const router = createBrowserRouter([
       { path: "/coursecontent/:course_id", element: <CourseContentPage /> },
     ],
   },
+  { path: "/course/upload", element: <CourseEdit /> },
   {
     path: "/profile",
     element: <ProfilePage />,
@@ -71,6 +75,7 @@ function App() {
       <>
         <RouterProvider router={router} />
         <ChatBot />
+        <Toaster />
       </>
     </AuthProvider>
   );
