@@ -29,7 +29,7 @@ const router = createBrowserRouter([
     element: <Register />,
   },
   {
-    path: "/course/:courseId",
+    path: "/course/:course_id",
     element: <CoursePage />,
   },
   {
