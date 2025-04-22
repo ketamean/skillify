@@ -18,7 +18,7 @@ function CourseVideoSection(props: CourseVideoSectionProps) {
             <h3 className={`bg-[#ededed] py-2 px-4 flex gap-x-2 ${props.index === 0 ? 'rounded-t-xl' : ''}`}><span>{props.index + 1}.</span>{props.sectionName}</h3>
             <table className="w-full flex flex-col gap-y-4 px-4 pb-2 rounded-2xl">
                 <tbody>
-                    {props.videos.map((video, index) => {
+                    {props.videos?.map((video, index) => {
                         const anchorRef = useRef<HTMLAnchorElement>(null)
                         return (
                         <tr key={index} className={`w-full min-w-full flex flex-row gap-x-4 border-b-1 border-b-zinc-300 py-2 ${video.visibility? "cursor-pointer" : ""}`}
