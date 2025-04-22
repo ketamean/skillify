@@ -5,86 +5,41 @@ import { supabase } from "../../supabaseClient";
 import { useEffect, useState } from "react";
 import CourseDetails from "../../components/CourseDetails";
 
-const data = {
-    name: "The Complete Full-Stack Web Development Bootcamp",
-    //shortDescription: "Learn full-stack web development with HTML, CSS, Bootstrap, JavaScript, jQuery, Node.js, MongoDB, Express, and React",
-    shortDescription: "Lorem ipsum dolor sit amet amet amet amet amet amet amet amet amet amet amet consectetur adipisicing elit. Nisi, quasi? Laboriosam consequuntur",
-    numberOfEnrollments: 100,
-    courseImageLink: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoCViFCnLqddCN7uHZrEQ1u20IOBbAzvM4JA&s",
-    courseDescriptionSections: [
-        {
-            header: "What you'll learn",
-            content: `
-* Learn HTML, CSS, Flexbox, CSS Grid, and Bootstrap 5
-* Build responsive websites from scratch
-* Learn JavaScript, ES6, and DOM manipulation
-* Build full-stack web applications with Node.js, Express, and MongoDB
-* Learn React, React Hooks, and Web Design
-* Learn Blockchain technology and Web3 development on the Internet Computer
-* Build NFT minting, buying, and selling logic
-* Learn how to deploy your websites online
-* Learn how to use Git, GitHub, and command line
-* Learn how to create your own APIs
-* Learn how to use SQL and PostgreSQL
-* Learn how to use authentication and security
-* Learn how to use React Hooks
-* Learn how to use Web3 development on the Internet Computer
-* Learn how to use Blockchain technology
-* Learn how to use Token contract development`
-        },
-        {
-            header: "Description",
-            content: `
-* Learn full-stack web development with HTML, CSS, Bootstrap, JavaScript, jQuery, Node.js, MongoDB, Express, and React
-* Learn how to build websites from scratch
-* Learn how to build apps from scratch
-* Learn how to build full-stack web applications
-* Learn how to build full-stack web applications with Node.js, Express, and MongoDB`
-        },
-        {
-            header: "Requirements",
-            content: `
-* No programming experience needed - I'll teach you everything you need to know
-* A computer with access to the internet
-* No paid software required
-* I'll walk you through, step-by-step how to get all the software installed and set up` 
-        },
-        {
-            header: "Pre-requisites",
-            content: `
-* No programming experience needed - I'll teach you everything you need to know
-* A computer with access to the internet
-* No paid software required
-* I'll walk you through, step-by-step how to get all the software installed and set up` 
-        }
-    ],
-    relatedTopics: [{name: "Web Development", link: "#"}, {name: "Development", link: "#"}],
-    content: [
-        {
-            sectionName: "Introduction",
-            videos: [
-                {name: "Lorem ipsum dolor sit amet amet amet amet amet amet amet amet amet amet amet consectetur adipisicing elit. Nisi, quasi? Laboriosam consequuntur Lorem ipsum dolor sit amet amet amet amet amet amet amet amet amet amet amet consectetur adipisicing elit. Nisi, quasi? Laboriosam consequuntur", duration: "03:08", visibility:true, link: "", coverImageLink: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoCViFCnLqddCN7uHZrEQ1u20IOBbAzvM4JA&s"}, {name: "This is what you will get", duration: "03:08", visibility:false, link: "", coverImageLink: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoCViFCnLqddCN7uHZrEQ1u20IOBbAzvM4JA&s"}]
-        },
-        {
-            sectionName: "Start",
-            videos: [{name: "This is what you will get", duration: "03:08", visibility:true, link: "", coverImageLink: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoCViFCnLqddCN7uHZrEQ1u20IOBbAzvM4JA&s"}, {name: "This is what you will get", duration: "03:08", visibility:false, link: ""}]
-        },
-    ],
-    linkToInstructor: "link:to:instr",
-    linkToInstructorAvatar: "link:to:instr:avatar",
-    instructorName: "Angela Yu",
-    isFree: false
+export interface Video {
+    name: string;
+    duration: string;
+    visibility: boolean;
+    link?: string;
+    coverImageLink?: string;
+}
+
+// parse md to html on server side
+// fe: only sanitize
+
+export interface VideoSection {
+    sectionName: string;
+    videos: Video[];
 }
 
 export default function CoursePage() {
-    const { courseId } = useParams();
-    const [course, setCourse] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const { course_id } = useParams()
+
+    const [title, setTitle] = useState('')
+    const [imageLink, setImageLink] = useState('https://www.vecteezy.com/free-vector/image-placeholder')
+    const [shortDescription, setShortDescription] = useState('')
+    const [linkToInstructorPage, setLinkToInstructorPage] = useState('/')
+    const [instructorName, setInstructorName] = useState('')
+    const [relatedTopics, setRelatedTopics] = useState<{name: string, link: string}[]>([])
+    const [descriptions, setDescriptions] = useState<{header: string, content: string}[]>([])
+    const [numberOfEnrolments, setNumberOfEnrolments] = useState(0)
+    const [videoSections, setVideoSections] = useState<VideoSection[]>([])
+    const [fee, setFee] = useState<number>(0)
+
     useEffect(() => {
-        const fetchCourse = async () => {
-            const { data, error } = await supabase
-                .from("courses")
-                .select(`
+        supabase
+            .from('courses')
+            .select(`
                 id,
                 name,
                 short_description,
@@ -95,20 +50,98 @@ export default function CoursePage() {
                     first_name,
                     last_name
                 )
+            `)
+            .eq('id', course_id as unknown as number)
+            .then(
+                (res) => {
+                    if (res.error) {
+                        console.log("1", res.error)
+                        return;
+                    }
+                    if (!res.data || res.data.length === 0) return;
+                    setLoading(false);
+                    const data = res.data
+                    setTitle(data[0].name)
+                    setImageLink(data[0].image_link)
+                    setShortDescription(res.data[0].short_description? res.data[0].short_description : "")
+                    setLinkToInstructorPage(`/instructor/${res.data[0].instructor_id}`)
+                    setInstructorName(`${res.data[0].users.first_name? res.data[0].users.first_name : ""} ${res.data[0].users.last_name? res.data[0].users.last_name : ""}`)
+                    setFee(res.data[0].fee)
+                }
+            )
+
+        supabase
+            .from('courserelatedtopics')
+            .select(`
+                    topics(id, name)
                 `)
-                .eq("id", courseId)
-                .single();
-            if (error) {
-                console.error("Failed to fetch course", error.message);
-            } else {
-                setCourse(data);
-            }
+            .eq('course_id', course_id as unknown as number)
+            .then(
+                (res) => {
+                    if (res.error) {
+                        console.log("2", res.error)
+                        return;
+                    }
+                    if (!res.data || res.data.length === 0) return;
+                    setLoading(false);
 
-            setLoading(false);
-        };
+                    setRelatedTopics(
+                        res.data.filter(el => el.topics.name).map((pair) => ({name: pair.topics.name, link: pair.topics.id ? `/topics?id=${pair.topics.id}` : '#'}))
+                    )
+                }
+            )
 
-        fetchCourse();
-    }, [courseId]);
+        supabase
+            .from('coursedescriptions')
+            .select(`
+                header, content
+            `)
+            .eq('course_id', course_id as unknown as number)
+            .order('order', {ascending: true})
+            .then(
+                (res) => {
+                    if (res.error) {
+                        console.error("3", res.error)
+                        return;
+                    }
+                    if (!res.data || res.data.length === 0) return;
+                    setLoading(false);
+                    setDescriptions(
+                        res.data
+                    )
+                }
+            )
+
+        supabase
+            .from('learnerenrolments')
+            .select('course_id', { count: 'exact', head: true })
+            .eq('course_id', course_id as unknown as number)
+            .then(
+                (res) => {
+                    if (res.error) {
+                        console.log(res.error)
+                        return;
+                    }
+                    if (!res.data || res.data.length === 0) return;
+                    setLoading(false);
+                    setNumberOfEnrolments(res.count as number)
+                }
+            )
+        
+        supabase
+            .rpc('get_sections_with_videos_by_course', { courseid: course_id as unknown as number })
+            .then(
+                (res) => {
+                    if (res.error) {
+                        console.log(res.error)
+                        return;
+                    }
+                    if (!res.data || res.data.length === 0) return;
+                    setLoading(false);
+                    setVideoSections(res.data)
+                }
+            )
+    })
     return (
         <>
             <NavBar
@@ -118,29 +151,25 @@ export default function CoursePage() {
                 }}
             />
             <div className="h-full w-full">
-                {loading ? (
-                    <p className="text-center mt-10">Loading course...</p>
-                ) : course ? (
-                    <CourseDetails
-                        courseId={course.id}
-                        courseName={course.name}
-                        shortDescription={course.short_description}
-                        courseImageLink={course.image_link}
-                        numberOfEnrollments={course.number_of_enrollments}
-                        instructorName={
-                            course.users?.first_name
-                                ? `${course.users.first_name}${course.users.last_name ? ` ${course.users.last_name}` : ""}`
-                                : "Unknown"
-                        }
-                        linkToInstructorPage={`/instructor/${course.instructor_id}`}
-                        courseDescriptionSections={[]}
-                        relatedTopics={[]}
-                        content={[]}
-                        fee={course.fee}
-                    />
-                ) : (
-                    <p className="text-center mt-10 text-red-600">Course not found.</p>
-                )}
+                {
+                    loading ? (
+                        <p className="text-center mt-10">Loading course...</p>
+                    ) : (
+                        <CourseDetails
+                            id={course_id as unknown as string}
+                            courseName={title}
+                            shortDescription={shortDescription}
+                            courseImageLink={imageLink}
+                            numberOfEnrollments={numberOfEnrolments}
+                            instructorName={instructorName}
+                            linkToInstructorPage={linkToInstructorPage}
+                            courseDescriptionSections={descriptions}
+                            relatedTopics={relatedTopics}
+                            content={videoSections}
+                            fee={fee}
+                        />
+                    )
+                }
             </div>
             <Footer />
         </>
