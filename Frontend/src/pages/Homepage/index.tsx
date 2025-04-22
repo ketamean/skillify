@@ -21,12 +21,13 @@ export default function Homepage() {
         console.error("Error fetching courses:", error);
       } else {
         const formattedCourses = data.map((course) => ({
+          id: course.id,
           title: course.name,
           imageUrl: course.image_link,
-          price: course.fee ? `$${course.fee.toFixed(2)}` : "Free",
+          price: course.fee,
           rating: 5,
           ratingCount: 1000,
-          level: "Unknown",
+          level: "Beginner",
           instructorName:
             course.instructors && course.instructors.length > 0
               ? `${course.instructors[0].first_name} ${course.instructors[0].last_name}`
