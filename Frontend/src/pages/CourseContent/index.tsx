@@ -389,7 +389,9 @@ export default function CourseContentPage() {
       {/* Header */}
       <header className="flex items-center justify-between bg-deepteal text-white p-4">
         <div className="flex items-center space-x-4">
-          <span className="text-xl font-bold text-white">Skillify</span>
+          <a href="/">
+            <span className="text-xl font-bold text-white">Skillify</span>
+          </a>
           <span className="text-sm">{courseData.title}</span>
         </div>
         <div className="flex items-center space-x-4">
