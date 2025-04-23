@@ -67,25 +67,25 @@ export default function InstructorDashboard(): ReactElement {
           <div className="flex items-center space-x-6 py-3 overflow-x-auto">
             <a
               href="/instructor/dashboard"
-              className="py-2 px-1 border-b-2 border-purple-500 font-medium"
+              className="py-2 px-1 border-b-2 border-vibrant-green font-medium"
             >
               Courses
             </a>
             <a
               href="/instructor/coupons"
-              className="py-2 px-1 border-b-2 border-transparent hover:border-purple-300 font-medium"
+              className="py-2 px-1 border-b-2 border-transparent hover:border-vibrant-green font-medium"
             >
               Coupons
             </a>
             <a
               href="#"
-              className="py-2 px-1 border-b-2 border-transparent hover:border-purple-300 font-medium"
+              className="py-2 px-1 border-b-2 border-transparent hover:border-vibrant-green font-medium"
             >
               Analytics
             </a>
             <a
               href="#"
-              className="py-2 px-1 border-b-2 border-transparent hover:border-purple-300 font-medium"
+              className="py-2 px-1 border-b-2 border-transparent hover:border-vibrant-green font-medium"
             >
               Students
             </a>
@@ -97,7 +97,7 @@ export default function InstructorDashboard(): ReactElement {
       <main className="container mx-auto px-[4%] py-8 flex-grow">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-deepteal">My Courses</h1>
-          <button className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition">
+          <button className="bg-deepteal hover:bg-blurple text-white py-2 px-4 rounded-lg transition">
             Create New Course
           </button>
         </div>
@@ -115,7 +115,7 @@ export default function InstructorDashboard(): ReactElement {
               Start creating your first course and share your knowledge with
               students around the world.
             </p>
-            <button className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-6 rounded-lg transition">
+            <button className="bg-deepteal hover:bg-blurple text-white py-2 px-6 rounded-lg transition">
               Create Your First Course
             </button>
           </div>
