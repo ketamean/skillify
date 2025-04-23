@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchUserProfile = async (id: string) => {
     const { data, error } = await supabase
       .from("users")
-      .select("id, email, first_name, last_name, avatar_image_link, bio, type")
+      .select("id, email, first_name, last_name, avatar_image_link, bio")
       .eq("id", id)
       .single();
 
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       fname: data.first_name,
       lname: data.last_name,
       bio: data.bio,
-      is_instructor: data.type,
+      is_instructor: true,
       avatar_url: avatarBlobUrl,
     };
   };

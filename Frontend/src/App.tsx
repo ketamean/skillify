@@ -30,7 +30,7 @@ const router = createBrowserRouter([
     element: <Register />,
   },
   {
-    path: "/course/:courseId",
+    path: "/course/:course_id",
     element: <CoursePage />,
   },
   {
@@ -44,7 +44,7 @@ const router = createBrowserRouter([
       { path: "/coursecontent/:course_id", element: <CourseContentPage /> },
     ],
   },
-  { path: "/course/upload", element: <CourseEdit /> },
+  { path: "/course/:course_id/upload", element: <CourseEdit /> },
   {
     path: "/profile",
     element: <ProfilePage />,
