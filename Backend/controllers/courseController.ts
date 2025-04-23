@@ -70,7 +70,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
 
     const [sectionsData, videosData, documentsData, quizzesData, quizDetailsData] = await Promise.all([
       supabase.from("coursesections").select("id, name, order").eq("course_id", course_id).order("order", { ascending: true }),
-      supabase.from("coursevideos").select("id, title, thumbnail_link, duration, section_id").eq("course_id", course_id),
+      supabase.from("coursevideos").select("id, title, thumbnail_link, duration, section_id, description").eq("course_id", course_id),
       supabase.schema("private").from("coursedocuments").select("id, title, description, link").eq("course_id", course_id),
       supabase.schema("private").from("coursequizzes").select("id, title, duration, description").eq("course_id", course_id),
       supabase.schema("private").from("coursequizdetails").select("id, quiz_id, question, type, choices, provided_key")
@@ -104,6 +104,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       id: section.id,
       title: section.name,
       order: section.order,
+      // description: section.description,
       videos: videos
         .filter((video) => video.section_id === section.id)
         .map((video) => ({
@@ -111,6 +112,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
           title: video.title,
           link: videoLinkMap[video.id] || "",
           duration: video.duration,
+          description: video.description,
         })),
     }));
 

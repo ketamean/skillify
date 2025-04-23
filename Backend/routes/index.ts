@@ -4,9 +4,13 @@ const router = express.Router();
 import { createCheckoutSession } from "../controllers/serviceController";
 import aiRouter from "./aiRoutes";
 import searchRouter from "./searchRoutes";
+import coursesRouter from './courseRoutes'
+import couponsRouter from './couponRoutes'
 
 router.post("/create-checkout-session", createCheckoutSession);
 router.use("/ai", aiRouter);
 router.use("/search", searchRouter);
+router.use('/courses', coursesRouter);
+router.use('/coupons', couponsRouter)
 
 export default router;
