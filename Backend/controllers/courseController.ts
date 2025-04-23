@@ -55,7 +55,7 @@ export const addMaterialComment = async (req: Request, res: Response): Promise<v
 export const getCourseContent = async (req: Request, res: Response): Promise<void> => {
   const { course_id } = req.params;
   const { data, error } = await supabase.rpc("current_user_role");
-
+  const user_id = req.query.user_id as string;
   try {
     const { data: course, error: courseError } = await supabase
       .from("courses")
@@ -157,6 +157,26 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         avatar: user?.avatar_image_link || null,
       };
     }) || [];
+      const quizIdsOfCourse = (quizzesData.data || []).map(q => q.id);
+
+      const { data: quizAttempts } = await supabase
+        .schema("private")
+        .from("quiz_attempts")
+        .select("quiz_id, score")
+        .eq("user_id", user_id)
+        .in("quiz_id", quizIdsOfCourse);
+
+      const safeQuizAttempts = quizAttempts ?? [];
+
+      const quizResults = safeQuizAttempts.map((attempt) => {
+        const totalQuestions = quizDetails.filter((q) => q.quiz_id === attempt.quiz_id).length;
+        return {
+          quiz_id: attempt.quiz_id,
+          score: `${attempt.score}/${totalQuestions}`
+        };
+      });
+
+        
 
     res.json({
       course_id: course.id,
@@ -174,6 +194,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       documents: documents,
       quizzes: formattedQuizzes,
       comments: formattedComments,
+      quizResults: quizResults 
     });
 
   } catch (error) {
@@ -181,3 +202,5 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
     res.status(500).json({ error: "Lỗi server" });
   }
 };
+
+

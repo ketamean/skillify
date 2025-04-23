@@ -9,12 +9,12 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/Profile";
 import MyLearningPage from "./pages/MyLearning";
 import SearchPage from "./pages/SearchPage";
+import MyQuizPage from "./pages/MyQuiz";
+import QuizDetailPage from "./pages/MyQuiz/QuizDetailPage";
 
 import ChatBot from "./components/ChatBot";
 import InstructorCouponPage from "./pages/InstructorCouponPage";
 import CourseEdit from "./pages/CourseEdit";
-
-import { Toaster } from "@/components/ui/sonner"
 
 const router = createBrowserRouter([
   {
@@ -56,6 +56,14 @@ const router = createBrowserRouter([
   {
     path: "/instructor/coupons",
     element: <InstructorCouponPage />,
+  },
+  {
+    path: "/myquiz",
+    element: <MyQuizPage />,
+  },
+  {
+    path: "/myquiz/:quiz_id",
+    element: <QuizDetailPage />,
   }
 ]);
 
@@ -65,7 +73,6 @@ function App() {
       <>
         <RouterProvider router={router} />
         <ChatBot />
-        <Toaster />
       </>
     </AuthProvider>
   );

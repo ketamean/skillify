@@ -1,27 +1,52 @@
 import NavBar from "../../components/NavBar";
 import Footer from "../../components/Footer";
-import CourseDetails from "../../components/CourseDetails";
-import { CourseDetailsProps, RelatedTopic, CourseDescriptionSection, VideoSection } from "../../components/CourseDetails/types";
-import { useState, useEffect } from "react";
-import { supabase } from "../../supabaseClient";
 import { useParams } from "react-router-dom";
+import { supabase } from "../../supabaseClient";
+import { useEffect, useState } from "react";
+import CourseDetails from "../../components/CourseDetails";
 
-interface CoursePageProps {
-    
+export interface Video {
+    name: string;
+    duration: string;
+    visibility: boolean;
+    link?: string;
+    coverImageLink?: string;
 }
 
-export default function CoursePage(props: CoursePageProps) {
-    const {course_id} = useParams()
-    const [courseData, setCourseData] = useState<CourseDetailsProps | null>(null);
+// parse md to html on server side
+// fe: only sanitize
+
+export interface VideoSection {
+    sectionName: string;
+    videos: Video[];
+}
+
+export default function CoursePage() {
+    const [loading, setLoading] = useState(true);
+    const { course_id } = useParams()
+
+    const [title, setTitle] = useState('')
+    const [imageLink, setImageLink] = useState('https://www.vecteezy.com/free-vector/image-placeholder')
+    const [shortDescription, setShortDescription] = useState('')
+    const [linkToInstructorPage, setLinkToInstructorPage] = useState('/')
+    const [instructorName, setInstructorName] = useState('')
+    const [relatedTopics, setRelatedTopics] = useState<{name: string, link: string}[]>([])
+    const [descriptions, setDescriptions] = useState<{header: string, content: string}[]>([])
+    const [numberOfEnrolments, setNumberOfEnrolments] = useState(0)
+    const [videoSections, setVideoSections] = useState<VideoSection[]>([])
+    const [fee, setFee] = useState<number>(0)
+
     useEffect(() => {
         supabase
             .from('courses')
             .select(`
+                id,
                 name,
                 short_description,
                 image_link,
-                users(
-                    id,
+                fee,
+                instructor_id,
+                users (
                     first_name,
                     last_name
                 )
@@ -33,22 +58,15 @@ export default function CoursePage(props: CoursePageProps) {
                         console.log("1", res.error)
                         return;
                     }
-                    console.log(res.data)
-                    setCourseData((prev) => {
-                        if (!res.data || res.data.length === 0) return prev;
-                        const r: CourseDetailsProps = {
-                            courseName: res.data[0].name,
-                            courseImageLink: res.data[0].image_link,
-                            shortDescription: res.data[0].short_description? res.data[0].short_description : "",
-                            linkToInstructorPage: "/",// res.data[0].users.id ? `/user?id=${res.data[0].users.id}` : '#',
-                            instructorName: `${res.data[0].users.first_name? res.data[0].users.first_name : ""} ${res.data[0].users.last_name? res.data[0].users.last_name : ""}`
-                        }
-                        return prev?
-                            {
-                                ...prev,
-                                ...r
-                            } : { ...r }
-                    })
+                    if (!res.data || res.data.length === 0) return;
+                    setLoading(false);
+                    const data = res.data
+                    setTitle(data[0].name)
+                    setImageLink(data[0].image_link)
+                    setShortDescription(res.data[0].short_description? res.data[0].short_description : "")
+                    setLinkToInstructorPage(`/instructor/${res.data[0].instructor_id}`)
+                    setInstructorName(`${res.data[0].users.first_name? res.data[0].users.first_name : ""} ${res.data[0].users.last_name? res.data[0].users.last_name : ""}`)
+                    setFee(res.data[0].fee)
                 }
             )
 
@@ -64,27 +82,19 @@ export default function CoursePage(props: CoursePageProps) {
                         console.log("2", res.error)
                         return;
                     }
-                    setCourseData((prev) => {
-                        if (!res.data || res.data.length === 0) return prev;
-                        const r: CourseDetailsProps = {
-                            relatedTopics: res.data.filter(el => el.topics.name).map((pair): RelatedTopic => ({
-                                name: pair.topics.name,
-                                link: pair.topics.id ? `/topics?id=${pair.topics.id}` : '#'
-                            }))
-                        }
-                        return prev?
-                            {
-                                ...prev,
-                                ...r
-                            } : { ...r }
-                    })
+                    if (!res.data || res.data.length === 0) return;
+                    setLoading(false);
+
+                    setRelatedTopics(
+                        res.data.filter(el => el.topics.name).map((pair) => ({name: pair.topics.name, link: pair.topics.id ? `/topics?id=${pair.topics.id}` : '#'}))
+                    )
                 }
             )
 
         supabase
             .from('coursedescriptions')
             .select(`
-                header, content, order
+                header, content
             `)
             .eq('course_id', course_id as unknown as number)
             .order('order', {ascending: true})
@@ -94,18 +104,11 @@ export default function CoursePage(props: CoursePageProps) {
                         console.error("3", res.error)
                         return;
                     }
-                    console.log(res) 
-                    setCourseData((prev) => {
-                        if (!res.data || res.data.length === 0) return prev;
-                        const r: CourseDetailsProps = {
-                            courseDescriptionSections: res.data.map((pair): CourseDescriptionSection => ({...pair}))
-                        }
-                        return prev?
-                            {
-                                ...prev,
-                                ...r
-                            } : { ...r }
-                    })
+                    if (!res.data || res.data.length === 0) return;
+                    setLoading(false);
+                    setDescriptions(
+                        res.data
+                    )
                 }
             )
 
@@ -119,17 +122,9 @@ export default function CoursePage(props: CoursePageProps) {
                         console.log(res.error)
                         return;
                     }
-                    setCourseData((prev) => {
-                        if (!res || !res.count) return prev;
-                        const r: CourseDetailsProps = {
-                            numberOfEnrollments: res.count as number
-                        }
-                        return prev?
-                            {
-                                ...prev,
-                                ...r
-                            } : { ...r }
-                    })
+                    if (!res.data || res.data.length === 0) return;
+                    setLoading(false);
+                    setNumberOfEnrolments(res.count as number)
                 }
             )
         
@@ -141,37 +136,39 @@ export default function CoursePage(props: CoursePageProps) {
                         console.log(res.error)
                         return;
                     }
-                    setCourseData((prev) => {
-                        if (!res.data || res.data.length === 0) return prev;
-                        const r: CourseDetailsProps = {
-                            content: res.data.map((section: VideoSection): VideoSection => {
-                                return {
-                                    sectionName: section.sectionName,
-                                    videos: section.videos
-                                }
-                            })
-                        }
-                        return prev?
-                            {
-                                ...prev,
-                                ...r
-                            } : { ...r }
-                    })
+                    if (!res.data || res.data.length === 0) return;
+                    setLoading(false);
+                    setVideoSections(res.data)
                 }
             )
-    }, [])
+    })
     return (
         <>
             <NavBar
                 user={{
-                fname: "Ariana", lname: "Grande",
-                // avatarUrl: "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg"
+                    fname: "Ariana", lname: "Grande",
+                    avatarUrl: "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg"
                 }}
             />
             <div className="h-full w-full">
                 {
-                    courseData?
-                        <CourseDetails {...courseData}/> : <></>
+                    loading ? (
+                        <p className="text-center mt-10">Loading course...</p>
+                    ) : (
+                        <CourseDetails
+                            id={course_id as unknown as string}
+                            courseName={title}
+                            shortDescription={shortDescription}
+                            courseImageLink={imageLink}
+                            numberOfEnrollments={numberOfEnrolments}
+                            instructorName={instructorName}
+                            linkToInstructorPage={linkToInstructorPage}
+                            courseDescriptionSections={descriptions}
+                            relatedTopics={relatedTopics}
+                            content={videoSections}
+                            fee={fee}
+                        />
+                    )
                 }
             </div>
             <Footer />
