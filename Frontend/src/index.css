@@ -1,48 +1,48 @@
 @import "tailwindcss";
 @theme {
-    --color-vibrant-green: #22d67f;
-    --color-deepteal: #002333;
-    --color-light-teal: #8cbdb3;
-    --color-blurple: #3722d3;
-    --color-sunbeam: #ffe03d;
-    --color-light-green: #00ff84;
-    --color-white-overlay: rgba(255, 255, 255, 0.6);
-    --color-custom-white: #fafafa;
+  --color-vibrant-green: #22d67f;
+  --color-deepteal: #002333;
+  --color-light-teal: #8cbdb3;
+  --color-blurple: #3722d3;
+  --color-sunbeam: #ffe03d;
+  --color-light-green: #00ff84;
+  --color-white-overlay: rgba(255, 255, 255, 0.6);
+  --color-custom-white: #fafafa;
 }
 :root {
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    font-weight: 400;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
 
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-    margin: 0;
+  margin: 0;
 }
 
 h1 {
-    font-size: 3.2em;
-    line-height: 1.1;
-    font-weight: bold;
+  font-size: 3.2em;
+  line-height: 1.1;
+  font-weight: bold;
 }
 
 h2 {
-    font-size: 2.2em;
-    line-height: 1.1;
-    font-weight: bold;
+  font-size: 2.2em;
+  line-height: 1.1;
+  font-weight: bold;
 }
 
 h3 {
-    font-size: 1.2em;
-    line-height: 1.1;
-    font-weight: bold;
+  font-size: 1.2em;
+  line-height: 1.1;
+  font-weight: bold;
 }
 
 button:focus,
 button:focus-visible {
-    outline: 4px auto -webkit-focus-ring-color;
+  outline: 4px auto -webkit-focus-ring-color;
 }
