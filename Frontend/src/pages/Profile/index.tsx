@@ -260,7 +260,7 @@ export default function ProfilePage() {
                   <label className="block text-sm text-black font-medium">Headline</label>
                   <input
                     className="mt-1 p-2 w-full text-black border border-black rounded"
-                    value={`${userData.role} at Skillify`}
+                    value={`${userData.role? 'Instructor' : 'Learner'} at Skillify`}
                     disabled
                   />
                 </div>
