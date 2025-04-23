@@ -7,12 +7,15 @@ import BurgerMenuOverlay from "./BurgerMenuOverlay";
 import { useAuth } from "../../context/AuthContext";
 import Button from "../Button";
 import { useNavigate } from "react-router-dom";
+import AvatarDropdown from "../AvatarDropdown";
+
 interface NavBarUserInfo {
   fname: string;
   lname: string;
   email?: string;
   avatarUrl?: string;
 }
+
 interface NavBarProps {
   disabled?: boolean;
   children?: React.ReactNode;
@@ -45,7 +48,7 @@ function BurgerMenuIcon(props: BurgerMenuIconProps): ReactElement {
 export default function NavBar(props: NavBarProps): ReactElement {
   const [searchOverlayState, setSearchOverlayState] = useState(false);
   const [burgerMenuState, setBurgerMenuState] = useState(false);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   return (
     <>
@@ -70,27 +73,17 @@ export default function NavBar(props: NavBarProps): ReactElement {
           </a>
         </div>
 
-        <div
-          className="h-full
-                        hidden
-                        md:flex md:w-full md:min-w-100"
-        >
+        <div className="h-full hidden md:flex md:w-full md:min-w-100">
           <SearchBar disabled={false} />
         </div>
 
-        <div
-          className="flex flex-row gap-x-8 justify-end w-full
-                    md:justify-self-end
-                "
-        >
+        <div className="flex flex-row gap-x-8 justify-end w-full md:justify-self-end">
           <div
             title="Go to home page"
-            className="w-12 max-h-full h-12 items-center
-                            hidden
-                            md:flex md:min-w-fit"
+            className="w-12 max-h-full h-12 items-center hidden md:flex md:min-w-fit"
           >
             <a
-              href="#"
+              href="/"
               className="text-decoration-none! text-white! text-lg font-bold! hover:text-light-green! hover:no-underline!"
             >
               <span>Home</span>
@@ -98,36 +91,16 @@ export default function NavBar(props: NavBarProps): ReactElement {
           </div>
 
           <div
-            title="Go to instructor page"
-            className="w-12 max-h-full h-12 items-center
-                            hidden
-                            md:flex md:min-w-fit"
+            title="Go to Instructor page"
+            className="w-12 max-h-full h-12 items-center hidden md:flex md:min-w-fit"
           >
             <a
-              href="#"
+              href="/instructor/dashboard"
               className="text-decoration-none! text-white! text-lg font-bold! hover:text-light-green! hover:no-underline!"
             >
               <span>Instructor</span>
             </a>
           </div>
-
-          {user && (
-            <div
-              className="h-12 items-center
-                                      hidden
-                                      md:flex md:min-w-fit"
-            >
-              <span className="text-white text-sm">
-                {user.email || "Not signed in"}
-              </span>
-            </div>
-          )}
-
-          {user && (
-            <Button onClick={logout}>
-              <span>Logout</span>
-            </Button>
-          )}
 
           {!user && (
             <Button
@@ -140,8 +113,7 @@ export default function NavBar(props: NavBarProps): ReactElement {
           )}
 
           <div
-            title="View basic settings"
-            className="w-fit h-auto cursor-pointer flex items-center
+            className="w-fit h-auto flex items-center
                             justify-end gap-x-4
                             md:justify-center md:min-w-fit"
           >
@@ -153,14 +125,16 @@ export default function NavBar(props: NavBarProps): ReactElement {
             >
               <SearchIcon onClick={() => setSearchOverlayState(true)} />
             </div>
+
             {user && (
-              <UserMiniAvatar
-                fname={user?.fname || "F"}
-                lname={user?.lname || "L"}
-                title="View basic settings"
-                avatarUrl={user?.avatar_url}
-                onClick={() => navigate("/profile")}
-              />
+              <AvatarDropdown isInstructor={user?.is_instructor}>
+                <UserMiniAvatar
+                  fname={user?.fname || "F"}
+                  lname={user?.lname || "L"}
+                  title="View options"
+                  avatarUrl={user?.avatar_url}
+                />
+              </AvatarDropdown>
             )}
           </div>
         </div>
