@@ -9,7 +9,7 @@ export const getAllCoupons = async (_req: Request, res: Response): Promise<void>
     res.status(200).json(data);
 };
 export const getInstructorCoupons = async (req: Request, res: Response): Promise<void> => {
-    const { instructorId } = req.params; 
+    const { instructorId } = req.params;
 
     try {
         const now = new Date().toISOString();
@@ -53,19 +53,7 @@ export const getInstructorCoupons = async (req: Request, res: Response): Promise
             course_name: null // no course name
         }));
 
-        // Fetch course-specific coupons
-        const { data: courseCouponLinks, error: courseError } = await supabase
-            .schema('private')
-            .from('coursecoupons')
-            .select('id, course_id');
-
-        if (courseError) {
-            console.error('Error fetching course coupons:', courseError.message);
-            res.status(500).json({ error: 'Failed to fetch course coupons' });
-            return;
-        }
-
-        // Fetch all courses (instructor's only)
+        // Fetch all courses taught by the instructor
         const { data: instructorCourses, error: courseFetchError } = await supabase
             .from('courses')
             .select('id, name')
@@ -77,8 +65,25 @@ export const getInstructorCoupons = async (req: Request, res: Response): Promise
             return;
         }
 
-        // Fetch all coupons that are course-specific
-        const courseCouponIds = courseCouponLinks.map(link => link.id);
+        // Fetch all course-specific coupons
+        const { data: courseCouponLinks, error: courseError } = await supabase
+            .schema('private')
+            .from('coursecoupons')
+            .select('id, course_id');
+
+        if (courseError) {
+            console.error('Error fetching course coupons:', courseError.message);
+            res.status(500).json({ error: 'Failed to fetch course coupons' });
+            return;
+        }
+
+        // Filter course-specific coupons to only include those linked to courses taught by the instructor
+        const instructorCourseIds = instructorCourses.map(course => course.id);
+        const courseCouponIds = courseCouponLinks
+            .filter(link => instructorCourseIds.includes(link.course_id))
+            .map(link => link.id);
+
+        // Fetch course-specific coupons linked to the instructor's courses
         const { data: courseCoupons, error: couponError } = await supabase
             .schema('private')
             .from('coupons')
@@ -91,18 +96,18 @@ export const getInstructorCoupons = async (req: Request, res: Response): Promise
             return;
         }
 
-        // Merge course name
+        // Merge course name with course-specific coupons
         const courseCouponsWithNames = courseCoupons.map(coupon => {
             const link = courseCouponLinks.find(l => l.id === coupon.id);
             const course = instructorCourses.find(c => c.id === link?.course_id);
             return {
                 ...coupon,
-                course_id: link?.course_id ?? null, 
+                course_id: link?.course_id ?? null,
                 course_name: course?.name ?? null
             };
         });
 
-        // Combine both results
+        // Merge instructor-specific coupons and course-specific coupons
         const allCoupons = [...instructorCoupons, ...courseCouponsWithNames];
 
         res.status(200).json(allCoupons);
@@ -153,7 +158,7 @@ export const getInstructorCoupons = async (req: Request, res: Response): Promise
 //             ...link.coupons,
 //             instructor_id: link.instructor_id
 //         }));
-        
+
 //         res.status(200).json(flatCoupons);
 //     } catch (error) {
 //         console.error('Error fetching instructor coupons:', error);
@@ -317,7 +322,7 @@ export const applyCoupon = async (req: Request, res: Response): Promise<void> =>
         res.status(400).json({ message: 'Coupon is expired or usage limit reached' });
         return;
     }
-    
+
     if (coupon.status === 'OutOfUse') {
         res.status(400).json({ message: 'Coupon is expired or usage limit reached' });
         return;
@@ -325,12 +330,12 @@ export const applyCoupon = async (req: Request, res: Response): Promise<void> =>
 
     if (coupon.coupon_type === 'ParticularCourse') {
         const { data: link } = await supabase
-        .schema('private')
-        .from('coursecoupons')
-        .select('id')
-        .eq('id', coupon.id)
-        .eq('course_id', course_id)
-        .maybeSingle();
+            .schema('private')
+            .from('coursecoupons')
+            .select('id')
+            .eq('id', coupon.id)
+            .eq('course_id', course_id)
+            .maybeSingle();
         if (!link) {
             res.status(400).json({ message: 'Coupon not valid for this course' });
             return;
