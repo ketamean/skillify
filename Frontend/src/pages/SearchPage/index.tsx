@@ -18,11 +18,11 @@ interface CourseResult {
 }
 
 export default function SearchPage() {
-const [searchResults, setSearchResults] = useState<CourseResult[]>([]);
+  const [searchResults, setSearchResults] = useState<CourseResult[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
-  
+
   // Extract query from URL search params
   const queryParams = new URLSearchParams(location.search);
   const query = queryParams.get("query") || "";
@@ -39,9 +39,9 @@ const [searchResults, setSearchResults] = useState<CourseResult[]>([]);
 
       try {
         const response = await axiosForm.post("/api/search", {
-          query: query
+          query: query,
         });
-        
+
         setSearchResults(response.data);
       } catch (err: any) {
         setError(err.response?.data?.error || "Failed to fetch search results");
@@ -91,7 +91,8 @@ const [searchResults, setSearchResults] = useState<CourseResult[]>([]);
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {searchResults.map((course) => (
                 <CourseCard
-key={course.id}
+                  key={course.id}
+                  id={course.id}
                   imageUrl={course.image_link}
                   title={course.name}
                   instructorName={course.instructor_name || "Instructor"}

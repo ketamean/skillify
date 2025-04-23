@@ -87,7 +87,7 @@ const ChatBot = () => {
       <button
         onClick={toggleChat}
         className={`flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-colors ${
-          isOpen ? "bg-red-500" : "bg-purple-600 hover:bg-purple-700"
+          isOpen ? "bg-red-500" : "bg-vibrant-green hover:bg-deepteal"
         }`}
       >
         {isOpen ? (
@@ -101,7 +101,7 @@ const ChatBot = () => {
       {isOpen && (
         <div className="absolute bottom-16 right-0 w-3xl h-[600px] bg-white rounded-lg shadow-xl flex flex-col border border-gray-200 overflow-hidden">
           {/* Header */}
-          <div className="bg-purple-600 text-white p-3 flex items-center">
+          <div className="bg-vibrant-green text-white p-3 flex items-center">
             <FaRobot className="mr-2" />
             <h3 className="font-medium">Skillify Assistant</h3>
           </div>

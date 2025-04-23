@@ -3,17 +3,10 @@ import NavBar from "../../components/NavBar";
 import Footer from "../../components/Footer";
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
-import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 export default function Homepage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  // if (!user) {
-  //   navigate("/register");
-  // }
+
   useEffect(() => {
     const fetchCourses = async () => {
       const { data, error } = await supabase.from("courses").select(`
@@ -28,12 +21,13 @@ export default function Homepage() {
         console.error("Error fetching courses:", error);
       } else {
         const formattedCourses = data.map((course) => ({
+          id: course.id,
           title: course.name,
           imageUrl: course.image_link,
-          price: course.fee ? `$${course.fee.toFixed(2)}` : "Free",
+          price: course.fee,
           rating: 5,
           ratingCount: 1000,
-          level: "Unknown",
+          level: "Beginner",
           instructorName:
             course.instructors && course.instructors.length > 0
               ? `${course.instructors[0].first_name} ${course.instructors[0].last_name}`
@@ -97,8 +91,6 @@ export default function Homepage() {
 
           {loading ? (
             <p>Loading courses...</p>
-          ) : errorMessage ? (
-            <p className="text-red-500">{errorMessage}</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {courses.map((course, index) => (
