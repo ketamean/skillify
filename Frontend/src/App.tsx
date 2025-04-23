@@ -15,6 +15,7 @@ import InstructorDashboard from "./pages/Instructor/Dashboard";
 
 import ChatBot from "./components/ChatBot";
 import InstructorCouponPage from "./pages/InstructorCouponPage";
+import CourseEdit from "./pages/CourseEdit";
 
 const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ const router = createBrowserRouter([
       { path: "/coursecontent/:course_id", element: <CourseContentPage /> },
       { path: "/instructor/dashboard", element: <InstructorDashboard /> },
     ],
+  },
+  {
+    path: '/course/:course_id/upload',
+    element: <CourseEdit />
   },
   {
     path: "/profile",
