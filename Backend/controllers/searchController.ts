@@ -25,7 +25,7 @@ export const searchCourses = async (
 
     const { data, error } = await supabase.rpc("match_courses", {
       query_embedding: queryEmbeddingResponse.embeddings?.[0].values,
-      match_threshold: 0.75,
+      match_threshold: 0.5,
       match_count: 20,
     });
 

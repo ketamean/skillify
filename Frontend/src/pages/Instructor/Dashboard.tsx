@@ -9,8 +9,8 @@ interface Course {
   id: number;
   name: string;
   description: string;
-  price: number;
-  course_thumbnail?: string;
+  fee: number;
+  image_link?: string;
   created_at: string;
   updated_at: string;
   instructor_id: number;
@@ -22,7 +22,6 @@ export default function InstructorDashboard(): ReactElement {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { user } = useAuth();
-
   useEffect(() => {
     const fetchInstructorCourses = async () => {
       if (!user || !user.id) return;
@@ -47,7 +46,7 @@ export default function InstructorDashboard(): ReactElement {
     };
 
     fetchInstructorCourses();
-  }, [user]);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -120,12 +119,12 @@ export default function InstructorDashboard(): ReactElement {
                 id={course.id}
                 title={course.name}
                 imageUrl={
-                  course.course_thumbnail ||
+                  course.image_link ||
                   "https://via.placeholder.com/300x200?text=Course+Thumbnail"
                 }
-                price={course.price}
-                rating={course.average_rating || 0}
-                instructorName={user?.fname + " " + user?.lname}
+                price={course.fee}
+                instructorName={user.fname + " " + user.lname}
+                is_Instructor={true}
               />
             ))}
           </div>

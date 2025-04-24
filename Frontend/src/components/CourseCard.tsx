@@ -9,6 +9,7 @@ interface CourseCardProps {
   ratingCount?: number;
   price: number | "Free";
   level?: "Beginner" | "Intermediate" | "Advanced";
+  is_Instructor?: boolean;
 }
 
 export function CourseCard({
@@ -18,9 +19,13 @@ export function CourseCard({
   instructorName,
   price,
   level,
+  is_Instructor = false,
 }: CourseCardProps) {
   return (
-    <Link to={`/course/${id}`} className="block">
+    <Link
+      to={is_Instructor ? `/course/${id}/upload` : `/course/${id}`}
+      className="block"
+    >
       <div className="bg-custom-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 h-full hover:transform hover:scale-[1.02] transition-all">
         <img src={imageUrl} alt={title} className="w-full h-48 object-cover" />
         <div className="p-4">

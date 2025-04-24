@@ -9,13 +9,19 @@ export default function Homepage() {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      const { data, error } = await supabase.from("courses").select(`
+      const { data, error } = await supabase
+        .from("courses")
+        .select(
+          `
           id,
           name,
           image_link,
           fee,
           instructor:instructor_id (first_name, last_name)
-        `);
+        `
+        )
+        .eq("status", "Published")
+        .limit(20);
 
       if (error) {
         console.error("Error fetching courses:", error);
@@ -27,9 +33,9 @@ export default function Homepage() {
           price: course.fee,
           level: "Beginner",
           instructorName:
-            course.instructor.first_name ??
-            "" + " " + course.instructor.last_name ??
-            "",
+            (course.instructor.first_name ?? "") +
+            " " +
+            (course.instructor.last_name ?? ""),
         }));
 
         setCourses(formattedCourses);
