@@ -44,31 +44,16 @@ const router = createBrowserRouter([
     children: [
       { path: "/coursecontent/:course_id", element: <CourseContentPage /> },
       { path: "/instructor/dashboard", element: <InstructorDashboard /> },
+      { path: "/instructor/quizzes", element: <MyQuizPage /> },
+      { path: "/instructor/quizzes/:quiz_id", element: <QuizDetailPage /> },
+      { path: "/instructor/coupons", element: <InstructorCouponPage /> },
+      { path: "/profile", element: <ProfilePage /> },
+      { path: "/mylearning", element: <MyLearningPage /> },
     ],
   },
   {
-    path: '/course/:course_id/upload',
-    element: <CourseEdit />
-  },
-  {
-    path: "/profile",
-    element: <ProfilePage />,
-  },
-  {
-    path: "/mylearning",
-    element: <MyLearningPage />,
-  },
-  {
-    path: "/instructor/coupons",
-    element: <InstructorCouponPage />,
-  },
-  {
-    path: "/myquiz",
-    element: <MyQuizPage />,
-  },
-  {
-    path: "/myquiz/:quiz_id",
-    element: <QuizDetailPage />,
+    path: "/course/:course_id/upload",
+    element: <CourseEdit />,
   },
 ]);
 

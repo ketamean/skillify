@@ -24,8 +24,6 @@ export default function MyLearning() {
         .select("course_id")
         .eq("learner_id", user.id);
 
-      console.log("Enrolments:", enrolments);
-
       if (enrolmentError || !enrolments) {
         console.error("Error fetching enrolments:", enrolmentError);
         setLoading(false);
@@ -60,10 +58,7 @@ export default function MyLearning() {
       }
 
       const formattedCourses = courseData.map((course) => {
-        const instructor =
-          course.instructors && course.instructors.length > 0
-            ? course.instructors[0]
-            : null;
+        const instructor = course.instructors;
         return {
           id: course.id,
           title: course.name,
@@ -93,14 +88,7 @@ export default function MyLearning() {
 
   return (
     <div className="min-h-screen bg-custom-white flex flex-col">
-      <NavBar
-        user={{
-          fname: user?.fname || "",
-          lname: user?.lname || "",
-          email: user?.email,
-          avatarUrl: user?.avatar_url,
-        }}
-      />
+      <NavBar />
 
       <main className="container mx-auto px-[4%] pt-10 pb-20 flex-grow">
         <h1 className="text-3xl font-bold text-deepteal mb-6">My Learning</h1>

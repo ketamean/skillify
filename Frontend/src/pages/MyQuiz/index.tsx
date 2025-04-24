@@ -11,7 +11,8 @@ export default function MyQuiz() {
 
   useEffect(() => {
     const fetchMyQuizzes = async () => {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
       if (userError || !userData?.user) {
         console.error("Error getting user:", userError);
         setLoading(false);
@@ -73,14 +74,7 @@ export default function MyQuiz() {
 
   return (
     <div className="min-h-screen bg-custom-white">
-      <NavBar
-        user={{
-          fname: "Ariana",
-          lname: "Grande",
-          avatarUrl:
-            "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg",
-        }}
-      />
+      <NavBar />
 
       <main className="container mx-auto px-[4%] pt-10 pb-20">
         <h1 className="text-3xl font-bold text-deepteal mb-6">My Quizzes</h1>
@@ -110,9 +104,15 @@ export default function MyQuiz() {
             {sortedQuizzes.map((quiz, idx) => (
               <Link to={`/myquiz/${quiz.id}`} key={idx}>
                 <div className="flex flex-col items-start border p-4 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
-                  <h3 className="font-semibold text-deepteal mb-1">{quiz.title}</h3>
-                  <p className="text-sm text-gray-700 mb-1">{quiz.description}</p>
-                  <p className="text-sm text-gray-600 italic mb-1">{quiz.courseTitle}</p>
+                  <h3 className="font-semibold text-deepteal mb-1">
+                    {quiz.title}
+                  </h3>
+                  <p className="text-sm text-gray-700 mb-1">
+                    {quiz.description}
+                  </p>
+                  <p className="text-sm text-gray-600 italic mb-1">
+                    {quiz.courseTitle}
+                  </p>
                   <p className="text-sm text-gray-500">{quiz.duration} mins</p>
                 </div>
               </Link>

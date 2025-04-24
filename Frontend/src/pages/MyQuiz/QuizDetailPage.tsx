@@ -27,14 +27,7 @@ export default function QuizDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-custom-white">
-        <NavBar
-          user={{
-            fname: "Ariana",
-            lname: "Grande",
-            avatarUrl:
-              "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg",
-          }}
-        />
+        <NavBar />
         <main className="container mx-auto px-[4%] pt-10 pb-20">
           <p>Loading quiz statistics...</p>
         </main>
@@ -45,28 +38,31 @@ export default function QuizDetailPage() {
 
   return (
     <div className="min-h-screen bg-custom-white">
-      <NavBar
-        user={{
-          fname: "Ariana",
-          lname: "Grande",
-          avatarUrl:
-            "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg",
-        }}
-      />
+      <NavBar />
 
       <main className="container mx-auto px-[4%] pt-10 pb-20">
-        <h1 className="text-3xl font-bold text-deepteal mb-6">📈 Quiz Statistics</h1>
+        <h1 className="text-3xl font-bold text-deepteal mb-6">
+          📈 Quiz Statistics
+        </h1>
 
-        <p className="mb-2 text-gray-700">🧑‍🎓 Total Attempts: {stats.totalAttempts}</p>
-        <p className="mb-6 text-gray-700">📊 Average Score: {stats.averageScore}</p>
+        <p className="mb-2 text-gray-700">
+          🧑‍🎓 Total Attempts: {stats.totalAttempts}
+        </p>
+        <p className="mb-6 text-gray-700">
+          📊 Average Score: {stats.averageScore}
+        </p>
 
-        <h2 className="text-2xl font-semibold text-deepteal mt-8 mb-4">📋 Question Stats</h2>
+        <h2 className="text-2xl font-semibold text-deepteal mt-8 mb-4">
+          📋 Question Stats
+        </h2>
         {stats.questionStats.map((q: any, idx: number) => (
           <div key={idx} className="mb-6 border-b pb-4">
             <p className="font-medium text-gray-800 mb-1">
               {idx + 1}. {q.question}
             </p>
-            <p className="text-green-600 mb-2">✅ Correct Rate: {q.correctRate}</p>
+            <p className="text-green-600 mb-2">
+              ✅ Correct Rate: {q.correctRate}
+            </p>
 
             <div className="ml-4">
               {q.optionStats.map((opt: any, i: number) => (
