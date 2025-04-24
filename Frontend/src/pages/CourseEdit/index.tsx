@@ -131,12 +131,30 @@ export default function CourseEdit() {
 				setCourseName(course.title)
 				setCourseDescription(course.description)
 				setCourseFee(course.fee)
-				setSections(course.sections.map((section: FetchedSection) => {
+
+				Promise.all(course.sections.map(async (section: FetchedSection) => {
 					return {
 						id: section.id,
 						title: section.title,
 						description: section.description,
-						content: section.videos.map((video: FetchedVideo, vidIndex: number) => {
+						content: await Promise.all(section.videos.map(async (video: FetchedVideo, vidIndex: number) => {
+							let bucketName = ''
+							if (video.isPublic) {
+								bucketName = 'coursevideospublic'
+							} else {
+								bucketName = 'coursevideosprivate'
+							}
+							console.log(bucketName, video.link)
+							const { data: fileData, error: videoFileError } = await supabase.storage.from(bucketName).download(video.link)
+							let file: File | null = null
+							console.log(videoFileError)
+							if (fileData) {
+								const filename = video.link.substring(video.link.indexOf('-') + 1);
+								file = new File([fileData], filename, {
+									type: fileData.type,
+									lastModified: Date.now()
+								})
+							}
 							return {
 								id: vidIndex,
 								title: video.title,
@@ -144,21 +162,34 @@ export default function CourseEdit() {
 								type: 'video',
 								duration: video.duration,
 								isPublic: video.isPublic,
-								// file: 
+								file
 							} as Video
-						})
+						}))
 					} as Section
-				}))
+				})).then(newSections => {
+					setSections(newSections)
+				})
 
-				setDocuments(course.documents.map((document: FetchedDocument, docIndex: number) => {
+				Promise.all(course.documents.map(async (document: FetchedDocument, docIndex: number) => {
+					const { data: documentFile } = await supabase.storage.from('coursedocuments').download(document.link)
+					let file: File | null = null
+					if (documentFile) {
+						const filename = document.link.substring(document.link.indexOf('-') + 1);
+						file = new File([documentFile], filename, {
+							type: documentFile.type,
+							lastModified: Date.now()
+						})
+					}
 					return {
 						id: docIndex,
 						title: document.title,
 						description: document.description,
 						type: 'document',
-						// file: null
+						file
 					} as Document
-				}))
+				})).then((newDocuments) => {
+					setDocuments(newDocuments)
+				})
 
 				setQuizzes(course.quizzes.map((quiz: FetchedQuiz) => {
 					return {
@@ -334,22 +365,23 @@ export default function CourseEdit() {
 										return {
 											...section,
 											content: await Promise.all(section.content.map(async (video) => {
-												const filePath = `${Date.now()}-${video.title}`
+												const filePath = `${Date.now()}-${video.file?.name}`
 												let bucketName = ''
 												if (video.isPublic) {
 													bucketName = videoPublicBucket
 												} else {
 													bucketName = videoPrivateBucket
 												}
-												const { data, error } = await supabase
+												const { data, error: fileError } = await supabase
 													.storage
 													.from(bucketName)
 													.upload(filePath, video.file as File, {
 														cacheControl: '3600',
 														upsert: true
 													})
-												if (error) {
-													toast.message(error.message)
+												if (fileError) {
+													console.log(fileError)
+													toast.message(fileError.message)
 												}
 												return {
 													...video,
@@ -360,7 +392,7 @@ export default function CourseEdit() {
 									}))
 
 									const newDocuments = await Promise.all(documents.map(async (document) => {
-										const filePath = `${Date.now()}-${document.title}`
+										const filePath = `${Date.now()}-${document.file?.name}`
 										const { data, error } = await supabase
 											.storage
 											.from('coursedocuments')
@@ -419,7 +451,7 @@ export default function CourseEdit() {
 										.put(`/api/courses/${course_id}`, course)
 										.then(() => {
 											toast.message('Course updated successfully!');
-											setIsLoading(false)
+											window.location.reload();
 										})
 										.catch((err) => {
 											err.response.data.error && setErrorMsg(err.response.data.error);

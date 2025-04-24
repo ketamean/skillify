@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import supabase from "../config/database/supabase";
-import { ICourse } from "../models/course";
+import { ICourse, IVideo } from "../models/course";
 
 export const addMaterialComment = async (req: Request, res: Response): Promise<void> => {
   const { course_id, material_id } = req.params;
@@ -83,23 +83,37 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
     }
 
     const sections = sectionsData.data || [];
-    const videos = videosData.data || [];
+    const videos = videosData.data || []; //{ is_public: boolean, id: number }[]
     const documents = documentsData.data || [];
     const quizzes = quizzesData.data || [];
     const quizDetails = quizDetailsData.data || [];
-
-    const videoIds = videos.map((v) => v.id);
-
-    const { data: videoLinks, error: videoLinkError } = await supabase
-      .from("coursevideos_public")
+    const videoLinkMap: { [key: number] : string } = {}
+    const videoIds: number[] = videos.map((video) => video.id);
+    for (const video of videos) {
+      let tablename = ''
+      let schema = ''
+      if (video.is_public) {
+        schema = 'public'
+        tablename = 'coursevideos_public'
+      } else {
+        schema = 'private'
+        tablename = 'coursevideos_private'
+      }
+      const { data: videoLinks, error: videoLinkError } = await supabase
+      .schema(schema)
+      .from(tablename)
       .select("id, link")
-      .in("id", videoIds);
-    if (videoLinkError) {
-      res.status(500).json({ error: "Lỗi lấy link video" });
-      return;
+      .eq("id", video.id)
+
+      if (videoLinkError) {
+        console.log(videoLinkError)
+        res.status(500).json({ error: "Lỗi lấy link video" });
+        return;
+      }
+      videoLinkMap[video.id] = videoLinks[0]?.link || "";
     }
 
-    const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
+    // const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
 
     const formattedSections = sections.map((section) => ({
       id: section.id,

@@ -2,7 +2,7 @@ import {fileTypeFromBlob} from 'file-type'
 import { toast } from "sonner"
 import { useState, DragEvent, ChangeEvent, Dispatch, SetStateAction } from "react"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faFile, faUpload, faRemove } from '@fortawesome/free-solid-svg-icons'
+import { faFile, faUpload, faRemove, faDownload } from '@fortawesome/free-solid-svg-icons'
 
 interface FileDropZoneProps {
     accept: string
@@ -68,10 +68,28 @@ export default function FileDropZone(props: FileDropZoneProps) {
                 <label htmlFor="fileinput">File</label>
                 {
                     props.file?
-                        <button className='ml-auto' onClick={() => props.setFile(null)}>
-                            <FontAwesomeIcon className="cursor-pointer text-zinc-500" title="Remove file" icon={faRemove}/>
-                        </button>
-                         :
+                        <div className='ml-auto flex flex-row gap-x-2 items-center'>
+                            <button
+                                onClick={() => {
+                                    const url = window.URL.createObjectURL(props.file as File);
+                                    const a = document.createElement('a');
+                                    a.style.display = 'none'
+                                    a.href = url;
+                                    a.download = (props.file as File).name;
+
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    window.URL.revokeObjectURL(url);
+                                }}
+                            >
+                                <FontAwesomeIcon className="cursor-pointer text-zinc-500" title="Download file" icon={faDownload}/>
+                            </button>
+                            <button onClick={() => props.setFile(null)}>
+                                <FontAwesomeIcon className="cursor-pointer text-zinc-500" title="Remove file" icon={faRemove}/>
+                            </button>
+                        </div>
+                        :
                         <></>
                 }
             </div>
