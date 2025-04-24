@@ -20,7 +20,7 @@ import {
     DialogOverlay
 } from "@/components/ui/dialog"
 import FileDropZone from "./FileDropZone";
-import { Document, Section, Quiz } from "./types";
+import { Document, Section, Quiz, CourseDescription } from "./types";
 
 // interface CourseEditSideBarProps {}
 
@@ -31,11 +31,11 @@ interface CollapsibleProps {
 
 
 
-interface DraggableCollapsibleProps<T extends Section | Document | Quiz> { //{ id: number; title: string; description: string, content?: Video[], type?: MaterialType, file?: File | null, duration?: string, questions?: QuizQuestion[] }
+interface DraggableCollapsibleProps<T extends Section | Document | Quiz | CourseDescription> { //{ id: number; title: string; description: string, content?: Video[], type?: MaterialType, file?: File | null, duration?: string, questions?: QuizQuestion[] }
     title: string,
     items: T[],
     setItems: (items: T[]) => void,
-    type: "document" | "section" | "quiz"
+    type: "document" | "section" | "quiz" | "description"
 }
 
 interface SortableItemProps {
@@ -124,7 +124,7 @@ function SortableItem(props: SortableItemProps) {
     )
 }
 
-function DraggableCollapsible<T extends Section | Document | Quiz>(props: DraggableCollapsibleProps<T>) { // {id: number, title: string, description: string, content?: Video[], file?: File | null}
+function DraggableCollapsible<T extends Section | Document | Quiz | CourseDescription>(props: DraggableCollapsibleProps<T>) { // {id: number, title: string, description: string, content?: Video[], file?: File | null}
     const pointerSensor = useSensor(PointerSensor, {
         // activationConstraint: {distance: 5}
     })
@@ -140,6 +140,7 @@ function DraggableCollapsible<T extends Section | Document | Quiz>(props: Dragga
         setNewTitle('')
         setNewDocumentFile(null)
     }
+
     const createNewItem = (): T => {
         const baseItem = {
             id: getNewId(props.items),
@@ -167,6 +168,10 @@ function DraggableCollapsible<T extends Section | Document | Quiz>(props: Dragga
                     type: 'quiz',
                     content: [],
                 } as unknown as T;
+            case 'description':
+                return {
+                    ...baseItem
+                } as unknown as T
         }
     };
 
@@ -189,7 +194,7 @@ function DraggableCollapsible<T extends Section | Document | Quiz>(props: Dragga
                 >
                     <div className="flex flex-col gap-y-2 w-full">
                         {
-                            props.items.map((item) => {
+                            !props.items? <></> : props.items.map((item) => {
                                 return (
                                     <SortableItem
                                         key={`${props.type}${item.id}`}
@@ -311,10 +316,12 @@ function DraggableCollapsible<T extends Section | Document | Quiz>(props: Dragga
 }
 
 export default function CourseEditSideBar() {
-    const { sections, setSections, documents, setDocuments, quizzes, setQuizzes} = useItemPortalContext()
+    const { sections, setSections, documents, setDocuments, quizzes, setQuizzes, courseDescriptionList, setCourseDescriptionList} = useItemPortalContext()
 
     return (
         <div className="flex flex-col w-full">
+            <DraggableCollapsible<CourseDescription> title="Descriptions" items={courseDescriptionList} setItems={setCourseDescriptionList} type="description"/>
+
             <DraggableCollapsible<Section> title="Sections" items={sections} setItems={setSections} type="section"/>
             
             <DraggableCollapsible<Document> title="Documents" items={documents} setItems={setDocuments} type="document"/>

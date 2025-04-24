@@ -27,11 +27,16 @@ export interface IQuiz {
     duration: number
 }
 
+export interface ICourseDescription {
+    header: string,
+    content: string
+}
+
 export interface ICourse {
     course_id: number;
     title: string;
     short_description: string;
-    // descriptions: string;
+    descriptions: ICourseDescription[];
     sections: ISection[];
     documents: IDocument[]
     quizzes: IQuiz[],
