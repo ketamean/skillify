@@ -52,14 +52,7 @@ export default function InstructorDashboard(): ReactElement {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
-      <NavBar
-        user={{
-          fname: user?.fname || "",
-          lname: user?.lname || "",
-          email: user?.email,
-          avatarUrl: user?.avatar_url,
-        }}
-      />
+      <NavBar />
 
       {/* Instructor Dashboard Navigation */}
       <div className="bg-gray-800 text-white">

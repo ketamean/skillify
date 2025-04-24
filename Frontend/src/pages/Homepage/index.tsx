@@ -14,7 +14,7 @@ export default function Homepage() {
           name,
           image_link,
           fee,
-          instructors:instructor_id (first_name, last_name)
+          instructor:instructor_id (first_name, last_name)
         `);
 
       if (error) {
@@ -25,13 +25,11 @@ export default function Homepage() {
           title: course.name,
           imageUrl: course.image_link,
           price: course.fee,
-          rating: 5,
-          ratingCount: 1000,
           level: "Beginner",
           instructorName:
-            course.instructors && course.instructors.length > 0
-              ? `${course.instructors[0].first_name} ${course.instructors[0].last_name}`
-              : "Unknown Instructor",
+            course.instructor.first_name ??
+            "" + " " + course.instructor.last_name ??
+            "",
         }));
 
         setCourses(formattedCourses);
@@ -44,14 +42,7 @@ export default function Homepage() {
 
   return (
     <div className="min-h-screen bg-custom-white">
-      <NavBar
-        user={{
-          fname: "Ariana",
-          lname: "Grande",
-          avatarUrl:
-            "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg",
-        }}
-      />
+      <NavBar />
 
       {/* Banner Section */}
       <div className="relative h-[400px] mx-auto container flex justify-center pt-4 px-[4%]">
