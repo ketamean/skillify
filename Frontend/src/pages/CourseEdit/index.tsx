@@ -332,14 +332,43 @@ export default function CourseEdit() {
                 setIsLoading(true);
                 // validate videos
                 sections.forEach((section) => {
+                  if (!section.title) {
+                    setErrorMsg("Please enter section title");
+                    setIsError(true);
+                    return;
+                  }
+                  if (!section.description) {
+                    setErrorMsg("Please enter section description");
+                    setIsError(true);
+                    return;
+                  }
                   section.content.forEach((video) => {
                     if (!video.file) {
-                      setErrorMsg("Please refresh and upload video file");
+                      setErrorMsg(
+                        "Please upload video file for section: " + section.title
+                      );
                       setIsError(true);
                       return;
                     }
                     if (!video.title) {
-                      setErrorMsg("Please enter video title");
+                      setErrorMsg(
+                        "Please enter video title for section: " + section.title
+                      );
+                      setIsError(true);
+                      return;
+                    }
+                    if (!video.description) {
+                      setErrorMsg(
+                        "Please enter video description for section: " +
+                          section.title
+                      );
+                      setIsError(true);
+                      return;
+                    }
+                    if (!video.duration) {
+                      setErrorMsg(
+                        "Please enter video duration for: " + video.title
+                      );
                       setIsError(true);
                       return;
                     }
@@ -350,11 +379,63 @@ export default function CourseEdit() {
 
                 // validate documents
                 documents.forEach((document) => {
-                  if (!document.file) {
-                    setErrorMsg("Please refresh and upload document file");
+                  if (!document.title) {
+                    setErrorMsg("Please enter document title");
                     setIsError(true);
                     return;
                   }
+                  if (!document.description) {
+                    setErrorMsg("Please enter document description");
+                    setIsError(true);
+                    return;
+                  }
+                  if (!document.file) {
+                    setErrorMsg(
+                      "Please upload document file for: " + document.title
+                    );
+                    setIsError(true);
+                    return;
+                  }
+                });
+
+                if (isError) return;
+
+                // validate quizzes
+                quizzes.forEach((quiz) => {
+                  if (!quiz.title) {
+                    setErrorMsg("Please enter quiz title");
+                    setIsError(true);
+                    return;
+                  }
+                  if (!quiz.description) {
+                    setErrorMsg("Please enter quiz description");
+                    setIsError(true);
+                    return;
+                  }
+                  if (quiz.content.length === 0) {
+                    setErrorMsg(
+                      "Please add at least one question to quiz: " + quiz.title
+                    );
+                    setIsError(true);
+                    return;
+                  }
+                  quiz.content.forEach((question) => {
+                    if (!question.question) {
+                      setErrorMsg(
+                        "Please enter question text for quiz: " + quiz.title
+                      );
+                      setIsError(true);
+                      return;
+                    }
+                    if (!question.answers || question.answers.length < 2) {
+                      setErrorMsg(
+                        "Please enter at least 2 answer choices for question in quiz: " +
+                          quiz.title
+                      );
+                      setIsError(true);
+                      return;
+                    }
+                  });
                 });
 
                 if (isError) return;

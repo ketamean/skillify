@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
-import axios from "axios";
+import { axiosForm } from "@/config/axios";
 import { useAuth } from "../../context/AuthContext";
 import NavBar from "../../components/NavBar";
 import CouponFormModal from "../../components/CouponFormModal";
@@ -33,7 +33,7 @@ const InstructorCouponPage: React.FC = () => {
     if (!confirm) return;
 
     try {
-      await axios.delete(`/api/coupons/${couponId}`);
+      await axiosForm.delete(`/api/coupons/${couponId}`);
       alert("Coupon deleted");
       fetchInstructorCoupons();
     } catch (err) {
@@ -47,8 +47,8 @@ const InstructorCouponPage: React.FC = () => {
 
     try {
       const instructorId = user.id;
-      const res = await axios.get<Coupon[]>(
-        `http://localhost:3000/api/coupons/instructor/${instructorId}`
+      const res = await axiosForm.get<Coupon[]>(
+        `/api/coupons/instructor/${instructorId}`
       );
       setCoupons(res.data);
     } catch (err) {
