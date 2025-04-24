@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import supabase from "../config/database/supabase";
-import { ICourse } from "../models/course";
+import { ICourse, IVideo } from "../models/course";
 
 export const addMaterialComment = async (req: Request, res: Response): Promise<void> => {
   const { course_id, material_id } = req.params;
@@ -55,12 +55,30 @@ export const addMaterialComment = async (req: Request, res: Response): Promise<v
 
 export const getCourseContent = async (req: Request, res: Response): Promise<void> => {
   const { course_id } = req.params;
-  const { data, error } = await supabase.rpc("current_user_role");
-  const user_id = req.query.user_id as string;
+  // const { data, error } = await supabase.rpc("current_user_role");
+  const user_id = req.user.id// req.query.user_id as string;
   try {
+    // check user's accessibility
+    const { data: checkAccessibilityData, error: checkAccessibilityError } = await supabase.schema('public').rpc("isAccessibleToACourse", {
+      courseid: Number(course_id),
+      userid: user_id,
+    })
+    if (checkAccessibilityError) {
+      console.error("Error checking course accessibility:", checkAccessibilityError);
+      res.status(500).json({ error: "Error checking course accessibility" });
+      return;
+    }
+
+    if (checkAccessibilityData as boolean === false) {
+      res.status(403).json({ error: "You don't have access to this course" });
+      return;
+    }
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+
     const { data: course, error: courseError } = await supabase
       .from("courses")
-      .select("id, name, short_description, created_at, fee")
+      .select("id, name, short_description, created_at, fee, instructor_id")
       .eq("id", course_id)
       .single();
 
@@ -83,23 +101,37 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
     }
 
     const sections = sectionsData.data || [];
-    const videos = videosData.data || [];
+    const videos = videosData.data || []; //{ is_public: boolean, id: number }[]
     const documents = documentsData.data || [];
     const quizzes = quizzesData.data || [];
     const quizDetails = quizDetailsData.data || [];
-
-    const videoIds = videos.map((v) => v.id);
-
-    const { data: videoLinks, error: videoLinkError } = await supabase
-      .from("coursevideos_public")
+    const videoLinkMap: { [key: number] : string } = {}
+    const videoIds: number[] = videos.map((video) => video.id);
+    for (const video of videos) {
+      let tablename = ''
+      let schema = ''
+      if (video.is_public) {
+        schema = 'public'
+        tablename = 'coursevideos_public'
+      } else {
+        schema = 'private'
+        tablename = 'coursevideos_private'
+      }
+      const { data: videoLinks, error: videoLinkError } = await supabase
+      .schema(schema)
+      .from(tablename)
       .select("id, link")
-      .in("id", videoIds);
-    if (videoLinkError) {
-      res.status(500).json({ error: "Lỗi lấy link video" });
-      return;
+      .eq("id", video.id)
+
+      if (videoLinkError) {
+        console.log(videoLinkError)
+        res.status(500).json({ error: "Lỗi lấy link video" });
+        return;
+      }
+      videoLinkMap[video.id] = videoLinks[0]?.link || "";
     }
 
-    const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
+    // const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
 
     const formattedSections = sections.map((section) => ({
       id: section.id,
@@ -211,31 +243,30 @@ export const setCourseContent = async (req: Request, res: Response): Promise<voi
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
     // check whether current user is instructor of the course
-    supabase
+    const { data: courseData, error: courseError } = await supabase
       .from("courses")
       .select("instructor_id")
       .eq("id", course.course_id)
-      .then(({ data, error }) => {
-        if (error) {
-          throw {
-            error: Error("Cannot get course"),
-            code: 500
-          }
-        }
-        if (!data || data.length === 0) {
-          throw {
-            error: Error("Course does not exist"),
-            code: 404
-          }
-        }
-        const instructorId = data[0].instructor_id;
-        if (instructorId !== req.user.id) {
-          throw {
-            error: Error("You are not the instructor of this course"),
-            code: 403
-          }
-        }
-      });
+      .single()
+    if (courseError) {
+      throw {
+        error: Error("Cannot get course"),
+        code: 500
+      }
+    }
+    if (!courseData) {
+      throw {
+        error: Error("Course does not exist"),
+        code: 404
+      }
+    }
+    const instructorId = courseData.instructor_id;
+    if (instructorId !== req.user.id) {
+      throw {
+        error: Error("You are not the instructor of this course"),
+        code: 403
+      }
+    }
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
     // validate data
@@ -253,8 +284,10 @@ export const setCourseContent = async (req: Request, res: Response): Promise<voi
     }
     course.sections.forEach((section) => {
       if (!section.title || !section.videos || !Array.isArray(section.videos)) {
-        res.status(400).json({ error: "Each section must have a title and an array of videos" });
-        return;
+        throw {
+          error: Error("Each section must have a title and an array of videos"),
+          code: 400
+        }
       }
       section.videos.forEach((video) => {
         if (!video.title || !video.duration) {
@@ -328,7 +361,7 @@ export const setCourseContent = async (req: Request, res: Response): Promise<voi
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
     // set course metadata
-    const { error: courseError } = await supabase
+    const { error: courseUpdateError } = await supabase
       .from("courses")
       .update({
         name: course.title,
@@ -336,6 +369,13 @@ export const setCourseContent = async (req: Request, res: Response): Promise<voi
         fee: course.fee,
       })
       .eq("id", course.course_id);
+    if (courseUpdateError) {
+      console.log(courseUpdateError)
+      throw {
+        error: Error("Failed to update course metadata"),
+        code: 500
+      }
+    }
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
     // delete meterials by course_id: call function delete_materials_by_course_id
@@ -382,8 +422,10 @@ export const setCourseContent = async (req: Request, res: Response): Promise<voi
         })
       if (quizError) {
         console.log(quizError)
-        res.status(500).json({ error: "Failed to insert quiz" });
-        return;
+        throw {
+          error: Error("Failed to insert quiz"),
+          code: 500
+        }
       }
 
       // set quizdetails
@@ -553,7 +595,7 @@ export const setCourseContent = async (req: Request, res: Response): Promise<voi
   } catch (err) {
     const { error, code} = err as {error: Error, code: number}
     console.log("set course content", error)
-    res.status(code).json({ ...error })
+    res.status(code).json({ error: error.message })
     return;
   }
 }
