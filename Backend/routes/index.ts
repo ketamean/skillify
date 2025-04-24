@@ -16,6 +16,8 @@ router.use("/search", searchRouter);
 // APIs that need Auth
 const router2 = express.Router();
 router2.use("/courses", courseRouter)
+
+
 router.use('/', checkAuth, router2)
 
 export default router;

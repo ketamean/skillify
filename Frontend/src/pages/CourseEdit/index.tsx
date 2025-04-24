@@ -119,9 +119,9 @@ export default function CourseEdit() {
 			.get(`/api/courses/${course_id}`)
 			.then((res) => {
 				if (!res.data) {
-					toast.message(`Cannot find course ${course_id}`)
-					setIsError(true)
-					return;
+					throw {
+						error: `Cannot find course ${course_id}`
+					}
 				}
 
 				setIsLoading(false)
@@ -147,7 +147,11 @@ export default function CourseEdit() {
 							console.log(bucketName, video.link)
 							const { data: fileData, error: videoFileError } = await supabase.storage.from(bucketName).download(video.link)
 							let file: File | null = null
-							console.log(videoFileError)
+							if (videoFileError) {
+								throw {
+									error: videoFileError
+								}
+							}
 							if (fileData) {
 								const filename = video.link.substring(video.link.indexOf('-') + 1);
 								file = new File([fileData], filename, {
@@ -210,7 +214,8 @@ export default function CourseEdit() {
 				}))
 			})
 			.catch((err) => {
-				console.log(err)
+				const {error} = err as {error: string}
+				setErrorMsg(error)
 				setIsError(true)
 			})
 	}, [course_id])
@@ -309,155 +314,173 @@ export default function CourseEdit() {
 							{/* "Save" button */}
 							<button className="ml-auto bg-light-green flex-none font-semibold rounded-md w-fit px-2 hover:bg-mint p-2 flex flex-row items-center gap-x-2 cursor-pointer"
 								onClick={async () => {
-									if (isError) return;
 									setIsLoading(true)
-									// validate videos
-									sections.forEach((section) => {
-										section.content.forEach((video) => {
-											if (!video.file) {
-												setErrorMsg("Please refresh and upload video file");
-												setIsError(true);
-												return;
+									try {
+										if (isError) {
+											throw {
+												error: 'Error. Please try again'
 											}
-											if (!video.title) {
-												setErrorMsg("Please enter video title");
-												setIsError(true);
-												return;
-											}
-										})
-									})
-
-									if (isError) return;
-
-									// validate documents
-									documents.forEach((document) => {
-										if (!document.file) {
-											setErrorMsg("Please refresh and upload document file");
-											setIsError(true);
-											return;
 										}
-									})
-
-									if (isError) return;
-
-									// validates metadata
-									if (!courseName) {
-										setErrorMsg("Please enter course name");
-										setIsError(true);
-										return;
-									}
-									if (!courseDescription) {
-										setErrorMsg("Please enter course description");
-										setIsError(true);
-										return;
-									}
-									if (courseFee < 0) {
-										setErrorMsg("Please enter course fee");
-										setIsError(true);
-										return;
-									}
-									if (isError) return;
-									// upload files
-									const videoPublicBucket = 'coursevideospublic'
-									const videoPrivateBucket = 'coursevideosprivate'
-
-									const newSections = await Promise.all(sections.map(async (section) => {
-										return {
-											...section,
-											content: await Promise.all(section.content.map(async (video) => {
-												const filePath = `${Date.now()}-${video.file?.name}`
-												let bucketName = ''
-												if (video.isPublic) {
-													bucketName = videoPublicBucket
-												} else {
-													bucketName = videoPrivateBucket
+										// validate videos
+										sections.forEach((section) => {
+											section.content.forEach((video) => {
+												if (!video.file) {
+													throw {
+														error: 'Please refresh and upload video file'
+													}
 												}
-												const { data, error: fileError } = await supabase
-													.storage
-													.from(bucketName)
-													.upload(filePath, video.file as File, {
-														cacheControl: '3600',
-														upsert: true
-													})
-												if (fileError) {
-													console.log(fileError)
-													toast.message(fileError.message)
+												if (!video.title) {
+													throw {
+														error: 'Please enter video title'
+													}
 												}
-												return {
-													...video,
-													link: data? data.path : ''
-												}
-											}))
-										}
-									}))
-
-									const newDocuments = await Promise.all(documents.map(async (document) => {
-										const filePath = `${Date.now()}-${document.file?.name}`
-										const { data, error } = await supabase
-											.storage
-											.from('coursedocuments')
-											.upload(filePath, document.file as File, {
-												cacheControl: '3600',
-												upsert: true
 											})
-										if (error) {
-											toast.message(error.message)
-										}
-										return {
-											...document,
-											link: data? data.path : ''
-										}
-									}))
-
-									console.log(newSections, newDocuments)
-
-									// set up sent data
-									const course: SendAPICourse = {
-										course_id: Number(course_id),
-										fee: courseFee,
-										title: courseName,
-										short_description: courseDescription,
-										sections: newSections.map((sec) => {
-											return {
-												title: sec.title,
-												videos: sec.content.map((video) => {
-													return {
-														title: video.title,
-														duration: '1',//video.duration,
-														description: video.description,
-														link: video.link,
-														isPublic: video.isPublic,
-													}
-												})
-											}
-										}),
-										documents: newDocuments,
-										quizzes: quizzes.map((quiz) => {
-											return {
-												title: quiz.title,
-												description: quiz.description,
-												duration: quiz.duration,
-												questions: quiz.content.map((question) => {
-													return {
-														question: question.question,
-														choices: question.answers,
-														answer: question.key
-													}
-												})
+										})
+	
+										// validate documents
+										documents.forEach((document) => {
+											if (!document.file) {
+												throw {
+													error: 'Please refresh and upload document file'
+												}
 											}
 										})
-									};
-									axiosForm
-										.put(`/api/courses/${course_id}`, course)
-										.then(() => {
-											toast.message('Course updated successfully!');
-											window.location.reload();
-										})
-										.catch((err) => {
-											err.response.data.error && setErrorMsg(err.response.data.error);
-											toast.message(err.response.data.error);
-											setIsError(true);
-										})
+	
+										if (isError) return;
+	
+										// validates metadata
+										if (!courseName) {
+											throw {
+												error: 'Please enter course name'
+											}
+										}
+										if (!courseDescription) {
+											throw {
+												error: 'Please enter course description'
+											}
+										}
+										if (courseFee < 0) {
+											throw {
+												error: 'Please enter course fee'
+											}
+										}
+										if (isError) return;
+										// upload files
+										const videoPublicBucket = 'coursevideospublic'
+										const videoPrivateBucket = 'coursevideosprivate'
+	
+										const newSections = await Promise.all(sections.map(async (section) => {
+											return {
+												...section,
+												content: await Promise.all(section.content.map(async (video) => {
+													const filePath = `${Date.now()}-${video.file?.name}`
+													let bucketName = ''
+													if (video.isPublic) {
+														bucketName = videoPublicBucket
+													} else {
+														bucketName = videoPrivateBucket
+													}
+													const { data, error: fileError } = await supabase
+														.storage
+														.from(bucketName)
+														.upload(filePath, video.file as File, {
+															cacheControl: '3600',
+															upsert: true
+														})
+													if (fileError) {
+														throw{
+															error: fileError.message
+														}
+													}
+													return {
+														...video,
+														link: data? data.path : ''
+													}
+												}))
+											}
+										}))
+	
+										const newDocuments = await Promise.all(documents.map(async (document) => {
+											const filePath = `${Date.now()}-${document.file?.name}`
+											const { data: documentUploadData, error: documentUploadError } = await supabase
+												.storage
+												.from('coursedocuments')
+												.upload(filePath, document.file as File, {
+													cacheControl: '3600',
+													upsert: true
+												})
+											if (documentUploadError) {
+												throw {
+													error: documentUploadError.message
+												}
+											}
+											return {
+												...document,
+												link: documentUploadData? documentUploadData.path : ''
+											}
+										}))
+	
+										console.log(newSections, newDocuments)
+	
+										// set up sent data
+										const course: SendAPICourse = {
+											course_id: Number(course_id),
+											fee: courseFee,
+											title: courseName,
+											short_description: courseDescription,
+											sections: newSections.map((sec) => {
+												return {
+													title: sec.title,
+													videos: sec.content.map((video) => {
+														return {
+															title: video.title,
+															duration: '1',//video.duration,
+															description: video.description,
+															link: video.link,
+															isPublic: video.isPublic,
+														}
+													})
+												}
+											}),
+											documents: newDocuments,
+											quizzes: quizzes.map((quiz) => {
+												return {
+													title: quiz.title,
+													description: quiz.description,
+													duration: quiz.duration,
+													questions: quiz.content.map((question) => {
+														return {
+															question: question.question,
+															choices: question.answers,
+															answer: question.key
+														}
+													})
+												}
+											})
+										};
+										axiosForm
+											.put(`/api/courses/${course_id}`, course)
+											.then(() => {
+												toast.message('Course updated successfully!');
+												window.location.reload();
+											})
+											.catch((err) => {
+												if (err?.response?.data?.error) {
+													throw {
+														error: err.response.data.error
+													}
+												}
+												if (err?.request?.data?.error) {
+													throw {
+														error: err.request.data.error
+													}
+												}
+											})
+									} catch (err) {
+										const {error} = err as {error: string}
+										setErrorMsg(error)
+										setIsError(true)
+									}
 								}}
 								disabled={isLoading}
 							>
