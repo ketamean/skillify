@@ -16,13 +16,13 @@ export default function CourseEditHeader(props: CourseEditHeaderProps) {
                         onChange={(e) => {
                             setCourseName(e.target.value)
                         }}
-                        maxLength={80}
+                        maxLength={20}
                     />
                 </div>
 
                 {/* Course description */}
                 <div className="flex flex-col gap-y-1">
-                    <label htmlFor="courseDescription">Course Description</label>
+                    <label htmlFor="courseDescription">Short Description</label>
                     <textarea
                         className="px-2 py-1 border border-gray-300 rounded-sm resize-none"
                         name="courseDescription" id="courseDescription"
@@ -32,7 +32,7 @@ export default function CourseEditHeader(props: CourseEditHeaderProps) {
                         placeholder="Markdown supported"
                         defaultValue={courseDescription}
                         rows={6}
-                        maxLength={2000}
+                        maxLength={80}
                     ></textarea>
                 </div>
 

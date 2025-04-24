@@ -378,6 +378,36 @@ export const setCourseContent = async (req: Request, res: Response): Promise<voi
     }
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
+    // delete old course descriptions list
+    const { error: deleteCourseDescriptionListError } = await supabase
+      .from("coursedescriptions")
+      .delete()
+      .eq("course_id", course.course_id);
+    if (deleteCourseDescriptionListError) {
+      throw {
+        error: Error("Failed to delete old descriptions"),
+        code: 500
+      }
+    }
+    ////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////
+    // set course descriptions list
+    const { error: setCourseDescriptionListError } = await supabase
+    .from("coursedescriptions")
+    .insert(course.descriptions.map((des, index) => ({
+      course_id: course.course_id,
+      header: des.header,
+      content: des.content,
+      order: index
+    })))
+    if (setCourseDescriptionListError) {
+      throw {
+        error: Error("Failed to delete old descriptions"),
+        code: 500
+      }
+    }
+    ////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////
     // delete meterials by course_id: call function delete_materials_by_course_id
     const { error: deleteMaterialsError } = await supabase
       .rpc("delete_materials_by_courseid", { courseid: course.course_id })

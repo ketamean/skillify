@@ -3,7 +3,7 @@ import Footer from "../../components/Footer";
 import NavBar from "../../components/NavBar";
 import CourseEditHeader from "./CourseEditHeader";
 import CourseEditSideBar from './CourseEditSideBar'
-import { Quiz, Section, Video, Document, SendAPICourse } from "./types";
+import { Quiz, Section, Video, Document, SendAPICourse, CourseDescription } from "./types";
 import ItemPortalProvider, { CurrentSelectedItem } from "./context"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
@@ -23,24 +23,34 @@ export default function CourseEdit() {
 	const [quizzes, setQuizzes] = useState<Quiz[]>([])
 	const [currentSelectedItem, setCurrentSelectedItem] = useState<CurrentSelectedItem | null>(null)
 	const [hasChanged, setHasChanged] = useState<boolean>(false)
-	const [tempChangedSelectedItem, setTempChangedSelectedItem] = useState<Section | Document | Quiz | null>(null)
+	const [tempChangedSelectedItem, setTempChangedSelectedItem] = useState<Section | Document | Quiz | CourseDescription | null>(null)
 	const [isError, setIsError] = useState<boolean>(false)
 	const [isLoading, setIsLoading] = useState<boolean>(true)
 	const [errorMsg, setErrorMsg] = useState<string>('')
+	const [courseDescriptionList, setCourseDescriptionList] = useState<CourseDescription[]>([])
 	const { course_id } = useParams()
 
 	useEffect(() => {
 		if (isError) setIsLoading(false)
 	}, [isError])
 
-	useEffect(() => {
-		console.log(errorMsg)
-	}, [errorMsg])
-
 	// fetch data
 	useEffect(() => {
+		supabase.from("coursedescriptions").select("header, content").eq("course_id", course_id).order("order", {ascending: true})
+			.then((res) => {
+				if (res.error) {
+					throw {
+						error: "Cannot get course description list"
+					}
+				}
+				setCourseDescriptionList(res.data.map((item, index) => ({
+					id: index,
+					title: item.header as string,
+					description: item.content as string
+				})))
+			})
 		axiosForm
-			.get(`/api/courses/${course_id}`)
+			.get(`/api/courses/${course_id}/instructor`)
 			.then((res) => {
 				if (!res.data) {
 					throw {
@@ -68,7 +78,6 @@ export default function CourseEdit() {
 							} else {
 								bucketName = 'coursevideosprivate'
 							}
-							console.log(bucketName, video.link)
 							const { data: fileData, error: videoFileError } = await supabase.storage.from(bucketName).download(video.link)
 							let file: File | null = null
 							if (videoFileError) {
@@ -165,6 +174,11 @@ export default function CourseEdit() {
                     if (quiz) setTempChangedSelectedItem(quiz)
                     else setTempChangedSelectedItem(null)
                     break;
+				case 'description':
+					const descr = courseDescriptionList.find((d) => d.id === currentSelectedItem.id)
+					if (descr) setTempChangedSelectedItem(descr)
+					else setTempChangedSelectedItem(null)
+					break;
             }
         }
     }, [currentSelectedItem]);
@@ -213,7 +227,15 @@ export default function CourseEdit() {
 				setTempChangedSelectedItem,
 
 				courseFee,
-				setCourseFee
+				setCourseFee,
+
+				courseDescriptionList,
+				setCourseDescriptionList,
+				setCourseDescriptionListAtIndex: (newItem: CourseDescription, atIndex: number) => {
+					const newCourseDescriptionList = [...courseDescriptionList]
+					newCourseDescriptionList[atIndex] = newItem
+					setCourseDescriptionList(newCourseDescriptionList)
+				},
 			}}>
 				{
 					isError ? <p className="text-red-600 p-4 text-2xl">{ errorMsg ? errorMsg : 'Error' }</p> : 
@@ -344,14 +366,16 @@ export default function CourseEdit() {
 											}
 										}))
 	
-										console.log(newSections, newDocuments)
-	
 										// set up sent data
 										const course: SendAPICourse = {
 											course_id: Number(course_id),
 											fee: courseFee,
 											title: courseName,
 											short_description: courseDescription,
+											descriptions: courseDescriptionList.map((item) => ({
+												header: item.title,
+												content: item.description
+											})),
 											sections: newSections.map((sec) => {
 												return {
 													title: sec.title,
@@ -401,6 +425,7 @@ export default function CourseEdit() {
 												}
 											})
 									} catch (err) {
+										console.log("I was here")
 										const {error} = err as {error: string}
 										setErrorMsg(error)
 										setIsError(true)

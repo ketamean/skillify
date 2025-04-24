@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch"
 // interface CourseEditorMainAreaProps {}
 
 export default function CourseEditorMainArea() { // props: CourseEditorMainAreaProps
-    const { currentSelectedItem, setCurrentSelectedItem, sections, setSectionAtIndex, documents, setDocumentAtIndex, quizzes, setQuizAtIndex, tempChangedSelectedItem, setTempChangedSelectedItem } = useItemPortalContext()
+    const { currentSelectedItem, setCurrentSelectedItem, sections, setSectionAtIndex, documents, setDocumentAtIndex, quizzes, setQuizAtIndex, tempChangedSelectedItem, setTempChangedSelectedItem,courseDescriptionList, setCourseDescriptionListAtIndex } = useItemPortalContext()
 
     // for documents
     const [documentFile, setDocumentFile] = useState<File | null>(null)
@@ -38,45 +38,12 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
             case 'quiz':
                 setQuestions((tempChangedSelectedItem as Quiz).content)
                 return [quizzes, setQuizAtIndex]
+            case 'description':
+                return [courseDescriptionList, setCourseDescriptionListAtIndex]
             default:
                 return [null, null]
         }
     }, [tempChangedSelectedItem])
-
-    // const [itemList, itemSetter, item] = useMemo(() => {
-    //     switch (currentSelectedItem?.type) {
-    //         case 'section':
-    //             let foundSection: Section | undefined | null = sections.find((item) => item.id === currentSelectedItem?.id)
-    //             if (foundSection === undefined) foundSection = null
-    //             return [sections, setSectionAtIndex, foundSection]
-    //         case 'document':
-    //             let foundDocument: Document | undefined | null = documents.find((item) => item.id === currentSelectedItem?.id)
-    //             if (foundDocument === undefined) {
-    //                 foundDocument = null
-    //                 setDocumentFile(null)
-    //             } else {
-    //                 setDocumentFile(foundDocument.file)
-    //             }
-    //             return [documents, setDocumentAtIndex, foundDocument]
-    //         case 'quiz':
-    //             let foundQuiz: Quiz | undefined | null = quizzes.find((item) => item.id === currentSelectedItem?.id)
-    //             if (foundQuiz === undefined) foundQuiz = null
-    //             return [quizzes, setQuizAtIndex, foundQuiz]
-    //         default:
-    //             return [null, null, null]
-    //     }
-    // }, [currentSelectedItem])
-
-    // useEffect(() => {
-    //     if (!item) return;
-    //     setTempChangedSelectedItem(item)
-    // }, [item])
-
-    // // for the save button of the current selected section / doc / quiz
-    // useEffect(() => {
-    //     if (!tempChangedSelectedItem || !item) return;
-    //     setHasChanged( !isEqualObjects(tempChangedSelectedItem, item) )
-    // }, [tempChangedSelectedItem])
 
     // for the Document part
     useEffect(() => {
@@ -158,7 +125,7 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                             }}
                             value={tempChangedSelectedItem?.description? tempChangedSelectedItem?.description : ''}
                             rows={6}
-                            maxLength={200}
+                            maxLength={500}
                         ></textarea>
                     </div>
 
