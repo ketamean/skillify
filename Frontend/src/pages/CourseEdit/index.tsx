@@ -8,7 +8,7 @@ import ItemPortalProvider, { CurrentSelectedItem } from "./context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import CourseEditorMainArea from "./CourseEditorMainArea";
-import { axiosForm, axiosFile } from "@/config/axios";
+import { axiosForm } from "@/config/axios";
 import {
   FetchedVideo,
   FetchedSection,
@@ -19,7 +19,6 @@ import {
 } from "./fetchedDataTypes";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/supabaseClient";
 import { supabase } from "@/supabaseClient";
 
 const sampleMaterials: Video[] = [
@@ -255,7 +254,7 @@ export default function CourseEdit() {
 
   return (
     <>
-      <NavBar user={{ fname: "Linda", lname: "Nee Xin Chao" }} />
+      <NavBar />
       <ItemPortalProvider
         value={{
           courseName,
