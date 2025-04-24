@@ -10,6 +10,8 @@ import FileDropZone from "./FileDropZone"
 import AddFileDialog from './AddFileDialog'
 import { DialogClose } from "@/components/ui/dialog"
 import Divider from "@/components/Divider"
+import { Switch } from "@/components/ui/switch"
+
 // interface CourseEditorMainAreaProps {}
 
 export default function CourseEditorMainArea() { // props: CourseEditorMainAreaProps
@@ -131,6 +133,7 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                                     })
                                 }
                             }}
+                            maxLength={50}
                         />
                     </div>
 
@@ -155,8 +158,31 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                             }}
                             value={tempChangedSelectedItem?.description? tempChangedSelectedItem?.description : ''}
                             rows={6}
+                            maxLength={200}
                         ></textarea>
                     </div>
+
+                    {/* Duration if is quiz */}
+                    {
+                        !tempChangedSelectedItem || !currentSelectedItem || currentSelectedItem.type !== 'quiz' || (tempChangedSelectedItem as Quiz).type !== 'quiz' ? <></> :
+                        <div className="w-full flex flex-col gap-y-2">
+                            <label htmlFor="main-edit-title">Duration</label>
+                            <input className=" px-2 h-10 border border-gray-300 rounded-sm" type="text" name="main-edit-title" id="main-edit-title"
+                                value={(tempChangedSelectedItem as Quiz).duration as number}
+                                onChange={(e) => {
+                                    const duration = Number(e.target.value)
+                                    if (tempChangedSelectedItem) {
+                                        setTempChangedSelectedItem({
+                                            ...tempChangedSelectedItem as Quiz,
+                                            duration
+                                        })
+                                    }
+                                }}
+                                min={0}
+                                max={120}
+                            />
+                        </div>
+                    }
 
                     {/* Add new content to a section */}
                     {
@@ -416,6 +442,7 @@ function AddVideoDialog() {
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [file, setFile] = useState<File | null>(null)
+    const [isPublic, setIsPublic] = useState(false)
 
     const [flagChanged, setFlagChanged] = useState(false)
 
@@ -428,18 +455,20 @@ function AddVideoDialog() {
 
         setTempNewContent(prev => {
             if (!prev) return {
+                isPublic,
                 title,
                 description,
                 file,
                 id: getNewId((tempChangedSelectedItem as Section).content),
                 duration: '',
-                type: 'video'
+                type: 'video',
             }
             return {
                 ...prev,
                 title,
                 description,
-                file
+                file,
+                isPublic
             }
         })
     }, [title, description, file])
@@ -477,6 +506,18 @@ function AddVideoDialog() {
                 >
                     OK
                 </DialogClose>
+            }
+
+            additionalBody={
+                <div className="flex flex-row items-center gap-x-2">
+                    <Switch
+                        // id="isPublic"
+                        checked={isPublic}
+                        onCheckedChange={setIsPublic}
+                        className="h-6"
+                    />
+                    <span>Is public</span>
+                </div>
             }
 
             onClickAIAutoFill={() => {}}

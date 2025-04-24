@@ -34,6 +34,8 @@ interface AddFileDialogProps {
 
     file: File | null
     setFile: Dispatch<SetStateAction<File | null>>
+
+    additionalBody?: ReactElement
 }
 
 export default function AddFileDialog(props: AddFileDialogProps) {
@@ -101,6 +103,11 @@ export default function AddFileDialog(props: AddFileDialogProps) {
                         file={props.file}
                         setFile={props.setFile}
                     />
+
+                    {/* Additional body */}
+                    {
+                        props.additionalBody ? props.additionalBody : <></>
+                    }
                 </div>
                 <DialogFooter className="flex flex-row gap-x-6">
                     <DialogClose className="w-20 text-white px-auto py-2 rounded-lg bg-zinc-600 cursor-pointer"

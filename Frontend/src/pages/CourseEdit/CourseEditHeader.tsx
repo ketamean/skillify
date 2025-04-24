@@ -3,7 +3,7 @@ import { useItemPortalContext } from "./context"
 interface CourseEditHeaderProps {}
 
 export default function CourseEditHeader(props: CourseEditHeaderProps) {
-    const { courseName, setCourseName, courseDescription, setCourseDescription } = useItemPortalContext()
+    const { courseName, setCourseName, courseDescription, setCourseDescription, courseFee,setCourseFee } = useItemPortalContext()
     return (
         <div className="w-full flex flex-col gap-y-8 justify-center items-center">
             <h2>Course editor</h2>
@@ -16,6 +16,7 @@ export default function CourseEditHeader(props: CourseEditHeaderProps) {
                         onChange={(e) => {
                             setCourseName(e.target.value)
                         }}
+                        maxLength={80}
                     />
                 </div>
 
@@ -31,7 +32,21 @@ export default function CourseEditHeader(props: CourseEditHeaderProps) {
                         placeholder="Markdown supported"
                         defaultValue={courseDescription}
                         rows={6}
+                        maxLength={2000}
                     ></textarea>
+                </div>
+
+                {/* Course fee */}
+                <div className="flex flex-col gap-y-2">
+                    <label htmlFor="courseName">Course Fee</label>
+                    <input className=" px-2 h-10 border border-gray-300 rounded-sm" type="number" name="courseName" id="courseName" defaultValue={courseFee}
+                        onChange={(e) => {
+                            const num = Number(e.target.value);
+                            setCourseFee(isNaN(num) ? 0 : num)
+                        }}
+                        min={0}
+                        max={10000000}
+                    />
                 </div>
             </div>
         </div>

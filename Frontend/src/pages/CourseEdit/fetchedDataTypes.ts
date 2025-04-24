@@ -3,7 +3,9 @@ export interface FetchedVideo {
     title: string,
     link: string,
     duration: string,
-    description: string
+    description: string,
+
+    isPublic: boolean
 }
 
 export interface FetchedSection {
@@ -24,8 +26,8 @@ export interface FetchedQuiz {
 export interface FetchedQuizQuestion {
     id: number,
     question: string,
-    answers: string[],
-    key: number | null
+    choices: string[],
+    answer: number | null
 }
 
 export interface FetchedDocument {
@@ -48,5 +50,6 @@ export interface FetchedCourse {
     lectures: number,
     sections: FetchedSection[],
     documents: FetchedDocument[],
-    quizzes: FetchedQuiz[]
+    quizzes: FetchedQuiz[],
+    fee: number
 }

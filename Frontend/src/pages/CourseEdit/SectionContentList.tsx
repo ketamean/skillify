@@ -11,7 +11,7 @@ import { handleDragEnd } from "./handlers"
 
 interface SortableItemProps {
     content: Video,
-    handleSaveContent: (title: string, description: string, file: File | null) => void
+    handleSaveContent: (title: string, description: string, file: File | null, isPublic: boolean) => void
     index: number | null
 }
 
@@ -76,16 +76,19 @@ export default function SectionContentList() {
                                             key={`section${tempChangedSelectedItem.id}-${item.id}`}
                                             content={item}
                                             index={index}
-                                            handleSaveContent={(title: string, description: string, file: File | null) => {
+                                            handleSaveContent={(title: string, description: string, file: File | null, isPublic: boolean) => {
                                                 setTempChangedSelectedItem(prev => {
                                                     if (!prev) return null
+
+                                                    console.log("isPublic", isPublic)
                                                     const newContentList = (prev as Section).content.map(
-                                                        (item, idx) => idx !== index ? item :
+                                                        (item, idx) => idx !== index ? item : 
                                                             {
                                                                 ...item,
                                                                 title,
                                                                 description,
-                                                                file
+                                                                file,
+                                                                isPublic
                                                             }
                                                     )
                                                     return {

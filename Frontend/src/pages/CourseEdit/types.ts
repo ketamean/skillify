@@ -29,11 +29,14 @@ export interface Video extends Material {
     type: 'video'
     file: File | null
     duration: string
+
+    isPublic: boolean
 }
 
 export interface Quiz extends Material {
     type: 'quiz'
     content: QuizQuestion[]
+    duration: number
 }
 
 export interface Document extends Material {
@@ -46,4 +49,44 @@ export interface QuizQuestion {
     question: string,
     answers: string[],
     key: number | null
+}
+
+export interface SendAPIVideo {
+    title: string;
+    duration: string;
+    link: string,
+    description: string | null;
+    isPublic: boolean;
+}
+export interface SendAPISection {
+    title: string;
+    videos: SendAPIVideo[]
+}
+export interface SendAPIDocument {
+    title: string;
+    description: string | null;
+    link: string
+}
+
+export interface SendAPIQuizQuestion {
+    question: string;
+    choices: string[];
+    answer: number | null;
+}
+export interface SendAPIQuiz {
+    title: string;
+    description: string | null;
+    questions: SendAPIQuizQuestion[],
+    duration: number
+}
+
+export interface SendAPICourse {
+    course_id: number;
+    title: string;
+    short_description: string;
+    // descriptions: string;
+    sections: SendAPISection[];
+    documents: SendAPIDocument[]
+    quizzes: SendAPIQuiz[]
+    fee: number
 }

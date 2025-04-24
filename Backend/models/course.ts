@@ -2,7 +2,7 @@ export interface IVideo {
     title: string;
     duration: string;
     description: string | null;
-
+    link: string,
     isPublic: boolean
 }
 export interface ISection {
@@ -12,6 +12,7 @@ export interface ISection {
 export interface IDocument {
     title: string;
     description: string | null;
+    link: string;
 }
 
 export interface IQuizQuestion {
@@ -23,6 +24,7 @@ export interface IQuiz {
     title: string;
     description: string | null;
     questions: IQuizQuestion[]
+    duration: number
 }
 
 export interface ICourse {
