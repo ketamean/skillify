@@ -8,10 +8,11 @@ import AddFileDialog from "./AddFileDialog"
 import { DialogClose } from "@/components/ui/dialog"
 import { useItemPortalContext } from "./context"
 import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities"
+import { Switch } from "@/components/ui/switch"
 
 interface SectionContentItemProps {
     content: Video | Document,
-    handleSaveContent: (title: string, description: string, file: File | null) => void
+    handleSaveContent: (title: string, description: string, file: File | null, isPublic: boolean) => void
 
     index: number | null
     listeners?: SyntheticListenerMap
@@ -22,19 +23,23 @@ export default function SectionContentItem(props: SectionContentItemProps) {
     const [tempTitle, setTempTitle] = useState(props.content.title)
     const [tempDescription, setTempDescription] = useState(props.content.description)
     const [tempFile, setTempFile] = useState(props.content.file)
+    const [tempIsPublic, setTempIsPublic] = useState((props.content as Video).isPublic)
 
     const [flagBlockSave, setFlagBlockSave] = useState(false)
-
+    // console.log((props.content as Video).isPublic)
     function handleCancelEditting() {
         setTempTitle(props.content.title)
         setTempDescription(props.content.description)
         setTempFile(props.content.file)
+        setTempIsPublic((props.content as Video).isPublic)
     }
 
     useEffect(() => {
+
         setTempTitle(props.content.title)
         setTempDescription(props.content.description)
         setTempFile(props.content.file)
+        setTempIsPublic((props.content as Video).isPublic)
     }, [props.content])
 
     useEffect(() => {
@@ -94,11 +99,22 @@ export default function SectionContentItem(props: SectionContentItemProps) {
                                     // e.stopPropagation()
                                     return;
                                 }
-                                props.handleSaveContent(tempTitle, tempDescription, tempFile)
+                                props.handleSaveContent(tempTitle, tempDescription, tempFile, tempIsPublic)
                             }}
                         >
                             OK
                         </DialogClose>
+                    }
+
+                    additionalBody={
+                        <div className="flex flex-row items-center gap-x-2">
+                            <Switch
+                                // id="isPublic"
+                                checked={tempIsPublic}
+                                onCheckedChange={setTempIsPublic}
+                            />
+                            <span className="font-bold">Is public</span>
+                        </div>
                     }
 
                     onCancel={ handleCancelEditting }

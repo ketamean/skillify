@@ -1,4 +1,4 @@
-import { MouseEvent, useState } from "react"
+import { MouseEvent, useEffect, useState } from "react"
 import { useItemPortalContext } from "./context"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars, faChevronDown, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -294,6 +294,10 @@ function DraggableCollapsible<T extends Section | Document | Quiz>(props: Dragga
                             onClick={() => {
                                 const newItem = createNewItem();
                                 props.setItems([...props.items, newItem]);
+                                setCurrentSelectedItem({
+                                    type: props.type,
+                                    id: newItem.id
+                                })
                                 handleOnCancelDialog();
                             }}
                         >
@@ -306,7 +310,7 @@ function DraggableCollapsible<T extends Section | Document | Quiz>(props: Dragga
     )
 }
 
-export default function CourseEditSideBar() { // props: CourseEditSideBarProps
+export default function CourseEditSideBar() {
     const { sections, setSections, documents, setDocuments, quizzes, setQuizzes} = useItemPortalContext()
 
     return (

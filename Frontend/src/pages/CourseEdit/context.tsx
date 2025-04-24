@@ -39,6 +39,9 @@ interface ItemPortalContext {
     tempChangedSelectedItem: Section | Document | Quiz | null
     setTempChangedSelectedItem: React.Dispatch<React.SetStateAction<Section | Document | Quiz | null>> //(item: Section | Document | Quiz | null) => void
 
+    courseFee: number,
+    setCourseFee: React.Dispatch<React.SetStateAction<number>> //(fee: number) => void
+
 
     // tempCurrentVideo: Video | null
     // setTempCurrentVideo: (video: Video | null) => void
@@ -77,6 +80,9 @@ const ItemPortal = React.createContext<ItemPortalContext>({
 
     tempChangedSelectedItem: null,
     setTempChangedSelectedItem: () => {},
+
+    courseFee: 0,
+    setCourseFee: () => {},
 })
 
 export default function ItemPortalProvider(props: ItemPortalProviderProps) {
