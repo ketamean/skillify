@@ -6,7 +6,7 @@ import { useLocation } from "react-router-dom";
 import { CourseCard } from "../../components/CourseCard";
 
 interface CourseResult {
-  id: string;
+  id: number;
   name: string;
   short_description: string;
   image_link: string;
@@ -54,14 +54,7 @@ export default function SearchPage() {
   }, [query]);
   return (
     <div className="min-h-screen bg-custom-white">
-      <NavBar
-        user={{
-          fname: "Ariana",
-          lname: "Grande",
-          avatarUrl:
-            "https://static.vecteezy.com/system/resources/thumbnails/041/880/991/small_2x/ai-generated-pic-artistic-depiction-of-sunflowers-under-a-vast-cloudy-sky-photo.jpg",
-        }}
-      />
+      <NavBar />
 
       <main className="container mx-auto mt-8 px-[4%] pb-12">
         <div className="mb-8">
@@ -96,8 +89,6 @@ export default function SearchPage() {
                   imageUrl={course.image_link}
                   title={course.name}
                   instructorName={course.instructor_name || "Instructor"}
-                  rating={course.rating || 4.5}
-                  ratingCount={course.rating_count || 100}
                   price={course.fee === 0 ? "Free" : course.fee}
                   level={course.level || "Beginner"}
                 />

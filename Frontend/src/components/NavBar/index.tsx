@@ -9,19 +9,11 @@ import Button from "../Button";
 import { useNavigate } from "react-router-dom";
 import AvatarDropdown from "../AvatarDropdown";
 
-interface NavBarUserInfo {
-  fname: string;
-  lname: string;
-  email?: string;
-  avatarUrl?: string;
-}
-
 interface NavBarProps {
   disabled?: boolean;
   children?: React.ReactNode;
   toInstructor?: boolean;
   isLoggedIn?: boolean;
-  user: NavBarUserInfo;
 }
 
 interface BurgerMenuIconProps {

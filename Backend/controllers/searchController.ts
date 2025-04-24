@@ -7,7 +7,7 @@ const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const searchCourses = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<any> => {
   const searchQuery = req.body.query;
   if (!searchQuery) {
@@ -25,7 +25,7 @@ export const searchCourses = async (
 
     const { data, error } = await supabase.rpc("match_courses", {
       query_embedding: queryEmbeddingResponse.embeddings?.[0].values,
-      match_threshold: 0.75,
+      match_threshold: 0.5,
       match_count: 20,
     });
 
@@ -44,6 +44,8 @@ export const searchCourses = async (
       short_description: course.short_description,
       image_link: course.image_link,
       fee: course.fee,
+      instructor_name:
+        (course.first_name ?? "") + " " + (course.last_name ?? ""),
     }));
     return res.status(200).json(courses);
   } catch (error) {

@@ -8,95 +8,19 @@ import ItemPortalProvider, { CurrentSelectedItem } from "./context"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import CourseEditorMainArea from './CourseEditorMainArea'
-import { axiosForm, axiosFile } from "@/config/axios";
+import { axiosForm } from "@/config/axios";
 import { FetchedVideo, FetchedSection, FetchedQuiz, FetchedDocument, FetchedCourse, FetchedQuizQuestion } from './fetchedDataTypes'
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/supabaseClient";
 
-const sampleMaterials: Video[] = [
-	{
-		id: 1,
-		title: 'bitchessss ssssssssssssssssssssssssssssssssssssssssssssssssbitchessssssssssssssssssssssssssssssssssssssssssssssssssbitchessssssssssssssssssssssssssssssssssssssssssssssssssbitchesssssssssssssssssssss sssssssssssssssssssssssssssss',
-		description: 'bitches sssssssssssssssssssssss sssssssssssss sssssssssssssbitches ssssssssss sssssssss ssssssss ssssssssss ssssssssssssbitchessssssssssssssssssssssssssssssssssssssssssss ssssssbitchessssssssssssssssss ssssssssssssssssssssssssssssssss',
-		type: 'video',
-		duration: '100:00',
-	} as Video,
-	{
-		id: 2,
-		title: 'hello3',
-		description: 'hello',
-		type: 'video',
-		duration: '9:00',
-
-	} as Video,
-	{
-		id: 3,
-		title: 'hello4',
-		description: 'hello',
-		type: 'video',
-		duration: '7:00',
-	} as Video,
-]
-
-const sampleQuizzes = [
-	{
-		id: 1,
-		title: 'hello5',
-		description: 'hello',
-		type: 'quiz',
-		content: [
-			{
-				id: 1,
-				question: 'hello',
-				answers: ['hello1', 'hello2', 'hello3', 'hello4'],
-				key: 1
-			},
-			{
-				id: 2,
-				question: 'hehehe',
-				answers: ['hello5', 'hello6', 'hello7', 'hello8'],
-				key: 0
-			},
-			{
-				id: 3,
-				question: 'hihihi',
-				answers: ['hello9', 'hello10', 'hello11', 'hello12'],
-				key: 1
-			},
-			{
-				id: 4,
-				question: 'huhuhu',
-				answers: ['hello13', 'hello14', 'hello15', 'hello16'],
-				key: 3
-			}
-		]
-	} as Quiz,
-]
-
-const sampleDocuments = [
-	{
-		id: 1,
-		title: 'hello2',
-		description: 'hello',
-		type: 'document',
-		file: null
-	} as Document,
-]
-
-const sampleSections: Section[] = [
-	{title: "How to know", content: sampleMaterials, description: 'Hihi ne ne', id: 1},
-	{title: "bitchessssssssssssssssssssssssssssssssssssssssssssssssss no please stoppppppppppppppppppppppppppppppp", content: [], description: 'ua alo', id: 2},
-	{title: "Random text hehe hihi haha huhu", content: [], description: 'jztr', id: 3}
-]
-
 export default function CourseEdit() {
 	const [courseName, setCourseName] = useState<string>('')
 	const [courseDescription, setCourseDescription] = useState<string>('')
 	const [courseFee, setCourseFee] = useState<number>(0)
-	const [sections, setSections] = useState<Section[]>(sampleSections)
-	const [documents, setDocuments] = useState<Document[]>(sampleDocuments)
-	const [quizzes, setQuizzes] = useState<Quiz[]>(sampleQuizzes)
+	const [sections, setSections] = useState<Section[]>([])
+	const [documents, setDocuments] = useState<Document[]>([])
+	const [quizzes, setQuizzes] = useState<Quiz[]>([])
 	const [currentSelectedItem, setCurrentSelectedItem] = useState<CurrentSelectedItem | null>(null)
 	const [hasChanged, setHasChanged] = useState<boolean>(false)
 	const [tempChangedSelectedItem, setTempChangedSelectedItem] = useState<Section | Document | Quiz | null>(null)
@@ -247,7 +171,7 @@ export default function CourseEdit() {
 
 	return (
 		<>
-			<NavBar user={{fname: 'Linda', lname: 'Nee Xin Chao'}}/>
+			<NavBar />
 			<ItemPortalProvider value={{
 				courseName,
 				setCourseName,
