@@ -20,6 +20,7 @@ import {
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/supabaseClient";
+import { supabase } from "@/supabaseClient";
 
 const sampleMaterials: Video[] = [
   {
