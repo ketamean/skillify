@@ -12,6 +12,7 @@ import { FetchedVideo, FetchedSection, FetchedQuiz, FetchedDocument, FetchedCour
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/supabaseClient";
+import { getVideoDuration } from "./handlers";
 
 export default function CourseEdit() {
 	const [courseName, setCourseName] = useState<string>('')
@@ -136,7 +137,7 @@ export default function CourseEdit() {
 							} else {
 								bucketName = 'coursevideosprivate'
 							}
-							const { data: fileData, error: videoFileError } = await supabase.storage.from(bucketName).download(video.link)
+							const { data: fileData, error: videoFileError } = await supabase.storage.from(bucketName).download(video.path)
 							let file: File | null = null
 							if (videoFileError) {
 								throw {
@@ -144,7 +145,7 @@ export default function CourseEdit() {
 								}
 							}
 							if (fileData) {
-								const filename = video.link.substring(video.link.indexOf('-') + 1);
+								const filename = video.path.substring(video.path.indexOf('-') + 1);
 								file = new File([fileData], filename, {
 									type: fileData.type,
 									lastModified: Date.now()
@@ -166,10 +167,10 @@ export default function CourseEdit() {
 				})
 
 				Promise.all(course.documents.map(async (document: FetchedDocument, docIndex: number) => {
-					const { data: documentFile } = await supabase.storage.from('coursedocuments').download(document.link)
+					const { data: documentFile } = await supabase.storage.from('coursedocuments').download(document.path)
 					let file: File | null = null
 					if (documentFile) {
-						const filename = document.link.substring(document.link.indexOf('-') + 1);
+						const filename = document.path.substring(document.path.indexOf('-') + 1);
 						file = new File([documentFile], filename, {
 							type: documentFile.type,
 							lastModified: Date.now()
@@ -412,7 +413,8 @@ export default function CourseEdit() {
 													}
 													return {
 														...video,
-														link: data? data.path : ''
+														link: data? data.path : '',
+														duration: await getVideoDuration(video.file as File)
 													}
 												}))
 											}
@@ -475,7 +477,7 @@ export default function CourseEdit() {
 													videos: sec.content.map((video) => {
 														return {
 															title: video.title,
-															duration: '1',//video.duration,
+															duration: video.duration,
 															description: video.description,
 															link: video.link,
 															isPublic: video.isPublic,

@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch"
 
 import axios from "axios"
 import { supabase } from "@/supabaseClient"
+import { axiosForm } from "@/config/axios"
 
 // interface CourseEditorMainAreaProps {}
 
@@ -28,6 +29,46 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
     const [aiText, setAIText] = useState('')
 
     const [aiLoadingText, setAILoadingText] = useState('')
+
+    async function handleAIDocument() {
+        // no file provided
+        const fileToDo = (tempChangedSelectedItem as Document).file
+        if (!fileToDo) return;
+        // get user id
+        setAILoadingText('Processing files')
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            throw {
+                error: 'Please log in'
+            }
+        }
+        const { data: uploadFile, error: errorUploadFile } = await supabase.storage.from('aiautofill').upload(`/${session.user.id}`, fileToDo, {
+            cacheControl: '3600',
+            upsert: true
+        })
+
+        if (errorUploadFile || !uploadFile) {
+            console.log(errorUploadFile)
+            return;
+        }
+        const documentToSend = {
+            title: (tempChangedSelectedItem as Document).title,
+            description: (tempChangedSelectedItem as Document).description,
+            link: uploadFile.path
+        }
+
+        try {
+            setAILoadingText('Getting description')
+            const axiosRes = await axios.post('/api/ai/fill/document', { document: documentToSend })
+            console.log(axiosRes)
+            if (axiosRes.data.reply) {
+                setAIText(axiosRes.data.reply)
+            }
+        } catch (_) {
+            setAILoadingText('An error occurs')
+            return;
+        }
+    }
 
     useEffect(() => {
         if (!tempChangedSelectedItem || !currentSelectedItem || currentSelectedItem.type !== 'quiz' || (tempChangedSelectedItem as Quiz).type !== 'quiz') return;
@@ -125,39 +166,7 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                                     onClick={async () => {
                                         switch(currentSelectedItem?.type) {
                                             case 'document':
-                                                // no file provided
-                                                const fileToDo = (tempChangedSelectedItem as Document).file
-                                                if (!fileToDo) return;
-                                                // get user id
-                                                setAILoadingText('Processing files')
-                                                const { data: { session } } = await supabase.auth.getSession();
-                                                if (!session) {
-                                                    throw {
-                                                        error: 'Please log in'
-                                                    }
-                                                }
-                                                const { data: uploadFile, error: errorUploadFile } = await supabase.storage.from('aiautofill').upload(`/${session.user.id}/${fileToDo.name}`, fileToDo, {
-                                                    cacheControl: '3600',
-                                                    upsert: true
-                                                })
-
-                                                if (errorUploadFile || !uploadFile) {
-                                                    return;
-                                                }
-                                                const documentToSend = {
-                                                    title: (tempChangedSelectedItem as Document).title,
-                                                    description: (tempChangedSelectedItem as Document).description,
-                                                    link: uploadFile.path
-                                                }
-
-                                                try {
-                                                    setAILoadingText('Getting description')
-                                                    const axiosRes = await axios.post('/api/ai/fill/document', documentToSend)
-                                                    if (axiosRes.data.reply) setAIText(axiosRes.data.reply)
-                                                } catch (_) {
-                                                    setAILoadingText('An error occurs')
-                                                    return;
-                                                }
+                                                handleAIDocument()
                                                 break;
                                         }
                                 }} />
@@ -186,10 +195,12 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                         !tempChangedSelectedItem || !currentSelectedItem || currentSelectedItem.type !== 'quiz' || (tempChangedSelectedItem as Quiz).type !== 'quiz' ? <></> :
                         <div className="w-full flex flex-col gap-y-2">
                             <label htmlFor="main-edit-title">Duration (minutes)<span className="text-xl font-bold text-red-600">*</span></label>
-                            <input className=" px-2 h-10 border border-gray-300 rounded-sm" type="text" name="main-edit-title" id="main-edit-title"
+                            <input className=" px-2 h-10 border border-gray-300 rounded-sm" type="number" name="main-edit-title" id="main-edit-title"
                                 value={(tempChangedSelectedItem as Quiz).duration as number}
                                 onChange={(e) => {
-                                    const duration = Number(e.target.value)
+                                    let duration = Number(e.target.value)
+                                    if (isNaN(duration)) return;
+                                    if (duration > 120) duration = 120
                                     if (tempChangedSelectedItem) {
                                         setTempChangedSelectedItem({
                                             ...tempChangedSelectedItem as Quiz,
@@ -319,10 +330,6 @@ function QuizQuestionItem(props: QuizQuestionItemProps) {
                     id={`quiz-question-${props.content.id}`}
                     value={question}
                     onChange={(e) => {
-                        // props.onUpdate?.({
-                        //     ...props.content,
-                        //     question: e.target.value
-                        // });
                         setQuestion(e.target.value)
                     }}
                     placeholder="Enter your question here"
@@ -467,6 +474,51 @@ function AddVideoDialog() {
 
     const [flagChanged, setFlagChanged] = useState(false)
 
+    const [aiLoadingText, setAILoadingText] = useState('')
+    const [aiText, setAIText] = useState('')
+
+    async function handleAIVideo() {
+        // no file provided
+        const fileToDo = file
+        if (!fileToDo) return;
+        // get user id
+        setAILoadingText('Processing files')
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            throw {
+                error: 'Please log in'
+            }
+        }
+        console.log(1)
+        const { data: uploadFile, error: errorUploadFile } = await supabase.storage.from('aiautofill').upload(`/${session.user.id}`, fileToDo, {
+            cacheControl: '3600',
+            upsert: true
+        })
+
+        if (errorUploadFile || !uploadFile) {
+            console.log(errorUploadFile)
+            return;
+        }
+        console.log(2)
+        const videoToSend = {
+            title,
+            description,
+            link: uploadFile.path
+        }
+
+        try {
+            setAILoadingText('Getting description')
+            const axiosRes = await axiosForm.post('/api/ai/fill/video', { video: videoToSend })
+            console.log(axiosRes)
+            if (axiosRes.data.reply) {
+                setAIText(axiosRes.data.reply)
+            }
+        } catch (_) {
+            setAILoadingText('An error occurs')
+            return;
+        }
+    }
+
     useEffect(() => {
         if ( title === '' || description === '' || file === null ) {
             setFlagChanged(false)
@@ -502,6 +554,10 @@ function AddVideoDialog() {
 
     return (
         <AddFileDialog
+            aiText={aiText}
+            setAIText={setAIText}
+            aiLoadingText={aiLoadingText}
+
             trigger={
                 <div className="ml-auto text-green-700 bg-green-100 hover:bg-green-200 flex items-center p-2 gap-x-2 rounded-lg cursor-pointer">
                     <FontAwesomeIcon icon={faVideo}/> Add video
@@ -541,7 +597,7 @@ function AddVideoDialog() {
                 </div>
             }
 
-            onClickAIAutoFill={() => {}}
+            onClickAIAutoFill={() => handleAIVideo()}
 
             fileAcceptType="video/*"
 

@@ -105,6 +105,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
     const quizzes = quizzesData.data || [];
     const quizDetails = quizDetailsData.data || [];
     const videoLinkMap: { [key: number] : string } = {}
+    const videoPathMap: { [key: number] : string } = {}
     const videoIds: number[] = videos.map((video) => video.id);
     for (const video of videos) {
       let tablename = '';
@@ -128,6 +129,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         res.status(500).json({ error: "Lỗi lấy link video" });
         return;
       }
+      videoPathMap[video.id] = videoLinks[0].link
       if (video.is_public) {
         const fileName = encodeURIComponent(videoLinks[0]?.link);
         videoLinkMap[video.id] = `https://qlgqwskmctxlhulicvrw.supabase.co/storage/v1/object/public/coursevideospublic/${fileName}`;
@@ -156,10 +158,11 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         .map((video) => ({
           id: video.id,
           title: video.title,
-          link: videoLinkMap[video.id] || "",  
+          link: videoLinkMap[video.id] || "",
           duration: video.duration,
           description: video.description,
-          isPublic: video.is_public
+          isPublic: video.is_public,
+          path: videoPathMap[video.id] || ""
         })),
     }));
     
@@ -181,6 +184,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       signedDocuments.push({
         ...doc,
         link: signedUrlData?.signedUrl || "",
+        path: doc.link
       });
     }
 

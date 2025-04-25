@@ -71,11 +71,14 @@ export default function CourseEditHeader(props: CourseEditHeaderProps) {
 
                 {/* Course fee */}
                 <div className="flex flex-col gap-y-2">
-                    <label htmlFor="courseName">Course Fee</label>
-                    <input className=" px-2 h-10 border border-gray-300 rounded-sm" type="number" name="courseFee" id="courseFee" defaultValue={courseFee}
+                    <label htmlFor="courseName">Course Fee (VND)</label>
+                    <input className=" px-2 h-10 border border-gray-300 rounded-sm" type="number" name="courseFee" id="courseFee" value={courseFee}
                         onChange={(e) => {
                             const num = Number(e.target.value);
-                            setCourseFee(isNaN(num) ? 0 : num)
+                            console.log(num)
+                            if (isNaN(num)) return;
+                            if (num > 10000000) setCourseFee(10000000)
+                            else setCourseFee(num)
                         }}
                         min={0}
                         max={10000000}

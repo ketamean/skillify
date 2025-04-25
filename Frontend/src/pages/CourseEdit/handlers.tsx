@@ -40,3 +40,42 @@ export function isEqualObjects(obj1: {[key: string]: any} | null, obj2: {[key: s
 
     return true
 }
+
+export function formatDuration(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    const ms = Math.round((seconds - Math.floor(seconds)) * 1000); // Milliseconds
+
+    const paddedHours = hours.toString().padStart(2, '0');
+    const paddedMinutes = minutes.toString().padStart(2, '0');
+    const paddedSecs = secs.toString().padStart(2, '0');
+    // const paddedMs = ms.toString().padStart(3, '0');
+
+    let timeString = `${paddedMinutes}:${paddedSecs}`;
+    if (hours > 0) {
+        timeString = `${paddedHours}:${timeString}`;
+    }
+    return timeString;
+}
+
+export function getVideoDuration(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const videoElement = document.createElement('video');
+        videoElement.preload = 'metadata';
+        const objectURL = URL.createObjectURL(file);
+
+        videoElement.onloadedmetadata = () => {
+            URL.revokeObjectURL(objectURL); // Free up memory
+            const duration = videoElement.duration;
+            resolve(formatDuration(duration));
+        };
+
+        videoElement.onerror = () => {
+            URL.revokeObjectURL(objectURL); // Free up memory
+            reject(new Error('Failed to load video metadata'));
+        };
+
+        videoElement.src = objectURL;
+    });
+}

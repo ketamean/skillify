@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faCopy, faFeather } from '@fortawesome/free-solid-svg-icons'
-import { MouseEvent, useRef, useState } from 'react'
+import { MouseEvent, useEffect, useRef, useState } from 'react'
 
 import {
     Dialog,
@@ -44,6 +44,14 @@ export default function AIAutoFillButton(props: AIAutoFillButtonProps) {
         props.setText('')
     }
 
+    useEffect(() => {
+        setIsWaiting(false)
+    }, [props.text])
+
+    useEffect(() => {
+        setIsWaiting(true)
+    }, [props.loadingText])
+
     return (
         <Dialog>
             <DialogTrigger className="flex flex-row items-center gap-x-2 cursor-pointer text-white px-4 py-2 rounded-xl font-bold transition-colors duration-300 ease-in-out bg-linear-to-bl from-violet-500 to-fuchsia-400 hover:to-blue-500 hover:from-fuchsia-500"
@@ -51,6 +59,8 @@ export default function AIAutoFillButton(props: AIAutoFillButtonProps) {
             >
                 <FontAwesomeIcon icon={faFeather} className='text-white'/>AI autofill
             </DialogTrigger>
+
+            <DialogOverlay className='z-0' onClick={() => resetOnCancel()}></DialogOverlay>
 
             <DialogContent>
                 <DialogHeader>
@@ -60,7 +70,7 @@ export default function AIAutoFillButton(props: AIAutoFillButtonProps) {
                 </DialogHeader>
                 {/* body */}
                 {
-                    isWaiting ? <p>{props.loadingText}</p> :
+                    isWaiting ? <p className='text-sm text-blue-500'><i>{props.loadingText}...</i></p> :
                     <div className='flex flex-col gap-y-2'>
                         <button className='text-zinc-700 cursor-pointer bg-zinc-200 hover:bg-zinc-300 flex flex-row gap-x-1 items-center rounded-lg p-2 ml-auto'
                             onClick={handleCopyClick}
