@@ -43,6 +43,11 @@ export default function CoursePage() {
   const [fee, setFee] = useState<number>(0);
 
   useEffect(() => {
+    console.log(videoSections)
+  }, [videoSections])
+
+  useEffect(() => {
+    (async() => {})();
     supabase
       .from("courses")
       .select(
@@ -153,8 +158,17 @@ export default function CoursePage() {
         }
         if (!res.data || res.data.length === 0) return;
         setLoading(false);
-        setVideoSections(res.data);
-      });
+        setVideoSections(res.data.map((videoSection: VideoSection) => ({
+          sectionName: videoSection.sectionName,
+          videos: videoSection.videos.map((video) => ({
+            ...video,
+            link: !video.link ? 'www.google.com' : supabase.storage.from('coursevideospublic').getPublicUrl(video.link).data.publicUrl
+          }))
+        })))
+      })
+
+        // get public videos link
+
   }, [course_id]);
   return (
     <>
