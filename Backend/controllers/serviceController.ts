@@ -7,7 +7,8 @@ export const handleStripeRedirect = async (req: Request, res: Response) => {
   try {
     const { success, canceled, session_id } = req.query;
     if (canceled) {
-      const clientOrigin = req.query.client_origin || req.headers.origin || req.headers.referer;
+      const clientOrigin =
+        req.query.client_origin || req.headers.origin || req.headers.referer;
       const course_id = req.query.course_id;
 
       res.redirect(`${clientOrigin}/course/${course_id}?payment=canceled`);
@@ -26,11 +27,15 @@ export const handleStripeRedirect = async (req: Request, res: Response) => {
       }
 
       const { metadata } = session;
-      const { course_id, learner_id, client_origin, couponCode } = metadata || {};
+      const { course_id, learner_id, client_origin, couponCode } =
+        metadata || {};
       if (couponCode) {
-        const { error: rpcError } = await supabase.rpc('increment_coupon_usage_by_code', {
-          input_code: couponCode,
-        });
+        const { error: rpcError } = await supabase.rpc(
+          "increment_coupon_usage_by_code",
+          {
+            input_code: couponCode,
+          }
+        );
 
         if (rpcError) {
           console.error("RPC increment failed:", rpcError.message);
@@ -72,8 +77,14 @@ export const handleStripeRedirect = async (req: Request, res: Response) => {
 
 export const createCheckoutSession = async (req: Request, res: Response) => {
   try {
-    const { learner_id, course_id, courseName, price, client_origin, couponCode } =
-      req.body;
+    const {
+      learner_id,
+      course_id,
+      courseName,
+      price,
+      client_origin,
+      couponCode,
+    } = req.body;
 
     if (!learner_id || !course_id) {
       res.status(400).json({ error: "Learner ID and Course ID are required" });
@@ -99,6 +110,28 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
       return;
     }
 
+    if (price === 0) {
+      const { data, error } = await supabase
+        .from("learnerenrolments")
+        .insert([
+          {
+            course_id,
+            learner_id,
+          },
+        ])
+        .select();
+      if (error) {
+        console.error("Supabase insert error:", error.message);
+        res.status(500).json({ error: "Internal server error" });
+        return;
+      }
+      if (data) {
+        console.log("Order stored successfully.", data);
+      }
+      res.json({ success: true });
+      return;
+    }
+
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -117,10 +150,12 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
         learner_id,
         course_id,
         client_origin,
-        ...(couponCode && { couponCode }) // include only if applied
+        ...(couponCode && { couponCode }), // include only if applied
       },
       success_url: `${DEFAULT_REDIRECT_DOMAIN}/service/stripe?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${DEFAULT_REDIRECT_DOMAIN}/service/stripe?canceled=true&course_id=${course_id}&client_origin=${encodeURIComponent(client_origin)}`
+      cancel_url: `${DEFAULT_REDIRECT_DOMAIN}/service/stripe?canceled=true&course_id=${course_id}&client_origin=${encodeURIComponent(
+        client_origin
+      )}`,
     });
 
     res.json({ url: session.url });
