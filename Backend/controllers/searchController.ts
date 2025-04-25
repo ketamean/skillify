@@ -13,7 +13,6 @@ export const searchCourses = async (
   if (!searchQuery) {
     return res.status(400).json({ error: "Search query is required" });
   }
-  console.log("Received search query:", searchQuery);
   try {
     const queryEmbeddingResponse = await genAI.models.embedContent({
       model: "text-embedding-004",

@@ -2,8 +2,7 @@ import { ReactElement, useState, useEffect } from "react";
 import NavBar from "../../components/NavBar";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../supabaseClient";
-import { CourseCard } from "../../components";
-import Footer from "../../components/Footer";
+import { CourseCard, InstructorNavbar } from "../../components";
 import { Link } from "react-router-dom";
 
 interface Course {
@@ -55,49 +54,17 @@ export default function InstructorDashboard(): ReactElement {
       <NavBar />
 
       {/* Instructor Dashboard Navigation */}
-      <div className="bg-gray-800 text-white">
-        <div className="container mx-auto px-[4%]">
-          <div className="flex items-center space-x-6 py-3 overflow-x-auto">
-            <a
-              href="/instructor/dashboard"
-              className="py-2 px-1 border-b-2 border-vibrant-green font-medium"
-            >
-              Courses
-            </a>
-            <a
-              href="/instructor/coupons"
-              className="py-2 px-1 border-b-2 border-transparent hover:border-vibrant-green font-medium"
-            >
-              Coupons
-            </a>
-            <a
-              href="#"
-              className="py-2 px-1 border-b-2 border-transparent hover:border-vibrant-green font-medium"
-            >
-              Analytics
-            </a>
-            <a
-              href="#"
-              className="py-2 px-1 border-b-2 border-transparent hover:border-vibrant-green font-medium"
-            >
-              Students
-            </a>
-          </div>
-        </div>
-      </div>
+      <InstructorNavbar activeTab="courses" />
 
       {/* Main Content */}
       <main className="container mx-auto px-[4%] py-8 flex-grow">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-deepteal">My Courses</h1>
-          <Link
-            to={'/instructor/upload'}
-          >
+          <Link to={"/instructor/upload"}>
             <button className="bg-deepteal hover:bg-green-400 hover:text-black cursor-pointer font-bold text-white py-2 px-4 rounded-lg transition">
               Create New Course
             </button>
           </Link>
-
         </div>
 
         {loading ? (
@@ -126,7 +93,7 @@ export default function InstructorDashboard(): ReactElement {
                 title={course.name}
                 imageUrl={
                   course.image_link ||
-                  'https://placehold.co/300x200?text=Thumbnail'
+                  "https://placehold.co/300x200?text=Thumbnail"
                 }
                 price={course.fee}
                 instructorName={user.fname + " " + user.lname}

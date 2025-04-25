@@ -5,6 +5,8 @@ import { useAuth } from "../../context/AuthContext";
 import NavBar from "../../components/NavBar";
 import CouponFormModal from "../../components/CouponFormModal";
 import Footer from "../../components/Footer";
+import { InstructorNavbar } from "../../components";
+
 interface Coupon {
   id: string;
   code: string;
@@ -65,6 +67,9 @@ const InstructorCouponPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-custom-white">
       <NavBar />
+
+      {/* Instructor Dashboard Navigation */}
+      <InstructorNavbar activeTab="coupons" />
 
       <div className="max-w-6xl mx-auto px-6 py-10">
         {/* Page Header */}
