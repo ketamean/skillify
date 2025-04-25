@@ -512,7 +512,6 @@ export default function CourseEdit() {
           </div>
         )}
       </ItemPortalProvider>
-      <Footer />
     </>
   );
 }

@@ -182,7 +182,6 @@ const InstructorCouponPage: React.FC = () => {
           initialData={editCoupon ?? undefined}
         />
       </div>
-      <Footer />
     </div>
   );
 };

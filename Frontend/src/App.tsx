@@ -12,7 +12,7 @@ import SearchPage from "./pages/SearchPage";
 import MyQuizPage from "./pages/MyQuiz";
 import QuizDetailPage from "./pages/MyQuiz/QuizDetailPage";
 import InstructorDashboard from "./pages/Instructor/Dashboard";
-
+import Footer from "./components/Footer";
 import ChatBot from "./components/ChatBot";
 import InstructorCouponPage from "./pages/InstructorCouponPage";
 import CourseEdit from "./pages/CourseEdit";
@@ -62,6 +62,7 @@ function App() {
     <AuthProvider>
       <>
         <RouterProvider router={router} />
+        <Footer />
         <ChatBot />
       </>
     </AuthProvider>

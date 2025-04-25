@@ -6,6 +6,7 @@ import DOMPurify from "dompurify";
 import { axiosForm } from "../../config/axios";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../supabaseClient";
+import { Link } from "react-router-dom";
 export interface Video {
   name: string;
   duration: string;
@@ -371,14 +372,13 @@ export default function CourseDetails(props: CourseDetailsProps): ReactElement {
           </div>
         )}
         {isEnrolled && (
-          <div className="w-full px-4 md:px-40 mt-4">
-            <button
-              className="bg-gray-600 text-white px-6 py-3 rounded-lg cursor-default"
-              disabled
-            >
-              Go to course
-            </button>
-          </div>
+          <Link to={`/coursecontent/${courseId}`}>
+            <div className="w-full px-4 md:px-40 mt-4">
+              <button className="bg-gray-600 text-white px-6 py-3 rounded-lg cursor-default">
+                Go to course
+              </button>
+            </div>
+          </Link>
         )}
       </div>
 

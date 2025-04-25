@@ -130,8 +130,6 @@ export default function InstructorDashboard(): ReactElement {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }
