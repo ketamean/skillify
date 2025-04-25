@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import NavBar from "@/components/NavBar";
 interface UserProfile {
   id: string;
   first_name: string;
@@ -191,15 +192,9 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-16 bg-gray-900 text-white flex flex-col items-center py-4">
-        <div className="mb-8">Skillify</div>
-        <div className="mb-8">💬</div>
-        <div className="mb-8">📊</div>
-        <div className="mb-8">⚙️</div>
-      </aside>
-
+    <div className="min-h-screen flex flex-col">
+      {/* Navbar */}
+      <NavBar />
       {/* Main Content */}
       <div className="flex-1 p-8">
         <h1 className="text-3xl text-black font-bold">Profile & Settings</h1>
@@ -303,7 +298,7 @@ export default function ProfilePage() {
             </div>
             <button
               type="submit"
-              className="mt-6 bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+              className="mt-6 bg-vibrant-green text-deepteal px-4 py-2 rounded-lg w-fit hover:bg-black hover:text-white transition-colors"
             >
               Save
             </button>
@@ -339,7 +334,7 @@ export default function ProfilePage() {
                 <span className="flex-1 text-gray-500 truncate">
                   {selectedFile ? selectedFile.name : "No file selected"}
                 </span>
-                <label className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 cursor-pointer">
+                <label className="bg-vibrant-green text-deepteal px-4 py-2 rounded-lg hover:bg-black hover:text-white transition-colors cursor-pointer">
                   {selectedFile || userData.avatar_image_link ? "Change" : "Upload image"}
                   <input
                     type="file"
@@ -359,8 +354,8 @@ export default function ProfilePage() {
                 onClick={handleImageUpload}
                 disabled={!selectedFile}
                 className={`mt-4 px-4 py-2 rounded ${selectedFile
-                  ? "bg-purple-500 text-white hover:bg-purple-600"
-                  : "bg-purple-200 text-purple-500 opacity-50 cursor-not-allowed"
+                  ? "bg-vibrant-green text-deepteal hover:bg-black hover:text-white rounded-lg transition-colors"
+                  : "bg-vibrant-green text-deepteal opacity-50 cursor-not-allowed rounded-lg"
                   }`}
               >
                 Save
@@ -386,7 +381,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-purple-600 underline"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-deepteal underline"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -406,7 +401,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-purple-600 underline"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-deepteal underline"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -426,7 +421,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-purple-600 underline"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-deepteal underline"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -437,7 +432,7 @@ export default function ProfilePage() {
             </p>
             <button
               onClick={handleChangePassword}
-              className="mt-6 bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+              className="mt-6 bg-vibrant-green text-deepteal px-4 py-2 rounded-lg w-fit hover:bg-black hover:text-white transition-colors"
             >
               Change Password
             </button>
