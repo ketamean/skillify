@@ -132,3 +132,32 @@ export const addQuizzAttemp = async (req: Request, res: Response): Promise<void>
     res.status(500).json({ error: "Server error" });
   }
 };
+
+
+export const getUserQuiz = async (req: Request, res: Response): Promise<void> => {
+  const { user_id } = req.params;
+  const { courseIds } = req.query; 
+  if (!user_id || !Array.isArray(courseIds) || courseIds.length === 0) {
+    res.status(400).json({ error: "Missing user_id or courseIds" });
+    return;
+  }
+
+  try {
+    const { data: quizzes, error: quizError } = await supabase
+      .schema("private")
+      .from("coursequizzes")
+      .select("id, title, description, duration, course_id")
+      .in("course_id", courseIds);
+
+    if (quizError || !quizzes) {
+      console.error("Lỗi khi lấy coursequizzes:", quizError);
+      res.status(500).json({ error: "Failed to fetch quizzes" });
+      return;
+    }
+
+    res.status(200).json({ quizzes });
+  } catch (error) {
+    console.error("Lỗi server khi lấy user quizzes:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
