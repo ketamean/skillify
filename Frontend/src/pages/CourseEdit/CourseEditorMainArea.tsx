@@ -138,11 +138,10 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                                         //     }))
                                         //     const prompt = genPromptsForDescription(tempChangedSelectedItem.title, )
                                         case 'quiz':
-                                            break
+                                            const q = (tempChangedSelectedItem as Quiz)
+                                            q.content.map
                                         case 'document':
-                                            const prompt = `
-
-                                            `
+                                            break
                                     }
                                 }} />
                             </div>}
