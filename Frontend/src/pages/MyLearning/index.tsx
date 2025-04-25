@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../../components/NavBar";
-import Footer from "../../components/Footer";
 import { supabase } from "../../supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 import { CourseCard } from "../../components";
@@ -78,7 +77,6 @@ export default function MyLearning() {
   }, [user]);
 
   const sortedCourses = [...courses].sort((a, b) => {
-    if (sortType === "recent") return 0;
     if (sortType === "title-asc") return a.title.localeCompare(b.title);
     if (sortType === "title-desc") return b.title.localeCompare(a.title);
     if (sortType === "price") return a.price - b.price;
@@ -94,13 +92,14 @@ export default function MyLearning() {
 
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-4">
-            <label className="text-deepteal font-medium">Sort by:</label>
+            <label className="text-deepteal font-medium my-auto">
+              Sort by:
+            </label>
             <select
               value={sortType}
               onChange={(e) => setSortType(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             >
-              <option value="recent">Recently Enrolled</option>
               <option value="title-asc">Title (A-Z)</option>
               <option value="title-desc">Title (Z-A)</option>
               <option value="price">Price (Low to High)</option>

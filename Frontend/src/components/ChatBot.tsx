@@ -119,7 +119,7 @@ const ChatBot = () => {
                   <div
                     className={`max-w-[80%] p-3 rounded-lg ${
                       chat.role === "user"
-                        ? "bg-purple-600 text-white"
+                        ? "bg-deepteal text-white"
                         : "bg-gray-100 text-gray-800"
                     }`}
                   >
@@ -160,7 +160,7 @@ const ChatBot = () => {
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyUp={handleKeyPress}
                 placeholder="Ask about courses..."
-                className="flex-1 p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                className="flex-1 p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-vibrant-green"
                 disabled={isLoading}
               />
               <button
@@ -169,7 +169,7 @@ const ChatBot = () => {
                 className={`p-2 rounded-r-lg ${
                   !message.trim() || isLoading
                     ? "bg-gray-300 cursor-not-allowed"
-                    : "bg-purple-600 hover:bg-purple-700 text-white"
+                    : "bg-vibrant-green hover:bg-deepteal text-white"
                 }`}
               >
                 <FaPaperPlane />
