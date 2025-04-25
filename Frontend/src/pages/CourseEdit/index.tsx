@@ -5,7 +5,7 @@ import CourseEditSideBar from './CourseEditSideBar'
 import { Quiz, Section, Video, Document, SendAPICourse, CourseDescription, CourseTopic } from "./types";
 import ItemPortalProvider, { CurrentSelectedItem } from "./context"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faCheck, faRotateLeft } from '@fortawesome/free-solid-svg-icons'
 import CourseEditorMainArea from './CourseEditorMainArea'
 import { axiosForm } from "@/config/axios";
 import { FetchedVideo, FetchedSection, FetchedQuiz, FetchedDocument, FetchedCourse, FetchedQuizQuestion } from './fetchedDataTypes'
@@ -306,8 +306,11 @@ export default function CourseEdit() {
 				setCourseTopics
 			}}>
 				{
-					isError ? <p className="text-red-600 p-4 text-2xl">{ errorMsg ? errorMsg : 'Error' }</p> : 
-					isLoading ? <p className="text-blue-500 p-4 text-xl">Loading...</p> :
+					isError ? <div className="flex flex-row gap-x-2 items-center p-4 text-2xl">
+						<button onClick={() => window.location.reload()}><FontAwesomeIcon icon={faRotateLeft}/></button>
+						<p className="text-red-600">{ errorMsg ? errorMsg : 'Error' }</p>
+					</div> : 
+					isLoading ? <div className="flex justify-center items-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-deepteal"></div></div> :
 						<div className="max-w-full flex flex-col text-black w-full lg:px-40 px-4 py-8 gap-y-4">
 							{/* header */}
 							<CourseEditHeader
@@ -333,6 +336,8 @@ export default function CourseEdit() {
 							{/* "Save" button */}
 							<button className="ml-auto bg-light-green flex-none font-semibold rounded-md w-fit px-2 hover:bg-mint p-2 flex flex-row items-center gap-x-2 cursor-pointer"
 								onClick={async () => {
+									const confirm = window.confirm("This action will overide your course and remove all quiz attemps")
+									if (!confirm) return;
 									setIsLoading(true)
 									try {
 										if (isError) {
@@ -365,8 +370,6 @@ export default function CourseEdit() {
 											}
 										})
 	
-										if (isError) return;
-	
 										// validates metadata
 										if (!courseName) {
 											throw {
@@ -383,7 +386,6 @@ export default function CourseEdit() {
 												error: 'Please enter course fee'
 											}
 										}
-										if (isError) return;
 										// upload files
 										const videoPublicBucket = 'coursevideospublic'
 										const videoPrivateBucket = 'coursevideosprivate'

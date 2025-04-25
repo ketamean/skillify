@@ -142,12 +142,9 @@ export default function CourseContentPage() {
 
       setLoading(true);
       try {
-        const response = await axios.get(
-          `http://localhost:3000/api/courses/${course_id}`,
+        const response = await axiosForm.get(
+          `/api/courses/${course_id}`,
           {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-            },
             params: {
               user_id: userData.user.id,
             },
@@ -352,15 +349,15 @@ export default function CourseContentPage() {
           answers,
         };
 
-        const res = await axios.post(
-          `http://localhost:3000/api/quizzes/${quiz.id}`,
+        const res = await axiosForm.post(
+          `/api/quizzes/${quiz.id}`,
           payload,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
-          }
+          // {
+          //   headers: {
+          //     "Content-Type": "application/json",
+          //     Authorization: `Bearer ${session.access_token}`,
+          //   },
+          // }
         );
 
         const data = res.data;
@@ -699,7 +696,7 @@ export default function CourseContentPage() {
                         {videoIdToNumber[video.id]}. {video.title}
                       </button>
                       <span className="ml-auto text-gray-500 whitespace-nowrap">
-                        {video.duration} min
+                        {video.duration}
                       </span>
                     </div>
                   ))}
