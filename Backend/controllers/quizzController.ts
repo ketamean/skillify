@@ -82,26 +82,24 @@ export const addQuizzAttemp = async (req: Request, res: Response): Promise<void>
     score,
     answers,
   } = req.body;
-  console.log(quiz_id);
+
   try {
     const { data: attemptData, error: attemptError } = await supabase
       .schema("private")
       .from("quiz_attempts")
       .insert([
         {
-          user_id,
           quiz_id: quiz_id,
+          user_id,
+          started_at,
           submitted_at,
           score,
-          started_at,
         },
       ])
       .select()
       .single(); 
 
     if (attemptError || !attemptData) {
-      console.error("Error inserting attempt", JSON.stringify(attemptError, null, 2));
-
       console.error("Lỗi khi tạo quiz_attempt:", attemptError);
       res.status(500).json({ error: "Failed to insert quiz attempt" });
       return;

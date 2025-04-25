@@ -36,12 +36,12 @@ export default function CourseContentPage() {
   const videoComments = comments.filter(
     (c) => c.material_id === currentVideoId
   );
-  let lessonCounter = 0;
   const [quizStartedAt, setQuizStartedAt] = useState<{ [key: number]: Date }>(
     {}
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user_id, setUserId] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
 
   interface CourseData {
     course_id: number;
@@ -180,8 +180,33 @@ export default function CourseContentPage() {
     loadAvatars();
   }, [comments, avatarCache]);
 
+  useEffect(() => {
+    if (selectedQuizIndex === null) return;
+    
+    const timerId = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerId);
+          handleSubmitQuiz(selectedQuizIndex);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timerId);
+  }, [selectedQuizIndex]);
+
   if (loading) return <p>Đang tải...</p>;
   if (!courseData) return <p>Không tìm thấy khóa học!</p>;
+
+  const videoIdToNumber: { [key: number]: number } = {};
+  let counter = 1;
+  courseData.sections.forEach((section) => {
+    section.videos.forEach((video) => {
+      videoIdToNumber[video.id] = counter++;
+    });
+  });
 
   const toggleSection = (id: number) => {
     setExpandedSections((prev) => ({
@@ -202,16 +227,7 @@ export default function CourseContentPage() {
   };
 
   const getQuizScore = (quizIndex: number) => {
-    const quiz = courseData.quizzes[quizIndex];
-    let correctCount = 0;
-
-    quiz.questions.forEach((q, qIndex) => {
-      if (quizAnswers[`${quizIndex}-${qIndex}`] === q.answer) {
-        correctCount++;
-      }
-    });
-
-    return `${correctCount} / ${quiz.questions.length}`;
+    return `${courseData.quizResults[quizIndex].score}`;
   };
 
   const handlePrevVideo = () => {
@@ -280,12 +296,6 @@ export default function CourseContentPage() {
   const hasSubmitted = (quizIndex: number) => {
     const quizId = courseData?.quizzes[quizIndex]?.id;
     return courseData?.quizResults?.some((r) => r.quiz_id === quizId);
-  };
-
-  const getSavedScore = (quizIndex: number) => {
-    const quizId = courseData?.quizzes[quizIndex]?.id;
-    const result = courseData?.quizResults?.find((r) => r.quiz_id === quizId);
-    return result?.score || "";
   };
 
   const handleSubmitQuiz = async (quizIndex: number) => {
@@ -555,6 +565,13 @@ export default function CourseContentPage() {
                     </p>
                   ) : selectedQuizIndex === quizIndex ? (
                     <>
+                      {!quizSubmitted[quizIndex] && (
+                        <div className="mb-2 text-red-600 font-semibold">
+                          Thời gian còn lại:{" "}
+                          {Math.floor(timeLeft / 60)}:
+                          {String(timeLeft % 60).padStart(2, "0")}
+                        </div>
+                      )}
                       {quiz.questions.map((q, qIndex) => (
                         <div key={qIndex} className="mt-2">
                           <p className="font-medium">
@@ -619,6 +636,8 @@ export default function CourseContentPage() {
                   ) : (
                     <button
                       onClick={() => {
+                        const durationInSeconds = quiz.duration * 60;
+                        setTimeLeft(durationInSeconds);
                         setQuizStartedAt((prev) => ({
                           ...prev,
                           [quizIndex]: new Date(),
@@ -704,7 +723,7 @@ export default function CourseContentPage() {
             </div>
           )}
         </div>
-        <div className="md:w-1/3 p-4 text-black sticky top-0 self-start border-l h-screen">
+        <div className="md:w-1/3 p-4 text-black sticky top-0 self-start border-l h-screen overflow-y-auto">
           <div className="flex justify-between items-center border-b pb-2">
             <h3 className="text-lg font-semibold">Course content</h3>
           </div>
@@ -724,26 +743,23 @@ export default function CourseContentPage() {
 
               {expandedSections[section.id] && (
                 <div className="mt-2 pl-4">
-                  {section.videos.map((video, idx) => {
-                    lessonCounter++;
-                    return (
-                      <div key={idx} className="mt-1 flex items-center">
-                        <button
-                          onClick={() => {
-                            const index = videos.findIndex(
-                              (v) => v.id === video.id
-                            );
-                            setCurrentVideoIndex(index);
-                            setCurrentVideoId(video.id);
-                          }}
-                          className="text-purple-600 underline text-left w-full"
-                        >
-                          {lessonCounter}. {video.title}
-                        </button>
-                        <span className="ml-auto text-gray-500 whitespace-nowrap">{video.duration} min</span>
-                      </div>
-                    );
-                  })}
+                  {section.videos.map((video) => (
+                    <div key={video.id} className="mt-1 flex items-center">
+                      <button
+                        onClick={() => {
+                          const index = videos.findIndex((v) => v.id === video.id);
+                          setCurrentVideoIndex(index);
+                          setCurrentVideoId(video.id);
+                        }}
+                        className="text-purple-600 underline text-left w-full"
+                      >
+                        {videoIdToNumber[video.id]}. {video.title}
+                      </button>
+                      <span className="ml-auto text-gray-500 whitespace-nowrap">
+                        {video.duration} min
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
