@@ -3,6 +3,7 @@ import { FaXTwitter, FaFacebook, FaLinkedin, FaLink } from "react-icons/fa6";
 import { FaSearch } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
+import axios from 'axios';
 
 export default function CourseContentPage() {
   const [activeTab, setActiveTab] = useState("Overview");
@@ -35,25 +36,18 @@ export default function CourseContentPage() {
   const videoComments = comments.filter(
     (c) => c.material_id === currentVideoId
   );
-  let lessonCounter = 0;
   const [quizStartedAt, setQuizStartedAt] = useState<{ [key: number]: Date }>(
     {}
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user_id, setUserId] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
 
   interface CourseData {
     course_id: number;
     title: string;
     description: string;
     lastUpdated: string;
-    rating: number;
-    students: number;
-    skillLevel: string;
-    languages: string;
-    captions: string;
-    lectures: number;
-    fullDescription: string;
     sections: {
       id: number;
       title: string;
@@ -62,7 +56,9 @@ export default function CourseContentPage() {
         id: number;
         title: string;
         link: string;
+        signedUrl: string;
         duration: number;
+        isPublic: boolean;
       }[];
     }[];
     documents: {
@@ -131,14 +127,29 @@ export default function CourseContentPage() {
       }
       setUserId(userData.user.id);
 
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+    
+      if (!token) {
+        console.error("Không có token Supabase");
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
-        const response = await fetch(
-          `http://localhost:3000/api/courses/${course_id}?user_id=${userData.user.id}`
-        );
-        console.log(response)
-        if (!response.ok) throw new Error("Failed to fetch course data");
-        const data = await response.json();
+        const response = await axios.get(`http://localhost:3000/api/courses/${course_id}`, {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          params: {
+            user_id: userData.user.id,
+          },
+        });
+      
+        const data = response.data;
         setCourseData(data);
         setComments(data.comments || []);
       } catch (error) {
@@ -169,8 +180,33 @@ export default function CourseContentPage() {
     loadAvatars();
   }, [comments, avatarCache]);
 
+  useEffect(() => {
+    if (selectedQuizIndex === null) return;
+    
+    const timerId = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerId);
+          handleSubmitQuiz(selectedQuizIndex);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timerId);
+  }, [selectedQuizIndex]);
+
   if (loading) return <p>Đang tải...</p>;
   if (!courseData) return <p>Không tìm thấy khóa học!</p>;
+
+  const videoIdToNumber: { [key: number]: number } = {};
+  let counter = 1;
+  courseData.sections.forEach((section) => {
+    section.videos.forEach((video) => {
+      videoIdToNumber[video.id] = counter++;
+    });
+  });
 
   const toggleSection = (id: number) => {
     setExpandedSections((prev) => ({
@@ -191,16 +227,7 @@ export default function CourseContentPage() {
   };
 
   const getQuizScore = (quizIndex: number) => {
-    const quiz = courseData.quizzes[quizIndex];
-    let correctCount = 0;
-
-    quiz.questions.forEach((q, qIndex) => {
-      if (quizAnswers[`${quizIndex}-${qIndex}`] === q.answer) {
-        correctCount++;
-      }
-    });
-
-    return `${correctCount} / ${quiz.questions.length}`;
+    return `${courseData.quizResults[quizIndex].score}`;
   };
 
   const handlePrevVideo = () => {
@@ -271,12 +298,6 @@ export default function CourseContentPage() {
     return courseData?.quizResults?.some((r) => r.quiz_id === quizId);
   };
 
-  const getSavedScore = (quizIndex: number) => {
-    const quizId = courseData?.quizzes[quizIndex]?.id;
-    const result = courseData?.quizResults?.find((r) => r.quiz_id === quizId);
-    return result?.score || "";
-  };
-
   const handleSubmitQuiz = async (quizIndex: number) => {
     setIsSubmitting(true);
     try {
@@ -319,6 +340,16 @@ export default function CourseContentPage() {
       }
 
       try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const token = session?.access_token;
+      
+        if (!token) {
+          console.error("Không có token Supabase");
+          setLoading(false);
+          return;
+        }
         const payload = {
           user_id,
           quiz_id: quiz.id,
@@ -328,19 +359,18 @@ export default function CourseContentPage() {
           answers,
         };
 
-        const res = await fetch(
+        const res = await axios.post(
           `http://localhost:3000/api/quizzes/${quiz.id}`,
+          payload,
           {
-            method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`, 
             },
-            body: JSON.stringify(payload),
           }
         );
 
-        if (!res.ok) throw new Error("Lỗi khi gửi bài");
-        const data = await res.json();
+        const data = res.data;
         console.log("Gửi bài thành công:", data);
       } catch (error) {
         console.error("Gửi bài thất bại:", error);
@@ -357,31 +387,6 @@ export default function CourseContentPage() {
     }
   };
 
-  const toEmbedUrl = (url: string | null | undefined): string | undefined => {
-    if (!url) return undefined;
-
-    try {
-      const parsed = new URL(url);
-
-      if (
-        parsed.hostname.includes("youtube.com") &&
-        parsed.pathname === "/watch"
-      ) {
-        const videoId = parsed.searchParams.get("v");
-        return videoId ? `https://www.youtube.com/embed/${videoId}` : undefined;
-      }
-
-      if (parsed.hostname === "youtu.be") {
-        const videoId = parsed.pathname.slice(1); // remove leading '/'
-        return videoId ? `https://www.youtube.com/embed/${videoId}` : undefined;
-      }
-
-      return undefined;
-    } catch {
-      return undefined;
-    }
-  };
-
   const videos =
     courseData?.sections.flatMap((section) => section.videos) || [];
 
@@ -395,13 +400,13 @@ export default function CourseContentPage() {
           </a>
           <span className="text-sm">{courseData.title}</span>
         </div>
-        <div className="flex items-center space-x-4">
+        {/* <div className="flex items-center space-x-4">
           <button className="text-sm">Leave a rating</button>
           <div className="w-6 h-6 border rounded-full border-gray-400"></div>
           <button className="text-sm">Your progress ▼</button>
           <button className="bg-gray-700 px-3 py-1 rounded">Share</button>
           <button className="text-lg">⋮</button>
-        </div>
+        </div> */}
       </header>
 
       {/* Main Content */}
@@ -420,15 +425,15 @@ export default function CourseContentPage() {
                   ❮ Prev
                 </button>
 
-                <iframe
+                <video
                   className="w-full h-full"
-                  src={toEmbedUrl(videos[currentVideoIndex]?.link)}
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
-
+                  controls
+                  src={
+                    !videos[currentVideoIndex]?.isPublic
+                      ? videos[currentVideoIndex]?.signedUrl
+                      : videos[currentVideoIndex]?.link
+                  }
+                />
                 <button
                   className="absolute right-0 bg-gray-700 text-white px-3 py-2 rounded-r disabled:opacity-50"
                   onClick={handleNextVideo}
@@ -462,41 +467,14 @@ export default function CourseContentPage() {
               </button>
             ))}
           </div>
-          <h3 className="mt-2 text-black">{courseData.description}</h3>
+          <h3 className="mt-2 text-black">{courseData.title}</h3>
           <div className="flex items-center mt-2 text-sm text-deepteal border-b pb-4">
-            ⭐ {courseData.rating} ({courseData.students} students) | Last
-            updated: {courseData.lastUpdated}
+             Last updated: {courseData.lastUpdated}
           </div>
 
           {/* Additional Course Details */}
           {activeTab === "Overview" && (
             <div className="mt-4">
-              <div className="mt-2 pt-2 pb-2 text-black border-b">
-                <div className="grid grid-cols-3 gap-4 mt-2 text-sm text-gray-600">
-                  <h3 className="text-lg font-semibold text-black">
-                    By the numbers
-                  </h3>
-                  <div>
-                    <p>
-                      <strong>Skill level:</strong> {courseData.skillLevel}
-                    </p>
-                    <p>
-                      <strong>Students:</strong> {courseData.students}
-                    </p>
-                    <p>
-                      <strong>Languages:</strong> {courseData.languages}
-                    </p>
-                    <p>
-                      <strong>Captions:</strong> {courseData.captions}
-                    </p>
-                  </div>
-                  <div>
-                    <p>
-                      <strong>Lectures:</strong> {courseData.lectures}
-                    </p>
-                  </div>
-                </div>
-              </div>
               <div className="grid grid-cols-3 gap-4 mt-4 pb-4 text-sm text-gray-600  border-b">
                 <h3 className="text-lg font-semibold mt-2">Features</h3>
                 <p className="text-sm text-gray-600 mt-2">
@@ -510,7 +488,7 @@ export default function CourseContentPage() {
                 <p
                   className="text-sm text-gray-600 mt-2 col-span-2"
                   dangerouslySetInnerHTML={{
-                    __html: courseData.fullDescription.replace(/\n/g, "<br/>"),
+                    __html: courseData.description.replace(/\n/g, "<br/>"),
                   }}
                 ></p>
               </div>
@@ -587,6 +565,13 @@ export default function CourseContentPage() {
                     </p>
                   ) : selectedQuizIndex === quizIndex ? (
                     <>
+                      {!quizSubmitted[quizIndex] && (
+                        <div className="mb-2 text-red-600 font-semibold">
+                          Thời gian còn lại:{" "}
+                          {Math.floor(timeLeft / 60)}:
+                          {String(timeLeft % 60).padStart(2, "0")}
+                        </div>
+                      )}
                       {quiz.questions.map((q, qIndex) => (
                         <div key={qIndex} className="mt-2">
                           <p className="font-medium">
@@ -651,6 +636,8 @@ export default function CourseContentPage() {
                   ) : (
                     <button
                       onClick={() => {
+                        const durationInSeconds = quiz.duration * 60;
+                        setTimeLeft(durationInSeconds);
                         setQuizStartedAt((prev) => ({
                           ...prev,
                           [quizIndex]: new Date(),
@@ -736,7 +723,7 @@ export default function CourseContentPage() {
             </div>
           )}
         </div>
-        <div className="md:w-1/3 p-4 text-black sticky top-0 self-start border-l h-screen">
+        <div className="md:w-1/3 p-4 text-black sticky top-0 self-start border-l h-screen overflow-y-auto">
           <div className="flex justify-between items-center border-b pb-2">
             <h3 className="text-lg font-semibold">Course content</h3>
           </div>
@@ -756,27 +743,23 @@ export default function CourseContentPage() {
 
               {expandedSections[section.id] && (
                 <div className="mt-2 pl-4">
-                  {section.videos.map((video, idx) => {
-                    lessonCounter++;
-                    return (
-                      <div key={idx} className="mt-1 flex items-center">
-                        <input type="checkbox" className="mr-2" />
-                        <button
-                          onClick={() => {
-                            const index = videos.findIndex(
-                              (v) => v.id === video.id
-                            );
-                            setCurrentVideoIndex(index);
-                            setCurrentVideoId(video.id);
-                          }}
-                          className="text-purple-600 underline text-left w-full"
-                        >
-                          {lessonCounter}. {video.title}
-                        </button>
-                        <span className="ml-auto text-gray-500">3min</span>
-                      </div>
-                    );
-                  })}
+                  {section.videos.map((video) => (
+                    <div key={video.id} className="mt-1 flex items-center">
+                      <button
+                        onClick={() => {
+                          const index = videos.findIndex((v) => v.id === video.id);
+                          setCurrentVideoIndex(index);
+                          setCurrentVideoId(video.id);
+                        }}
+                        className="text-purple-600 underline text-left w-full"
+                      >
+                        {videoIdToNumber[video.id]}. {video.title}
+                      </button>
+                      <span className="ml-auto text-gray-500 whitespace-nowrap">
+                        {video.duration} min
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
