@@ -60,6 +60,7 @@ export default function CoursePage() {
             `
       )
       .eq("id", course_id as unknown as number)
+      .eq('status', 'Published')
       .then((res) => {
         if (res.error) {
           console.log("1", res.error);

@@ -1,5 +1,5 @@
 import React, { ReactNode, useContext } from "react"
-import { CourseDescription, Document, Quiz, Section } from "./types"
+import { CourseDescription, CourseTopic, Document, Quiz, Section } from "./types"
 
 interface ItemPortalProviderProps {
     children: ReactNode
@@ -14,6 +14,12 @@ export interface CurrentSelectedItem {
 interface ItemPortalContext {
     courseName: string,
     setCourseName: (name: string) => void
+
+    courseStatus: string
+    setCourseStatus: (s: string) => void,
+
+    coursePicture: File | null
+    setCoursePicture: React.Dispatch<React.SetStateAction<File | null>>
 
     courseDescription: string
     setCourseDescription: (description: string) => void
@@ -46,6 +52,9 @@ interface ItemPortalContext {
     setCourseDescriptionList: React.Dispatch<React.SetStateAction<CourseDescription[]>>
     setCourseDescriptionListAtIndex: (newQuiz: CourseDescription, atIndex: number) => void,
 
+    courseTopics: CourseTopic[],
+    setCourseTopics: React.Dispatch<React.SetStateAction<CourseTopic[]>>;
+
     // tempCurrentVideo: Video | null
     // setTempCurrentVideo: (video: Video | null) => void
 
@@ -59,9 +68,14 @@ interface ItemPortalContext {
 const ItemPortal = React.createContext<ItemPortalContext>({
     courseName: '',
     setCourseName: () => {},
+    courseStatus: '',
+    setCourseStatus: () => {},
 
     courseDescription: '',
     setCourseDescription: () => {},
+
+    coursePicture: null,
+    setCoursePicture: () => {},
 
     sections: [],
     setSections: () => {},
@@ -89,7 +103,10 @@ const ItemPortal = React.createContext<ItemPortalContext>({
 
     courseDescriptionList: [],
     setCourseDescriptionList: () => {},
-    setCourseDescriptionListAtIndex: () => {}
+    setCourseDescriptionListAtIndex: () => {},
+
+    courseTopics: [],
+    setCourseTopics: () => {},
 })
 
 export default function ItemPortalProvider(props: ItemPortalProviderProps) {

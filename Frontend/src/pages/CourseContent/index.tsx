@@ -136,6 +136,7 @@ export default function CourseContentPage() {
         const response = await fetch(
           `http://localhost:3000/api/courses/${course_id}?user_id=${userData.user.id}`
         );
+        console.log(response)
         if (!response.ok) throw new Error("Failed to fetch course data");
         const data = await response.json();
         setCourseData(data);

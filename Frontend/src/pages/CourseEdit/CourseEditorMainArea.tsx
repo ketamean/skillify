@@ -12,6 +12,8 @@ import { DialogClose } from "@/components/ui/dialog"
 import Divider from "@/components/Divider"
 import { Switch } from "@/components/ui/switch"
 
+import { genPromptsForDescription } from '../../utils/genPrompts'
+
 // interface CourseEditorMainAreaProps {}
 
 export default function CourseEditorMainArea() { // props: CourseEditorMainAreaProps
@@ -89,7 +91,7 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
 
                     {/* Title */}
                     <div className="w-full flex flex-col gap-y-2">
-                        <label htmlFor="main-edit-title">Title</label>
+                        <label htmlFor="main-edit-title">Title<span className="text-xl font-bold text-red-600">*</span></label>
                         <input className=" px-2 h-10 border border-gray-300 rounded-sm" type="text" name="main-edit-title" id="main-edit-title"
                             value={tempChangedSelectedItem?.title? tempChangedSelectedItem?.title : ''}
                             onChange={(e) => {
@@ -106,12 +108,46 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
 
                     {/* Description */}
                     <div className="w-full flex flex-col gap-y-1">
+                        {/* AI Autofill button on Main Area for Document, Quiz, or Description */}
                         <div className="flex flex-row items-center">
                             <label htmlFor="main-edit-description">Description</label>
+                            {currentSelectedItem?.type === 'section' ? <></> :
                             <div className="ml-auto">
-                                <AIAutoFillButton onClick={() => {}} />
-                            </div>
+                                <AIAutoFillButton onClick={() => {
+                                    switch(currentSelectedItem?.type) {
+                                        // case 'description':
+                                        //     if (!tempChangedSelectedItem.title) {
+                                        //         alert('Please provide title')
+                                        //         return;
+                                        //     }
+                                        //     const quizInfo = quizzes.map((quiz) => ({
+                                        //         title: quiz.title,
+                                        //         description: quiz.description
+                                        //     }))
+                                        //     const documentInfo = documents.map((doc) => ({
+                                        //         title: doc.title,
+                                        //         description: doc.description
+                                        //     }))
+                                        //     const sectionInfo = sections.map((sec) => ({
+                                        //         title: sec.title,
+                                        //         description: sec.description,
+                                        //         videos: sec.content.map((vid) => ({
+                                        //             title: vid.title,
+                                        //             description: vid.description
+                                        //         }))
+                                        //     }))
+                                        //     const prompt = genPromptsForDescription(tempChangedSelectedItem.title, )
+                                        case 'quiz':
+                                            break
+                                        case 'document':
+                                            const prompt = `
+
+                                            `
+                                    }
+                                }} />
+                            </div>}
                         </div>
+
                         <textarea
                             className="px-2 py-1 border border-gray-300 rounded-sm resize-none"
                             name="main-edit-description" id="main-edit-description"
@@ -133,7 +169,7 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                     {
                         !tempChangedSelectedItem || !currentSelectedItem || currentSelectedItem.type !== 'quiz' || (tempChangedSelectedItem as Quiz).type !== 'quiz' ? <></> :
                         <div className="w-full flex flex-col gap-y-2">
-                            <label htmlFor="main-edit-title">Duration</label>
+                            <label htmlFor="main-edit-title">Duration<span className="text-xl font-bold text-red-600">*</span></label>
                             <input className=" px-2 h-10 border border-gray-300 rounded-sm" type="text" name="main-edit-title" id="main-edit-title"
                                 value={(tempChangedSelectedItem as Quiz).duration as number}
                                 onChange={(e) => {
@@ -172,6 +208,7 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                                 accept=".docx,.pdf"
                                 file={documentFile}
                                 setFile={setDocumentFile}
+                                header={<>File<span className="text-xl font-bold text-red-600">*</span></>}
                             />
                     }
 

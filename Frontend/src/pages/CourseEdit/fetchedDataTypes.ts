@@ -51,5 +51,7 @@ export interface FetchedCourse {
     sections: FetchedSection[],
     documents: FetchedDocument[],
     quizzes: FetchedQuiz[],
-    fee: number
+    fee: number,
+    status: string,
+    image_link: string,
 }
