@@ -1,5 +1,4 @@
 import NavBar from "../../components/NavBar";
-import Footer from "../../components/Footer";
 import { useEffect, useState } from "react";
 import { axiosForm } from "../../config/axios";
 import { useLocation } from "react-router-dom";
@@ -11,9 +10,12 @@ interface CourseResult {
   short_description: string;
   image_link: string;
   fee: number;
-  instructor_name?: string;
   rating?: number;
   rating_count?: number;
+  instructor: {
+    first_name: string;
+    last_name: string;
+  };
   level?: "Beginner" | "Intermediate" | "Advanced";
 }
 
@@ -38,10 +40,9 @@ export default function SearchPage() {
       setError(null);
 
       try {
-        const response = await axiosForm.post("/api/search", {
-          query: query,
-        });
-
+        const response = await axiosForm.get(
+          `/api/search/keyword?keyword=${encodeURIComponent(query)}`
+        );
         setSearchResults(response.data);
       } catch (err: any) {
         setError(err.response?.data?.error || "Failed to fetch search results");
@@ -88,7 +89,11 @@ export default function SearchPage() {
                   id={course.id}
                   imageUrl={course.image_link}
                   title={course.name}
-                  instructorName={course.instructor_name || "Instructor"}
+                  instructorName={
+                    (course.instructor.first_name ?? "") +
+                    " " +
+                    (course.instructor.last_name ?? "")
+                  }
                   price={course.fee === 0 ? "Free" : course.fee}
                   level={course.level || "Beginner"}
                 />
