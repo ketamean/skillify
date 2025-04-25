@@ -105,32 +105,60 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
     const documents = documentsData.data || [];
     const quizzes = quizzesData.data || [];
     const quizDetails = quizDetailsData.data || [];
-    const videoLinkMap: { [key: number] : string } = {}
+    const videoLinkMap: { 
+      [key: number]: { 
+        originalLink: string; 
+        signedUrl?: string; 
+      } 
+    } = {};
     const videoIds: number[] = videos.map((video) => video.id);
     for (const video of videos) {
-      let tablename = ''
-      let schema = ''
+      let tablename = '';
+      let schema = '';
+      
       if (video.is_public) {
-        schema = 'public'
-        tablename = 'coursevideos_public'
+        schema = 'public';
+        tablename = 'coursevideos_public';
       } else {
-        schema = 'private'
-        tablename = 'coursevideos_private'
+        schema = 'private';
+        tablename = 'coursevideos_private';
       }
+    
       const { data: videoLinks, error: videoLinkError } = await supabase
-      .schema(schema)
-      .from(tablename)
-      .select("id, link")
-      .eq("id", video.id)
-
+        .schema(schema)
+        .from(tablename)
+        .select("id, link")
+        .eq("id", video.id);
+    
       if (videoLinkError) {
-        console.log(videoLinkError)
+        console.log(videoLinkError);
         res.status(500).json({ error: "Lỗi lấy link video" });
         return;
       }
-      videoLinkMap[video.id] = videoLinks[0]?.link || "";
+    
+      const rawUrl = videoLinks[0]?.link || "";
+      videoLinkMap[video.id] = {
+        originalLink: rawUrl,
+      };
+    
+      if (!video.is_public) {
+        const fileNameEncoded = rawUrl.substring(rawUrl.lastIndexOf("/") + 1);
+        const fileName = decodeURIComponent(fileNameEncoded);
+    
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+          .from("coursevideosprivate")
+          .createSignedUrl(fileName, 3600);
+    
+        if (signedUrlError) {
+          console.log(signedUrlError);
+          res.status(500).json({ error: "Lỗi tạo signed URL cho video private" });
+          return;
+        }
+    
+        // Thêm signedUrl vào object
+        videoLinkMap[video.id].signedUrl = signedUrlData?.signedUrl || "";
+      }
     }
-
     // const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
 
     const formattedSections = sections.map((section) => ({
@@ -142,12 +170,14 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         .map((video) => ({
           id: video.id,
           title: video.title,
-          link: videoLinkMap[video.id] || "",
+          link: videoLinkMap[video.id]?.originalLink || "",
+          signedUrl: videoLinkMap[video.id]?.signedUrl || null,
           duration: video.duration,
           description: video.description,
           isPublic: video.is_public
         })),
     }));
+    
 
     const formattedQuizzes = quizzes.map((quiz) => ({
       id: quiz.id,
@@ -217,13 +247,6 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       fee: course.fee,
       description: course.short_description,
       lastUpdated: course.created_at,
-      rating: 5,
-      students: 10000,
-      skillLevel: "Beginner Level",
-      languages: "English",
-      captions: "Yes",
-      lectures: 32,
-      fullDescription: "Nội dung khóa học chi tiết...",
       sections: formattedSections,
       documents: documents,
       quizzes: formattedQuizzes,
