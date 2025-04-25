@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "../supabaseClient";
 
 interface CourseCardProps {
   id: number;
@@ -10,6 +12,7 @@ interface CourseCardProps {
   price: number | "Free";
   level?: "Beginner" | "Intermediate" | "Advanced";
   is_Instructor?: boolean;
+  studentCount?: number;
 }
 
 export function CourseCard({
@@ -35,7 +38,9 @@ export function CourseCard({
           <p className="text-gray-500 text-sm mb-2">{instructorName}</p>
           <div className="flex justify-between items-center mt-4">
             <span className="text-deepteal font-bold text-lg">
-              {price === "Free" ? "Free" : `$${price}`}
+              {price === "Free" || price === 0
+                ? "Free"
+                : `${price.toLocaleString()}₫`}
             </span>
             {level && (
               <span className="bg-vibrant-green text-deepteal text-sm font-extrabold px-2 py-1 rounded">

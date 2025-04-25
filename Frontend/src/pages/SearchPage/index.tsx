@@ -97,8 +97,6 @@ export default function SearchPage() {
           )}
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

@@ -49,7 +49,6 @@ export default function MyLearning() {
           instructors:instructor_id (first_name, last_name)`
         )
         .in("id", courseIds);
-      console.log("Course Data:", courseData);
 
       if (courseError || !courseData) {
         console.error("Error fetching course data:", courseError);
@@ -147,8 +146,6 @@ export default function MyLearning() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }

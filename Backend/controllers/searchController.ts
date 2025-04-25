@@ -53,3 +53,49 @@ export const searchCourses = async (
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const searchCoursesByTopic = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  const topicId = req.params.topicId;
+  if (!topicId) {
+    return res.status(400).json({ error: "Topic ID is required" });
+  }
+  try {
+    const { data, error } = await supabase
+      .from("courserelatedtopics")
+      .select("course_id")
+      .eq("topic_id", topicId);
+    if (error) {
+      console.error("Error fetching data from Supabase:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+    if (!data || data.length === 0) {
+      return res.status(200).json([]);
+    }
+    const { data: courseData, error: courseError } = await supabase
+      .from("courses")
+      .select(
+        `
+          id,
+          name,
+          short_description,
+          image_link,
+          fee,
+          instructors:instructor_id (first_name, last_name)`
+      )
+      .in(
+        "id",
+        data.map((item) => item.course_id)
+      );
+    if (courseError) {
+      console.error("Error fetching course data:", courseError);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+    if (!courseData || courseData.length === 0) {
+      return res.status(200).json([]);
+    }
+    return res.status(200).json(courseData);
+  } catch (error) {}
+};

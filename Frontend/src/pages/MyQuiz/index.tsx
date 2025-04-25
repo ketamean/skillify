@@ -120,8 +120,6 @@ export default function MyQuiz() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }

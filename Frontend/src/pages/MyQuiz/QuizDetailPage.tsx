@@ -31,7 +31,6 @@ export default function QuizDetailPage() {
         <main className="container mx-auto px-[4%] pt-10 pb-20">
           <p>Loading quiz statistics...</p>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -85,8 +84,6 @@ export default function QuizDetailPage() {
           </div>
         ))}
       </main>
-
-      <Footer />
     </div>
   );
 }
