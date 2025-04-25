@@ -16,6 +16,7 @@ interface Course {
   instructor_id: number;
   average_rating?: number;
   total_students?: number;
+  status: string
 }
 
 export default function InstructorDashboard(): ReactElement {
@@ -87,18 +88,25 @@ export default function InstructorDashboard(): ReactElement {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {courses.map((course) => (
-              <CourseCard
-                key={course.id}
-                id={course.id}
-                title={course.name}
-                imageUrl={
-                  course.image_link ||
-                  "https://placehold.co/300x200?text=Thumbnail"
-                }
-                price={course.fee}
-                instructorName={user.fname + " " + user.lname}
-                is_Instructor={true}
-              />
+              <div className='flex flex-col gap-y-2'>
+                <CourseCard
+                  key={course.id}
+                  id={course.id}
+                  title={course.name}
+                  imageUrl={
+                    course.image_link ||
+                    'https://placehold.co/300x200?text=Thumbnail'
+                  }
+                  price={course.fee}
+                  instructorName={user.fname + " " + user.lname}
+                  is_Instructor={true}
+                  footer={
+                    <p className={`text-sm font-bold ${course.status !== 'Published' ? 'text-red-500' : 'text-green-500'}`}>
+                      {course.status}
+                    </p>
+                  }
+                />
+              </div>
             ))}
           </div>
         )}

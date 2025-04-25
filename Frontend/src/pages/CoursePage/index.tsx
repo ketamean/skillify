@@ -1,6 +1,6 @@
 import NavBar from "../../components/NavBar";
 import Footer from "../../components/Footer";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import { useEffect, useState } from "react";
 import CourseDetails from "../../components/CourseDetails";
@@ -22,6 +22,7 @@ export interface VideoSection {
 }
 
 export default function CoursePage() {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true);
   const { course_id } = useParams();
 
@@ -46,129 +47,76 @@ export default function CoursePage() {
     console.log(videoSections)
   }, [videoSections])
 
-  useEffect(() => {
-    (async() => {})();
-    supabase
-      .from("courses")
-      .select(
-        `
-                id,
-                name,
-                short_description,
-                image_link,
-                fee,
-                instructor_id,
-                users (
-                    first_name,
-                    last_name
-                )
-            `
-      )
-      .eq("id", course_id as unknown as number)
-      .eq('status', 'Published')
-      .then((res) => {
-        if (res.error) {
-          console.log("1", res.error);
-          return;
-        }
-        if (!res.data || res.data.length === 0) return;
-        setLoading(false);
-        const data = res.data;
-        setTitle(data[0].name);
-        if (data[0].image_link) setImageLink(data[0].image_link);
-        else setImageLink('https://placehold.co/300x200?text=Thumbnail')
-        setShortDescription(
-          res.data[0].short_description ? res.data[0].short_description : ""
-        );
-        setLinkToInstructorPage(`/instructor/${res.data[0].instructor_id}`);
-        setInstructorName(
-          `${
-            res.data[0].users.first_name ? res.data[0].users.first_name : ""
-          } ${res.data[0].users.last_name ? res.data[0].users.last_name : ""}`
-        );
-        setFee(res.data[0].fee);
-      });
+  async function fetchData () {
+    //////////////////////////////////////////
+    //////////////////////////////////////////
+    // get course metadata and validity
+    const { data: dataGetCourse, error: errorGetCourse } = await supabase.from("courses").select(`id, name, short_description, image_link, fee, instructor_id, users (first_name, last_name)`).eq("id", course_id as unknown as number).eq("status", "Published").single();
 
-    supabase
-      .from("courserelatedtopics")
-      .select(
-        `
-                    topics(id, name)
-                `
-      )
-      .eq("course_id", course_id as unknown as number)
-      .then((res) => {
-        if (res.error) {
-          console.log("2", res.error);
-          return;
-        }
-        if (!res.data || res.data.length === 0) return;
-        setLoading(false);
+    if (errorGetCourse || !dataGetCourse) {
+      alert('Cannot find course')
+      navigate('/')
+      return;
+    }
 
-        setRelatedTopics(
-          res.data
-            .filter((el) => el.topics.name)
-            .map((pair) => ({
-              name: pair.topics.name,
-              link: pair.topics.id ? `/topics?id=${pair.topics.id}` : "#",
-            }))
-        );
-      });
-
-    supabase
-      .from("coursedescriptions")
-      .select(
-        `
-                header, content
-            `
-      )
-      .eq("course_id", course_id as unknown as number)
-      .order("order", { ascending: true })
-      .then((res) => {
-        if (res.error) {
-          console.error("3", res.error);
-          return;
-        }
-        if (!res.data || res.data.length === 0) return;
-        setLoading(false);
-        setDescriptions(res.data);
-      });
-
-    supabase
-      .from("learnerenrolments")
-      .select("course_id", { count: "exact", head: true })
-      .eq("course_id", course_id as unknown as number)
-      .then((res) => {
-        if (res.error) {
-          console.log(res.error);
-          return;
-        }
-        setLoading(false);
-        setNumberOfEnrolments(res.count as number);
-      });
-
-    supabase
+    setLoading(false);
+    
+    setTitle(dataGetCourse.name);
+    if (dataGetCourse.image_link) setImageLink(dataGetCourse.image_link);
+    else setImageLink('https://placehold.co/300x200?text=Thumbnail')
+    setShortDescription(
+      dataGetCourse.short_description ? dataGetCourse.short_description : ""
+    );
+    setLinkToInstructorPage(`/instructor/${dataGetCourse.instructor_id}`);
+    setInstructorName(
+      `${
+        dataGetCourse.users.first_name ? dataGetCourse.users.first_name : ""
+      } ${dataGetCourse.users.last_name ? dataGetCourse.users.last_name : ""}`
+    );
+    setFee(dataGetCourse.fee);
+    //////////////////////////////////////////
+    //////////////////////////////////////////
+    // get descriptions list
+    const {data: descriptionList} = await supabase
+    .from("coursedescriptions")
+    .select(
+      `
+              header, content
+          `
+    )
+    .eq("course_id", course_id as unknown as number)
+    .order("order", { ascending: true })
+    if (descriptionList) setDescriptions(descriptionList);
+    //////////////////////////////////////////
+    //////////////////////////////////////////
+    // get number of enrolments
+    const {count: nEnrolments} = await supabase
+    .from("learnerenrolments")
+    .select("course_id", { count: "exact", head: true })
+    .eq("course_id", course_id as unknown as number)
+    setNumberOfEnrolments(nEnrolments as number);
+    //////////////////////////////////////////
+    //////////////////////////////////////////
+    // get sections and vids
+    const { data: sections } = await supabase
       .rpc("get_sections_with_videos_by_course", {
         courseid: course_id as unknown as number,
       })
-      .then((res) => {
-        if (res.error) {
-          console.log(res.error);
-          return;
-        }
-        if (!res.data || res.data.length === 0) return;
-        setLoading(false);
-        setVideoSections(res.data.map((videoSection: VideoSection) => ({
-          sectionName: videoSection.sectionName,
-          videos: videoSection.videos.map((video) => ({
-            ...video,
-            link: !video.link ? 'www.google.com' : supabase.storage.from('coursevideospublic').getPublicUrl(video.link).data.publicUrl
-          }))
-        })))
-      })
 
-        // get public videos link
+    if (sections) {
+      console.log(sections)
+      setVideoSections(sections.map((videoSection: VideoSection) => ({
+        sectionName: videoSection.sectionName,
+        videos: !videoSection.videos ? [] : videoSection.videos.map((video) => ({
+          ...video,
+          link: !video.link ? 'www.google.com' : supabase.storage.from('coursevideospublic').getPublicUrl(video.link).data.publicUrl
+        }))
+      })))
+    }
+  }
 
+  useEffect(() => {
+    fetchData()
   }, [course_id]);
   return (
     <>
