@@ -201,7 +201,7 @@ export default function ProfilePage() {
 
         {/* Tabs */}
         <div className="mt-4 border-b text-black flex space-x-6">
-          {[{ id: "profile", label: "Udemy profile" },
+          {[{ id: "profile", label: "My profile" },
           { id: "picture", label: "Profile picture" },
           { id: "privacy", label: "Privacy settings" }].map((t) => (
             <button
@@ -381,7 +381,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-deepteal underline"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-deepteal hover:underline"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -401,7 +401,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-deepteal underline"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-deepteal hover:underline"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -421,7 +421,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-deepteal underline"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-deepteal hover:underline"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
