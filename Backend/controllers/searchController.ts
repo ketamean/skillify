@@ -87,7 +87,8 @@ export const searchCoursesByTopic = async (
       .in(
         "id",
         data.map((item) => item.course_id)
-      );
+      )
+      .limit(20);
     if (courseError) {
       console.error("Error fetching course data:", courseError);
       return res.status(500).json({ error: "Internal server error" });
@@ -141,6 +142,39 @@ export const searchCoursesByKeyword = async (
     return res.status(200).json(data);
   } catch (error) {
     console.error("Error in keyword search:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getTopicNameById = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  const topicId = req.params.topicId;
+
+  if (!topicId) {
+    return res.status(400).json({ error: "Topic ID is required" });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("topics")
+      .select("name")
+      .eq("id", topicId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching topic name:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+
+    if (!data) {
+      return res.status(404).json({ error: "Topic not found" });
+    }
+
+    return res.status(200).json({ name: data.name });
+  } catch (error) {
+    console.error("Error getting topic name:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };

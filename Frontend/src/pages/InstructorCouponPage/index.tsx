@@ -68,7 +68,6 @@ const InstructorCouponPage: React.FC = () => {
     <div className="min-h-screen bg-custom-white">
       <NavBar />
 
-      {/* Instructor Dashboard Navigation */}
       <InstructorNavbar activeTab="coupons" />
 
       <div className="max-w-6xl mx-auto px-6 py-10">
