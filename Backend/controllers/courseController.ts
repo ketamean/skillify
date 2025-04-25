@@ -99,18 +99,12 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       res.status(500).json({ error: "Lỗi lấy dữ liệu từ Supabase" });
       return;
     }
-
     const sections = sectionsData.data || [];
     const videos = videosData.data || []; //{ is_public: boolean, id: number }[]
     const documents = documentsData.data || [];
     const quizzes = quizzesData.data || [];
     const quizDetails = quizDetailsData.data || [];
-    const videoLinkMap: { 
-      [key: number]: { 
-        originalLink: string; 
-        signedUrl?: string; 
-      } 
-    } = {};
+    const videoLinkMap: { [key: number] : string } = {}
     const videoIds: number[] = videos.map((video) => video.id);
     for (const video of videos) {
       let tablename = '';
@@ -123,7 +117,6 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         schema = 'private';
         tablename = 'coursevideos_private';
       }
-    
       const { data: videoLinks, error: videoLinkError } = await supabase
         .schema(schema)
         .from(tablename)
@@ -135,28 +128,21 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         res.status(500).json({ error: "Lỗi lấy link video" });
         return;
       }
-    
-      const rawUrl = videoLinks[0]?.link || "";
-      videoLinkMap[video.id] = {
-        originalLink: rawUrl,
+      if (video.is_public) {
+        const fileName = encodeURIComponent(videoLinks[0]?.link);
+        videoLinkMap[video.id] = `https://qlgqwskmctxlhulicvrw.supabase.co/storage/v1/object/public/coursevideospublic/${fileName}`;
       };
-    
       if (!video.is_public) {
-        const fileNameEncoded = rawUrl.substring(rawUrl.lastIndexOf("/") + 1);
-        const fileName = decodeURIComponent(fileNameEncoded);
-    
         const { data: signedUrlData, error: signedUrlError } = await supabase.storage
           .from("coursevideosprivate")
-          .createSignedUrl(fileName, 3600);
+          .createSignedUrl(videoLinks[0]?.link, 3600);
     
         if (signedUrlError) {
           console.log(signedUrlError);
           res.status(500).json({ error: "Lỗi tạo signed URL cho video private" });
           return;
         }
-    
-        // Thêm signedUrl vào object
-        videoLinkMap[video.id].signedUrl = signedUrlData?.signedUrl || "";
+        videoLinkMap[video.id] = signedUrlData?.signedUrl || ""; 
       }
     }
     // const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
@@ -170,14 +156,35 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         .map((video) => ({
           id: video.id,
           title: video.title,
-          link: videoLinkMap[video.id]?.originalLink || "",
-          signedUrl: videoLinkMap[video.id]?.signedUrl || null,
+          link: videoLinkMap[video.id] || "",  
           duration: video.duration,
           description: video.description,
           isPublic: video.is_public
         })),
     }));
     
+    const signedDocuments = [];
+
+    for (const doc of documents) {
+      const fileName = doc.link;
+
+      const { data: signedUrlData, error } = await supabase.storage
+        .from("coursedocuments")
+        .createSignedUrl(fileName, 3600); 
+
+      if (error) {
+        console.error(`Lỗi tạo signed URL cho tài liệu ${fileName}:`, error.message);
+        res.status(500).json({ error: "Lỗi tạo signed URL cho tài liệu" });
+        return;
+      }
+      console.log(signedUrlData?.signedUrl);
+      signedDocuments.push({
+        ...doc,
+        link: signedUrlData?.signedUrl || "",
+      });
+    }
+
+
 
     const formattedQuizzes = quizzes.map((quiz) => ({
       id: quiz.id,
@@ -246,7 +253,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       description: course.short_description,
       lastUpdated: course.created_at,
       sections: formattedSections,
-      documents: documents,
+      documents: signedDocuments,
       quizzes: formattedQuizzes,
       comments: formattedComments,
       quizResults: quizResults,
