@@ -2,7 +2,7 @@ import { ReactElement } from "react";
 import { Link } from "react-router-dom";
 
 interface InstructorNavbarProps {
-  activeTab: "courses" | "coupons" | "analytics" | "students";
+  activeTab: "courses" | "coupons" | "quizzes" | "students";
 }
 
 export default function InstructorNavbar({
@@ -35,7 +35,7 @@ export default function InstructorNavbar({
           <Link
             to="/instructor/quizzes"
             className={`py-2 px-1 border-b-2 ${
-              activeTab === "analytics"
+              activeTab === "quizzes"
                 ? "border-vibrant-green font-medium"
                 : "border-transparent hover:border-vibrant-green font-medium"
             }`}

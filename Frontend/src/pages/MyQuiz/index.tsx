@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import NavBar from "../../components/NavBar";
-import Footer from "../../components/Footer";
 import { supabase } from "../../supabaseClient";
-import axios from 'axios';
-
+import axios from "axios";
+import InstructorNavbar from "../../components/InstructorNavbar";
 export default function MyQuiz() {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,57 +16,61 @@ export default function MyQuiz() {
     duration: number;
     course_id: string;
   }
-  
+
   useEffect(() => {
     const fetchMyQuizzes = async () => {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
       if (userError || !userData?.user) {
         console.error("Error getting user:", userError);
         setLoading(false);
         return;
       }
-  
+
       const userId = userData.user.id;
 
       const {
         data: { session },
       } = await supabase.auth.getSession();
       const token = session?.access_token;
-    
+
       if (!token) {
         console.error("Không có token Supabase");
         setLoading(false);
         return;
       }
-      
+
       if (!token) {
         console.error("Access token is missing");
         setLoading(false);
         return;
       }
-      
+
       const { data: courses, error: courseError } = await supabase
         .from("courses")
         .select("id, name")
         .eq("instructor_id", userId);
-  
+
       if (courseError || !courses || courses.length === 0) {
         console.error("Error fetching courses:", courseError);
         setLoading(false);
         return;
       }
-  
+
       const courseIds = courses.map((c) => c.id);
-  
+
       let formattedQuizzes = [];
       try {
-        const response = await axios.get(`http://localhost:3000/api/quizzes/myquiz/${userId}`, {
-          params: { courseIds },  
-          headers: {
-            Authorization: `Bearer ${token}`, 
-          },
-        });
-      
+        const response = await axios.get(
+          `http://localhost:3000/api/quizzes/myquiz/${userId}`,
+          {
+            params: { courseIds },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
         const quizzesData = response.data.quizzes;
         formattedQuizzes = (quizzesData as QuizData[]).map((quiz) => {
           const course = courses.find((c) => c.id === quiz.course_id);
@@ -79,24 +82,20 @@ export default function MyQuiz() {
             courseTitle: course?.name || "Unknown Course",
           };
         });
-        
       } catch (err) {
         console.error("Error fetching quizzes:", err);
         setLoading(false);
         return;
       }
-  
+
       setQuizzes(formattedQuizzes);
       setLoading(false);
     };
-  
+
     fetchMyQuizzes();
   }, []);
-  
-  
 
   const sortedQuizzes = [...quizzes].sort((a, b) => {
-    if (sortType === "recent") return 0;
     if (sortType === "title-asc") return a.title.localeCompare(b.title);
     if (sortType === "title-desc") return b.title.localeCompare(a.title);
     if (sortType === "duration") return a.duration - b.duration;
@@ -107,18 +106,21 @@ export default function MyQuiz() {
     <div className="min-h-screen bg-custom-white">
       <NavBar />
 
+      <InstructorNavbar activeTab="quizzes" />
+
       <main className="container mx-auto px-[4%] pt-10 pb-20">
         <h1 className="text-3xl font-bold text-deepteal mb-6">My Quizzes</h1>
 
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-4">
-            <label className="text-deepteal font-medium">Sort by:</label>
+            <label className="text-deepteal font-medium my-auto">
+              Sort by:
+            </label>
             <select
               value={sortType}
               onChange={(e) => setSortType(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             >
-              <option value="recent">Recently Created</option>
               <option value="title-asc">Title (A-Z)</option>
               <option value="title-desc">Title (Z-A)</option>
               <option value="duration">Duration (Short to Long)</option>
