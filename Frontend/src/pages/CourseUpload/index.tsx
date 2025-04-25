@@ -1,20 +1,18 @@
 import { useEffect, useState } from "react";
 import Footer from "../../components/Footer";
 import NavBar from "../../components/NavBar";
-import CourseEditHeader from "./CourseEditHeader";
-import CourseEditSideBar from './CourseEditSideBar'
-import { Quiz, Section, Video, Document, SendAPICourse, CourseDescription, CourseTopic } from "./types";
-import ItemPortalProvider, { CurrentSelectedItem } from "./context"
+import CourseEditHeader from "../CourseEdit/CourseEditHeader";
+import CourseEditSideBar from '../CourseEdit/CourseEditSideBar'
+import { Quiz, Section, Document, SendAPICourse, CourseDescription, CourseTopic } from "../CourseEdit/types";
+import ItemPortalProvider, { CurrentSelectedItem } from "../CourseEdit/context"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheck } from '@fortawesome/free-solid-svg-icons'
-import CourseEditorMainArea from './CourseEditorMainArea'
+import { faCheck, faRotateLeft } from '@fortawesome/free-solid-svg-icons'
+import CourseEditorMainArea from '../CourseEdit/CourseEditorMainArea'
 import { axiosForm } from "@/config/axios";
-import { FetchedVideo, FetchedSection, FetchedQuiz, FetchedDocument, FetchedCourse, FetchedQuizQuestion } from './fetchedDataTypes'
-import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/supabaseClient";
 
-export default function CourseEdit() {
+export default function CourseUpload() {
 	const [courseName, setCourseName] = useState<string>('')
 	const [courseDescription, setCourseDescription] = useState<string>('')
 	const [courseFee, setCourseFee] = useState<number>(0)
@@ -29,190 +27,37 @@ export default function CourseEdit() {
 	const [errorMsg, setErrorMsg] = useState<string>('')
 	const [courseDescriptionList, setCourseDescriptionList] = useState<CourseDescription[]>([])
 	const [courseTopics,setCourseTopics] = useState<CourseTopic[]>([])
-	const [coursePicture, setCoursePicture] = useState<File | null>(null)
-	const { course_id } = useParams()
 	const [allTopicList, setAllTopicList] = useState<CourseTopic[]>([])
+	const [coursePicture, setCoursePicture] = useState<File | null>(null)
 	const [courseStatus, setCourseStatus] = useState('')
 
 	useEffect(() => {
 		if (isError) setIsLoading(false)
 	}, [isError])
 
-	// fetch data
-	useEffect(() => {
-		// fetch description list
-		supabase.from("coursedescriptions").select("header, content").eq("course_id", course_id).order("order", {ascending: true})
-			.then((res) => {
-				if (res.error) {
-					throw {
-						error: "Cannot get course description list"
-					}
-				}
-				setCourseDescriptionList(res.data.map((item, index) => ({
-					id: index,
-					title: item.header as string,
-					description: item.content as string
-				})))
-			})
-		///////////////////////////////////////////
-		///////////////////////////////////////////
-		// fetch topic list
+	/////////////////////////////////////////////
+	/////////////////////////////////////////////
+	// fetch topic list
+	try {
 		supabase.from('topics').select('id, name')
-			.then((res) => {
-				if (res.error) {
-					throw {
-						error: "Cannot get course description list"
-					}
+		.then((res) => {
+			if (res.error) {
+				console.log(res.error)
+				throw {
+					error: "Cannot get topic list"
 				}
-				const _allTopics = res.data
-				setAllTopicList(_allTopics)
-
-				// fetch related topics
-				supabase.from('courserelatedtopics').select('topic_id').eq('course_id', course_id)
-					.then((res) => {
-						if (res.error) {
-							throw {
-								error: "Cannot get course description list"
-							}
-						}
-						const newCourseTopics = res.data.map((item) => _allTopics.find((it) => item.topic_id === it.id))
-						setCourseTopics(newCourseTopics.filter(item => item !== undefined))
-					})
-			})
-
-		///////////////////////////////////////////
-		///////////////////////////////////////////
-		axiosForm
-			.get(`/api/courses/${course_id}/instructor`)
-			.then((res) => {
-				if (!res.data) {
-					throw {
-						error: `Cannot find course ${course_id}`
-					}
-				}
-
-				setIsLoading(false)
-				const data = res.data as FetchedCourse
-				const course = data
-
-				setCourseName(course.title)
-				setCourseDescription(course.description)
-				setCourseFee(course.fee)
-				setCourseStatus(course.status || '')
-
-				// get course picture
-				console.log(course.image_link)
-				if (course.image_link) {
-					fetch(course.image_link)
-					.then((response) => {
-						if (!response.ok) {
-							setCoursePicture(null)
-						} else {
-							response.blob()
-							.then((blob) => {
-								setCoursePicture(new File(
-									[blob],
-									'Your course thumbnail',
-									{
-										type: blob.type || 'image/*',
-										lastModified: Date.now()
-									}
-								))
-							})
-						}
-					})
-				} else {
-					setCoursePicture(null)
-				}
-				
-
-				Promise.all(course.sections.map(async (section: FetchedSection) => {
-					return {
-						id: section.id,
-						title: section.title,
-						description: section.description,
-						content: await Promise.all(section.videos.map(async (video: FetchedVideo, vidIndex: number) => {
-							let bucketName = ''
-							if (video.isPublic) {
-								bucketName = 'coursevideospublic'
-							} else {
-								bucketName = 'coursevideosprivate'
-							}
-							const { data: fileData, error: videoFileError } = await supabase.storage.from(bucketName).download(video.link)
-							let file: File | null = null
-							if (videoFileError) {
-								throw {
-									error: videoFileError
-								}
-							}
-							if (fileData) {
-								const filename = video.link.substring(video.link.indexOf('-') + 1);
-								file = new File([fileData], filename, {
-									type: fileData.type,
-									lastModified: Date.now()
-								})
-							}
-							return {
-								id: vidIndex,
-								title: video.title,
-								description: video.description,
-								type: 'video',
-								duration: video.duration,
-								isPublic: video.isPublic,
-								file
-							} as Video
-						}))
-					} as Section
-				})).then(newSections => {
-					setSections(newSections)
-				})
-
-				Promise.all(course.documents.map(async (document: FetchedDocument, docIndex: number) => {
-					const { data: documentFile } = await supabase.storage.from('coursedocuments').download(document.link)
-					let file: File | null = null
-					if (documentFile) {
-						const filename = document.link.substring(document.link.indexOf('-') + 1);
-						file = new File([documentFile], filename, {
-							type: documentFile.type,
-							lastModified: Date.now()
-						})
-					}
-					return {
-						id: docIndex,
-						title: document.title,
-						description: document.description,
-						type: 'document',
-						file
-					} as Document
-				})).then((newDocuments) => {
-					setDocuments(newDocuments)
-				})
-
-				setQuizzes(course.quizzes.map((quiz: FetchedQuiz) => {
-					return {
-						id: quiz.id,
-						title: quiz.title,
-						description: quiz.description,
-						type: 'quiz',
-						duration: quiz.duration,
-						content: quiz.questions.map((question: FetchedQuizQuestion) => {
-							return {
-								id: question.id,
-								question: question.question,
-								answers: question.choices,
-								key: question.answer
-							}
-						})
-					} as Quiz
-				}))
-			})
-			.catch((err) => {
-				const {error} = err as {error: string}
-				setErrorMsg(error)
-				setIsError(true)
-			})
-	}, [course_id])
-
+			}
+			const _allTopics = res.data
+			setAllTopicList(_allTopics)
+			setIsLoading(false)
+		})
+	} catch (err) {
+		const { error } = err as {error: string}
+		setErrorMsg(error)
+		setIsError(true);
+	}
+	/////////////////////////////////////////////
+	/////////////////////////////////////////////
 	useEffect(() => {
         // console.log('currentSelectedItem type: ', currentSelectedItem?.type)
         if (!currentSelectedItem) {
@@ -242,7 +87,8 @@ export default function CourseEdit() {
             }
         }
     }, [currentSelectedItem]);
-
+	/////////////////////////////////////////////
+	/////////////////////////////////////////////
 	return (
 		<>
 			<NavBar />
@@ -250,11 +96,11 @@ export default function CourseEdit() {
 				courseName,
 				setCourseName,
 
-				courseStatus,
-				setCourseStatus,
-
 				courseDescription,
 				setCourseDescription,
+
+				courseStatus,
+				setCourseStatus,
 
 				coursePicture,
 				setCoursePicture,
@@ -307,7 +153,12 @@ export default function CourseEdit() {
 				setCourseTopics
 			}}>
 				{
-					isError ? <p className="text-red-600 p-4 text-2xl">{ errorMsg ? errorMsg : 'Error' }</p> : 
+					isError ? <>
+						<button onClick={() => window.location.reload()}>
+							<FontAwesomeIcon icon={faRotateLeft}/>
+						</button>
+						<p className="text-red-600 p-4 text-2xl">{ errorMsg ? errorMsg : 'Error' }</p>
+					</> : 
 					isLoading ? <p className="text-blue-500 p-4 text-xl">Loading...</p> :
 						<div className="max-w-full flex flex-col text-black w-full lg:px-40 px-4 py-8 gap-y-4">
 							{/* header */}
@@ -462,7 +313,7 @@ export default function CourseEdit() {
 	
 										// set up sent data
 										const course: SendAPICourse = {
-											course_id: Number(course_id),
+											course_id: -1,
 											fee: courseFee,
 											title: courseName,
 											image_link: coursePictureLink,
@@ -505,7 +356,8 @@ export default function CourseEdit() {
 										axiosForm
 											.put(`/api/courses/`, course)
 											.then(() => {
-												toast.message('Course updated successfully!');
+												setIsLoading(false)
+												toast.message('Course added successfully!');
 												window.location.href = 'http://localhost:5173/instructor/dashboard';
 											})
 											.catch((err) => {

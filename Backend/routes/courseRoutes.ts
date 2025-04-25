@@ -25,6 +25,6 @@ router.get("/:course_id/instructor",
 
 // router.get("/:course_id/descriptions", getCourseDescription)
 
-router.put("/:course_id", setCourseContent);
+router.put("/", setCourseContent);
 
 export default router;

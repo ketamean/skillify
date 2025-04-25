@@ -41,4 +41,6 @@ export interface ICourse {
     documents: IDocument[]
     quizzes: IQuiz[],
     fee: number,
+    topics: {id: number}[],
+    image_link: string
 }
