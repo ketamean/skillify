@@ -99,7 +99,6 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       res.status(500).json({ error: "Lỗi lấy dữ liệu từ Supabase" });
       return;
     }
-
     const sections = sectionsData.data || [];
     const videos = videosData.data || []; //{ is_public: boolean, id: number }[]
     const documents = documentsData.data || [];
@@ -108,29 +107,44 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
     const videoLinkMap: { [key: number] : string } = {}
     const videoIds: number[] = videos.map((video) => video.id);
     for (const video of videos) {
-      let tablename = ''
-      let schema = ''
+      let tablename = '';
+      let schema = '';
+      
       if (video.is_public) {
-        schema = 'public'
-        tablename = 'coursevideos_public'
+        schema = 'public';
+        tablename = 'coursevideos_public';
       } else {
-        schema = 'private'
-        tablename = 'coursevideos_private'
+        schema = 'private';
+        tablename = 'coursevideos_private';
       }
       const { data: videoLinks, error: videoLinkError } = await supabase
-      .schema(schema)
-      .from(tablename)
-      .select("id, link")
-      .eq("id", video.id)
-
+        .schema(schema)
+        .from(tablename)
+        .select("id, link")
+        .eq("id", video.id);
+    
       if (videoLinkError) {
-        console.log(videoLinkError)
+        console.log(videoLinkError);
         res.status(500).json({ error: "Lỗi lấy link video" });
         return;
       }
-      videoLinkMap[video.id] = videoLinks[0]?.link || "";
+      if (video.is_public) {
+        const fileName = encodeURIComponent(videoLinks[0]?.link);
+        videoLinkMap[video.id] = `https://qlgqwskmctxlhulicvrw.supabase.co/storage/v1/object/public/coursevideospublic/${fileName}`;
+      };
+      if (!video.is_public) {
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+          .from("coursevideosprivate")
+          .createSignedUrl(videoLinks[0]?.link, 3600);
+    
+        if (signedUrlError) {
+          console.log(signedUrlError);
+          res.status(500).json({ error: "Lỗi tạo signed URL cho video private" });
+          return;
+        }
+        videoLinkMap[video.id] = signedUrlData?.signedUrl || ""; 
+      }
     }
-
     // const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
 
     const formattedSections = sections.map((section) => ({
@@ -142,12 +156,35 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         .map((video) => ({
           id: video.id,
           title: video.title,
-          link: videoLinkMap[video.id] || "",
+          link: videoLinkMap[video.id] || "",  
           duration: video.duration,
           description: video.description,
           isPublic: video.is_public
         })),
     }));
+    
+    const signedDocuments = [];
+
+    for (const doc of documents) {
+      const fileName = doc.link;
+
+      const { data: signedUrlData, error } = await supabase.storage
+        .from("coursedocuments")
+        .createSignedUrl(fileName, 3600); 
+
+      if (error) {
+        console.error(`Lỗi tạo signed URL cho tài liệu ${fileName}:`, error.message);
+        res.status(500).json({ error: "Lỗi tạo signed URL cho tài liệu" });
+        return;
+      }
+      console.log(signedUrlData?.signedUrl);
+      signedDocuments.push({
+        ...doc,
+        link: signedUrlData?.signedUrl || "",
+      });
+    }
+
+
 
     const formattedQuizzes = quizzes.map((quiz) => ({
       id: quiz.id,
@@ -215,15 +252,8 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       fee: course.fee,
       description: course.short_description,
       lastUpdated: course.created_at,
-      rating: 5,
-      students: 10000,
-      skillLevel: "Beginner Level",
-      languages: "English",
-      captions: "Yes",
-      lectures: 32,
-      fullDescription: "Nội dung khóa học chi tiết...",
       sections: formattedSections,
-      documents: documents,
+      documents: signedDocuments,
       quizzes: formattedQuizzes,
       comments: formattedComments,
       quizResults: quizResults,

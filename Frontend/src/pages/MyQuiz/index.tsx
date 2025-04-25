@@ -3,66 +3,97 @@ import { Link } from "react-router-dom";
 import NavBar from "../../components/NavBar";
 import Footer from "../../components/Footer";
 import { supabase } from "../../supabaseClient";
+import axios from 'axios';
 
 export default function MyQuiz() {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortType, setSortType] = useState("recent");
 
+  interface QuizData {
+    id: string;
+    title: string;
+    description: string;
+    duration: number;
+    course_id: string;
+  }
+  
   useEffect(() => {
     const fetchMyQuizzes = async () => {
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData?.user) {
         console.error("Error getting user:", userError);
         setLoading(false);
         return;
       }
-
+  
       const userId = userData.user.id;
 
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+    
+      if (!token) {
+        console.error("Không có token Supabase");
+        setLoading(false);
+        return;
+      }
+      
+      if (!token) {
+        console.error("Access token is missing");
+        setLoading(false);
+        return;
+      }
+      
       const { data: courses, error: courseError } = await supabase
         .from("courses")
         .select("id, name")
         .eq("instructor_id", userId);
-
+  
       if (courseError || !courses || courses.length === 0) {
         console.error("Error fetching courses:", courseError);
         setLoading(false);
         return;
       }
-
+  
       const courseIds = courses.map((c) => c.id);
-
-      const { data: quizzesData, error: quizError } = await supabase
-        .schema("private")
-        .from("coursequizzes")
-        .select("id, title, description, duration, course_id")
-        .in("course_id", courseIds);
-
-      if (quizError || !quizzesData) {
-        console.error("Error fetching quizzes:", quizError);
+  
+      let formattedQuizzes = [];
+      try {
+        const response = await axios.get(`http://localhost:3000/api/quizzes/myquiz/${userId}`, {
+          params: { courseIds },  
+          headers: {
+            Authorization: `Bearer ${token}`, 
+          },
+        });
+      
+        const quizzesData = response.data.quizzes;
+        formattedQuizzes = (quizzesData as QuizData[]).map((quiz) => {
+          const course = courses.find((c) => c.id === quiz.course_id);
+          return {
+            id: quiz.id,
+            title: quiz.title,
+            description: quiz.description,
+            duration: quiz.duration,
+            courseTitle: course?.name || "Unknown Course",
+          };
+        });
+        
+      } catch (err) {
+        console.error("Error fetching quizzes:", err);
         setLoading(false);
         return;
       }
-
-      const formattedQuizzes = quizzesData.map((quiz) => {
-        const course = courses.find((c) => c.id === quiz.course_id);
-        return {
-          id: quiz.id,
-          title: quiz.title,
-          description: quiz.description,
-          duration: quiz.duration,
-          courseTitle: course?.name || "Unknown Course",
-        };
-      });
-
+  
       setQuizzes(formattedQuizzes);
       setLoading(false);
     };
-
+  
     fetchMyQuizzes();
   }, []);
+  
+  
 
   const sortedQuizzes = [...quizzes].sort((a, b) => {
     if (sortType === "recent") return 0;
@@ -102,7 +133,7 @@ export default function MyQuiz() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {sortedQuizzes.map((quiz, idx) => (
-              <Link to={`/myquiz/${quiz.id}`} key={idx}>
+              <Link to={`/instructor/quizzes/${quiz.id}`} key={idx}>
                 <div className="flex flex-col items-start border p-4 rounded-lg shadow hover:shadow-lg transition cursor-pointer">
                   <h3 className="font-semibold text-deepteal mb-1">
                     {quiz.title}
