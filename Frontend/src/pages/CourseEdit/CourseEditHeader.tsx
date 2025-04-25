@@ -93,27 +93,31 @@ export default function CourseEditHeader(props: CourseEditHeaderProps) {
                 </div>
 
                 {/* Course topics */}
-                <div className="w-full flex gap-x-2 gap-y-2">
-                    {
-                        props.allTopics.map((tp) => (
-                            <InteractableCourseTopicTag name={tp.name} key={tp.id}
-                                checked={
-                                    courseTopics.some((val) => val.id === tp.id && val.name === tp.name)
-                                }
-                                onCheck={() => {
-                                    if (courseTopics.some((val) => val.id === tp.id && val.name === tp.name)) {
-                                        // already chosen
-                                        const newCourseTopics = courseTopics.filter((val) => val.id !== tp.id)
-                                        setCourseTopics(newCourseTopics)
-                                    } else {
-                                        // not chosen yet
-                                        const newCourseTopics = [...courseTopics, {...tp}]
-                                        setCourseTopics(newCourseTopics)
+                <div className="w-full flex flex-col gap-x-2 gap-y-2">
+                    <p>Tags</p>
+                    <div className="gap-x-2 gap-y-2 flex flex-row flex-wrap">
+                        {
+                            props.allTopics.map((tp) => (
+                                <InteractableCourseTopicTag name={tp.name} key={tp.id}
+                                    checked={
+                                        courseTopics.some((val) => val.id === tp.id && val.name === tp.name)
                                     }
-                                }}
-                            />
-                        ))
-                    }
+                                    onCheck={() => {
+                                        if (courseTopics.some((val) => val.id === tp.id && val.name === tp.name)) {
+                                            // already chosen
+                                            const newCourseTopics = courseTopics.filter((val) => val.id !== tp.id)
+                                            setCourseTopics(newCourseTopics)
+                                        } else {
+                                            // not chosen yet
+                                            const newCourseTopics = [...courseTopics, {...tp}]
+                                            setCourseTopics(newCourseTopics)
+                                        }
+                                    }}
+                                />
+                            ))
+                        }
+                    </div>
+
                 </div>
             </div>
         </div>

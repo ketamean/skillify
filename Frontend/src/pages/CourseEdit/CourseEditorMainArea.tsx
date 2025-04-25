@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react"
 import { useItemPortalContext } from "./context"
 import SectionContentList from "./SectionContentList"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft, faCheck, faPlus, faTrash, faVideo } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faCheck, faPlus, faRemove, faTrash, faVideo } from '@fortawesome/free-solid-svg-icons'
 import { getItemPositionById, getNewId } from './handlers'
 import AIAutoFillButton from './AIAutoFillButton'
 import { Quiz, Section, Video, QuizQuestion, Document } from "./types"
@@ -12,7 +12,8 @@ import { DialogClose } from "@/components/ui/dialog"
 import Divider from "@/components/Divider"
 import { Switch } from "@/components/ui/switch"
 
-import { genPromptsForDescription } from '../../utils/genPrompts'
+import axios from "axios"
+import { supabase } from "@/supabaseClient"
 
 // interface CourseEditorMainAreaProps {}
 
@@ -23,7 +24,11 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
     const [documentFile, setDocumentFile] = useState<File | null>(null)
 
     const [questions, setQuestions] = useState<QuizQuestion[]>([])
-    
+
+    const [aiText, setAIText] = useState('')
+
+    const [aiLoadingText, setAILoadingText] = useState('')
+
     useEffect(() => {
         if (!tempChangedSelectedItem || !currentSelectedItem || currentSelectedItem.type !== 'quiz' || (tempChangedSelectedItem as Quiz).type !== 'quiz') return;
         setQuestions((tempChangedSelectedItem as Quiz).content)
@@ -76,7 +81,7 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                         </button>
 
                         {/* Save */}
-                        <button className={`ml-auto p-auto w-12 h-12 rounded-full bg-green-100 text-green-400 hover:bg-green-200 hover:text-green-500 hover:cursor-pointer`}
+                        <button className={`ml-auto p-auto w-12 aspect-square rounded-full bg-green-300 text-green-600 hover:bg-green-700 hover:text-white hover:cursor-pointer`}
                             onClick={() => {
                                 if (!currentSelectedItem || !itemList || !itemSetter ) return;
                                 const idx = getItemPositionById<typeof tempChangedSelectedItem>(currentSelectedItem.id, itemList)
@@ -111,38 +116,50 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                         {/* AI Autofill button on Main Area for Document, Quiz, or Description */}
                         <div className="flex flex-row items-center">
                             <label htmlFor="main-edit-description">Description</label>
-                            {currentSelectedItem?.type === 'section' ? <></> :
+                            {currentSelectedItem?.type !== 'document' ? <></> :
                             <div className="ml-auto">
-                                <AIAutoFillButton onClick={() => {
-                                    switch(currentSelectedItem?.type) {
-                                        // case 'description':
-                                        //     if (!tempChangedSelectedItem.title) {
-                                        //         alert('Please provide title')
-                                        //         return;
-                                        //     }
-                                        //     const quizInfo = quizzes.map((quiz) => ({
-                                        //         title: quiz.title,
-                                        //         description: quiz.description
-                                        //     }))
-                                        //     const documentInfo = documents.map((doc) => ({
-                                        //         title: doc.title,
-                                        //         description: doc.description
-                                        //     }))
-                                        //     const sectionInfo = sections.map((sec) => ({
-                                        //         title: sec.title,
-                                        //         description: sec.description,
-                                        //         videos: sec.content.map((vid) => ({
-                                        //             title: vid.title,
-                                        //             description: vid.description
-                                        //         }))
-                                        //     }))
-                                        //     const prompt = genPromptsForDescription(tempChangedSelectedItem.title, )
-                                        case 'quiz':
-                                            const q = (tempChangedSelectedItem as Quiz)
-                                            q.content.map
-                                        case 'document':
-                                            break
-                                    }
+                                <AIAutoFillButton
+                                    text={aiText}
+                                    loadingText={aiLoadingText}
+                                    setText={setAIText}
+                                    onClick={async () => {
+                                        switch(currentSelectedItem?.type) {
+                                            case 'document':
+                                                // no file provided
+                                                const fileToDo = (tempChangedSelectedItem as Document).file
+                                                if (!fileToDo) return;
+                                                // get user id
+                                                setAILoadingText('Processing files')
+                                                const { data: { session } } = await supabase.auth.getSession();
+                                                if (!session) {
+                                                    throw {
+                                                        error: 'Please log in'
+                                                    }
+                                                }
+                                                const { data: uploadFile, error: errorUploadFile } = await supabase.storage.from('aiautofill').upload(`/${session.user.id}/${fileToDo.name}`, fileToDo, {
+                                                    cacheControl: '3600',
+                                                    upsert: true
+                                                })
+
+                                                if (errorUploadFile || !uploadFile) {
+                                                    return;
+                                                }
+                                                const documentToSend = {
+                                                    title: (tempChangedSelectedItem as Document).title,
+                                                    description: (tempChangedSelectedItem as Document).description,
+                                                    link: uploadFile.path
+                                                }
+
+                                                try {
+                                                    setAILoadingText('Getting description')
+                                                    const axiosRes = await axios.post('/api/ai/fill/document', documentToSend)
+                                                    if (axiosRes.data.reply) setAIText(axiosRes.data.reply)
+                                                } catch (_) {
+                                                    setAILoadingText('An error occurs')
+                                                    return;
+                                                }
+                                                break;
+                                        }
                                 }} />
                             </div>}
                         </div>
@@ -168,7 +185,7 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                     {
                         !tempChangedSelectedItem || !currentSelectedItem || currentSelectedItem.type !== 'quiz' || (tempChangedSelectedItem as Quiz).type !== 'quiz' ? <></> :
                         <div className="w-full flex flex-col gap-y-2">
-                            <label htmlFor="main-edit-title">Duration<span className="text-xl font-bold text-red-600">*</span></label>
+                            <label htmlFor="main-edit-title">Duration (minutes)<span className="text-xl font-bold text-red-600">*</span></label>
                             <input className=" px-2 h-10 border border-gray-300 rounded-sm" type="text" name="main-edit-title" id="main-edit-title"
                                 value={(tempChangedSelectedItem as Quiz).duration as number}
                                 onChange={(e) => {
@@ -237,20 +254,23 @@ interface QuizQuestionItemProps {
 function QuizQuestionItem(props: QuizQuestionItemProps) {
     const [answers, setAnswers] = useState<string[]>(props.content.answers || []);
     const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(props.content.key);
+    const [question, setQuestion] = useState<string>(props.content.question)
 
     useEffect(() => {
         setAnswers(props.content.answers || []);
         setCorrectAnswerIndex(props.content.key);
+        setQuestion(props.content.question)
     }, [props.content])
 
     // Update parent component when answers or correct answer change
     useEffect(() => {
         props.onUpdate?.({
             ...props.content,
+            question,
             answers,
             key: correctAnswerIndex
         });
-    }, [answers, correctAnswerIndex]);
+    }, [question, answers, correctAnswerIndex]);
 
 
     const handleAddAnswer = () => {
@@ -297,12 +317,13 @@ function QuizQuestionItem(props: QuizQuestionItemProps) {
                     type="text" 
                     name={`quiz-question-${props.content.id}`} 
                     id={`quiz-question-${props.content.id}`}
-                    value={props.content.question}
+                    value={question}
                     onChange={(e) => {
-                        props.onUpdate?.({
-                            ...props.content,
-                            question: e.target.value
-                        });
+                        // props.onUpdate?.({
+                        //     ...props.content,
+                        //     question: e.target.value
+                        // });
+                        setQuestion(e.target.value)
                     }}
                     placeholder="Enter your question here"
                 />
@@ -343,10 +364,7 @@ function QuizQuestionItem(props: QuizQuestionItemProps) {
                                     className="text-zinc-400 hover:text-red-500 p-1"
                                     aria-label="Remove answer"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
+                                    <FontAwesomeIcon icon={faRemove}/>
                                 </button>
                             </li>
                         ))}
@@ -429,10 +447,10 @@ function QuizQuestionList(props: QuizQuestionListProps) {
                         )) : <p className="text-center">No questions added</p>
                     }
                 </ul>
-                <button className="ml-auto flex items-center justify-center cursor-pointer aspect-square w-8 p-2 bg-green-200 hover:bg-green-300 rounded-lg"
+                <button className="ml-auto flex gap-x-2 items-center justify-center cursor-pointer p-2 bg-green-200 hover:bg-green-300 rounded-lg"
                     onClick={() => handleAddQuestion()}
                 >
-                    <FontAwesomeIcon icon={faPlus}/>
+                    <FontAwesomeIcon icon={faPlus}/> <span>Add question</span>
                 </button>
             </div>
     )

@@ -101,7 +101,6 @@ export default function CourseEdit() {
 				setCourseStatus(course.status || '')
 
 				// get course picture
-				console.log(course.image_link)
 				if (course.image_link) {
 					fetch(course.image_link)
 					.then((response) => {
@@ -125,7 +124,7 @@ export default function CourseEdit() {
 					setCoursePicture(null)
 				}
 				
-
+				// get section
 				Promise.all(course.sections.map(async (section: FetchedSection) => {
 					return {
 						id: section.id,
@@ -393,7 +392,7 @@ export default function CourseEdit() {
 											return {
 												...section,
 												content: await Promise.all(section.content.map(async (video) => {
-													const filePath = `${Date.now()}-${video.file?.name}`
+													const filePath = `${Date.now()}` // -${video.file?.name}
 													let bucketName = ''
 													if (video.isPublic) {
 														bucketName = videoPublicBucket
@@ -421,7 +420,7 @@ export default function CourseEdit() {
 										}))
 	
 										const newDocuments = await Promise.all(documents.map(async (document) => {
-											const filePath = `${Date.now()}-${document.file?.name}`
+											const filePath = `${Date.now()}` // -${document.file?.name}
 											const { data: documentUploadData, error: documentUploadError } = await supabase
 												.storage
 												.from('coursedocuments')
@@ -442,7 +441,7 @@ export default function CourseEdit() {
 
 										let coursePictureLink = ''
 										if (coursePicture) {
-											const filePath = `${Date.now()}-${coursePicture.name}`
+											const filePath = `${Date.now()}` // -${coursePicture.name}
 											const { error: pictureUploadError } = await supabase
 												.storage
 												.from('courseimages')
@@ -533,7 +532,7 @@ export default function CourseEdit() {
 						</div>
 				}
 			</ItemPortalProvider>
-			<Footer/>
+			{/* <Footer/> */}
 		</>
 	)
 }
