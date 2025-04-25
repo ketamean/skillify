@@ -330,6 +330,16 @@ export default function CourseContentPage() {
       }
 
       try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const token = session?.access_token;
+      
+        if (!token) {
+          console.error("Không có token Supabase");
+          setLoading(false);
+          return;
+        }
         const payload = {
           user_id,
           quiz_id: quiz.id,
@@ -339,19 +349,18 @@ export default function CourseContentPage() {
           answers,
         };
 
-        const res = await fetch(
+        const res = await axios.post(
           `http://localhost:3000/api/quizzes/${quiz.id}`,
+          payload,
           {
-            method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`, 
             },
-            body: JSON.stringify(payload),
           }
         );
 
-        if (!res.ok) throw new Error("Lỗi khi gửi bài");
-        const data = await res.json();
+        const data = res.data;
         console.log("Gửi bài thành công:", data);
       } catch (error) {
         console.error("Gửi bài thất bại:", error);
