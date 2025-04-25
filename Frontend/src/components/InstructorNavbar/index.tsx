@@ -33,14 +33,14 @@ export default function InstructorNavbar({
             Coupons
           </Link>
           <Link
-            to="#"
+            to="/instructor/quizzes"
             className={`py-2 px-1 border-b-2 ${
               activeTab === "analytics"
                 ? "border-vibrant-green font-medium"
                 : "border-transparent hover:border-vibrant-green font-medium"
             }`}
           >
-            Analytics
+            Quizzes
           </Link>
           <Link
             to="#"
