@@ -70,7 +70,8 @@ export default function CoursePage() {
         setLoading(false);
         const data = res.data;
         setTitle(data[0].name);
-        setImageLink(data[0].image_link);
+        if (data[0].image_link) setImageLink(data[0].image_link);
+        else setImageLink('https://placehold.co/300x200?text=Thumbnail')
         setShortDescription(
           res.data[0].short_description ? res.data[0].short_description : ""
         );
