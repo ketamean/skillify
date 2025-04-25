@@ -3,7 +3,9 @@ import { FaXTwitter, FaFacebook, FaLinkedin, FaLink } from "react-icons/fa6";
 import { FaSearch } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
-import axios from 'axios';
+import axios from "axios";
+import NavBar from "@/components/NavBar";
+import { axiosForm } from "@/config/axios";
 
 export default function CourseContentPage() {
   const [activeTab, setActiveTab] = useState("Overview");
@@ -131,7 +133,7 @@ export default function CourseContentPage() {
         data: { session },
       } = await supabase.auth.getSession();
       const token = session?.access_token;
-    
+
       if (!token) {
         console.error("Không có token Supabase");
         setLoading(false);
@@ -140,15 +142,18 @@ export default function CourseContentPage() {
 
       setLoading(true);
       try {
-        const response = await axios.get(`http://localhost:3000/api/courses/${course_id}`, {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          params: {
-            user_id: userData.user.id,
-          },
-        });
-      
+        const response = await axios.get(
+          `http://localhost:3000/api/courses/${course_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            params: {
+              user_id: userData.user.id,
+            },
+          }
+        );
+
         const data = response.data;
         setCourseData(data);
         setComments(data.comments || []);
@@ -182,9 +187,9 @@ export default function CourseContentPage() {
 
   useEffect(() => {
     if (selectedQuizIndex === null) return;
-    
+
     const timerId = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerId);
           handleSubmitQuiz(selectedQuizIndex);
@@ -193,11 +198,16 @@ export default function CourseContentPage() {
         return prev - 1;
       });
     }, 1000);
-    
+
     return () => clearInterval(timerId);
   }, [selectedQuizIndex]);
 
-  if (loading) return <p>Đang tải...</p>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-deepteal"></div>
+      </div>
+    );
   if (!courseData) return <p>Không tìm thấy khóa học!</p>;
 
   const videoIdToNumber: { [key: number]: number } = {};
@@ -249,46 +259,29 @@ export default function CourseContentPage() {
   const handleAddComment = async () => {
     if (!newComment.trim() || !currentVideoId || !course_id) return;
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      alert("Please log in to post a comment.");
-      return;
-    }
-
-    const response = await fetch(
-      `http://localhost:3000/api/courses/${course_id}/materials/${currentVideoId}/comments`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+    try {
+      const response = await axiosForm.post(
+        `/api/courses/${course_id}/materials/${currentVideoId}/comments`,
+        {
           content: newComment,
-          user_id: user.id,
-        }),
-      }
-    );
+          user_id: user_id,
+        }
+      );
 
-    const result = await response.json();
-    if (response.ok) {
       setComments((prev) => [
         {
-          id: result.comment.id,
-          text: result.comment.text,
-          time: result.comment.time,
-          user: result.comment.user,
-          avatar: result.comment.avatar,
+          id: response.data.comment.id,
+          text: response.data.comment.text,
+          time: response.data.comment.time,
+          user: response.data.comment.user,
+          avatar: response.data.comment.avatar,
           material_id: currentVideoId,
         },
         ...prev,
       ]);
       setNewComment("");
-    } else {
-      console.error("Error posting comment:", result.error);
+    } catch (error) {
+      console.error("Error posting comment:", error);
       alert("Failed to post comment. Please try again.");
     }
   };
@@ -344,7 +337,7 @@ export default function CourseContentPage() {
           data: { session },
         } = await supabase.auth.getSession();
         const token = session?.access_token;
-      
+
         if (!token) {
           console.error("Không có token Supabase");
           setLoading(false);
@@ -365,7 +358,7 @@ export default function CourseContentPage() {
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`, 
+              Authorization: `Bearer ${session.access_token}`,
             },
           }
         );
@@ -392,22 +385,7 @@ export default function CourseContentPage() {
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-gray-100 text-black">
-      {/* Header */}
-      <header className="flex items-center justify-between bg-deepteal text-white p-4">
-        <div className="flex items-center space-x-4">
-          <a href="/">
-            <span className="text-xl font-bold text-white">Skillify</span>
-          </a>
-          <span className="text-sm">{courseData.title}</span>
-        </div>
-        {/* <div className="flex items-center space-x-4">
-          <button className="text-sm">Leave a rating</button>
-          <div className="w-6 h-6 border rounded-full border-gray-400"></div>
-          <button className="text-sm">Your progress ▼</button>
-          <button className="bg-gray-700 px-3 py-1 rounded">Share</button>
-          <button className="text-lg">⋮</button>
-        </div> */}
-      </header>
+      <NavBar />
 
       {/* Main Content */}
       <div className="flex flex-col md:flex-row w-full">
@@ -469,18 +447,12 @@ export default function CourseContentPage() {
           </div>
           <h3 className="mt-2 text-black">{courseData.title}</h3>
           <div className="flex items-center mt-2 text-sm text-deepteal border-b pb-4">
-             Last updated: {courseData.lastUpdated}
+            Last updated: {courseData.lastUpdated}
           </div>
 
           {/* Additional Course Details */}
           {activeTab === "Overview" && (
             <div className="mt-4">
-              <div className="grid grid-cols-3 gap-4 mt-4 pb-4 text-sm text-gray-600  border-b">
-                <h3 className="text-lg font-semibold mt-2">Features</h3>
-                <p className="text-sm text-gray-600 mt-2">
-                  Available on iOS and Android
-                </p>
-              </div>
               <div className="grid grid-cols-3 gap-4 mt-4 pb-4 text-sm text-gray-600 border-b">
                 <h3 className="text-lg font-semibold mt-2 col-span-1 text-black">
                   Description
@@ -491,36 +463,6 @@ export default function CourseContentPage() {
                     __html: courseData.description.replace(/\n/g, "<br/>"),
                   }}
                 ></p>
-              </div>
-              <div className="grid grid-cols-3 gap-4 mt-4 pb-4 text-sm text-gray-600">
-                <h3 className="text-lg font-semibold mt-4">Instructor</h3>
-                <div>
-                  <button className="text-sm text-gray-600">
-                    Udemy Instructor Team - Official Udemy Instructor Account
-                  </button>
-                  <div className="flex space-x-4 mt-2">
-                    <button className="text-gray-600">
-                      <FaXTwitter size={20} />
-                    </button>
-                    <button className="text-gray-600">
-                      <FaFacebook size={20} />
-                    </button>
-                    <button className="text-gray-600">
-                      <FaLinkedin size={20} />
-                    </button>
-                    <button className="text-gray-600">
-                      <FaLink size={20} />
-                    </button>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    The Udemy Instructor Team has one passion: Udemy's
-                    instructors! We'll work with you to help you create an
-                    online course—along the way, we'll also help you become an
-                    integral member of the Udemy community, a promotional whiz,
-                    a teaching star, and an all-around amazing instructor. We're
-                    excited to help you succeed on Udemy!
-                  </p>
-                </div>
               </div>
             </div>
           )}
@@ -567,8 +509,7 @@ export default function CourseContentPage() {
                     <>
                       {!quizSubmitted[quizIndex] && (
                         <div className="mb-2 text-red-600 font-semibold">
-                          Thời gian còn lại:{" "}
-                          {Math.floor(timeLeft / 60)}:
+                          Thời gian còn lại: {Math.floor(timeLeft / 60)}:
                           {String(timeLeft % 60).padStart(2, "0")}
                         </div>
                       )}
@@ -747,7 +688,9 @@ export default function CourseContentPage() {
                     <div key={video.id} className="mt-1 flex items-center">
                       <button
                         onClick={() => {
-                          const index = videos.findIndex((v) => v.id === video.id);
+                          const index = videos.findIndex(
+                            (v) => v.id === video.id
+                          );
                           setCurrentVideoIndex(index);
                           setCurrentVideoId(video.id);
                         }}
