@@ -136,7 +136,6 @@ export default function CoursePage() {
           console.log(res.error);
           return;
         }
-        if (!res.data || res.data.length === 0) return;
         setLoading(false);
         setNumberOfEnrolments(res.count as number);
       });
@@ -154,7 +153,7 @@ export default function CoursePage() {
         setLoading(false);
         setVideoSections(res.data);
       });
-  });
+  }, [course_id]);
   return (
     <>
       <NavBar />

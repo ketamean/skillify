@@ -1,5 +1,5 @@
 import React, { ReactNode, useContext } from "react"
-import { Document, Quiz, Section } from "./types"
+import { CourseDescription, Document, Quiz, Section } from "./types"
 
 interface ItemPortalProviderProps {
     children: ReactNode
@@ -7,7 +7,7 @@ interface ItemPortalProviderProps {
 }
 
 export interface CurrentSelectedItem {
-    type: 'section' | 'document' | 'quiz'
+    type: 'section' | 'document' | 'quiz' | 'description'
     id: number
 }
 
@@ -36,12 +36,15 @@ interface ItemPortalContext {
     hasChanged: boolean
     setHasChanged: (hasChanged: boolean) => void
 
-    tempChangedSelectedItem: Section | Document | Quiz | null
-    setTempChangedSelectedItem: React.Dispatch<React.SetStateAction<Section | Document | Quiz | null>> //(item: Section | Document | Quiz | null) => void
+    tempChangedSelectedItem: Section | Document | Quiz | CourseDescription | null
+    setTempChangedSelectedItem: React.Dispatch<React.SetStateAction<Section | Document | Quiz | CourseDescription | null>> //(item: Section | Document | Quiz | null) => void
 
     courseFee: number,
     setCourseFee: React.Dispatch<React.SetStateAction<number>> //(fee: number) => void
 
+    courseDescriptionList: CourseDescription[],
+    setCourseDescriptionList: React.Dispatch<React.SetStateAction<CourseDescription[]>>
+    setCourseDescriptionListAtIndex: (newQuiz: CourseDescription, atIndex: number) => void,
 
     // tempCurrentVideo: Video | null
     // setTempCurrentVideo: (video: Video | null) => void
@@ -83,6 +86,10 @@ const ItemPortal = React.createContext<ItemPortalContext>({
 
     courseFee: 0,
     setCourseFee: () => {},
+
+    courseDescriptionList: [],
+    setCourseDescriptionList: () => {},
+    setCourseDescriptionListAtIndex: () => {}
 })
 
 export default function ItemPortalProvider(props: ItemPortalProviderProps) {

@@ -25,6 +25,12 @@ export interface Material {
     type: MaterialType
 }
 
+export interface CourseDescription {
+    id: number
+    title: string,
+    description: string
+}
+
 export interface Video extends Material {
     type: 'video'
     file: File | null
@@ -80,11 +86,15 @@ export interface SendAPIQuiz {
     duration: number
 }
 
+export interface SendCourseDescription {
+    header: string,
+    content: string
+}
 export interface SendAPICourse {
     course_id: number;
     title: string;
     short_description: string;
-    // descriptions: string;
+    descriptions: SendCourseDescription[];
     sections: SendAPISection[];
     documents: SendAPIDocument[]
     quizzes: SendAPIQuiz[]
