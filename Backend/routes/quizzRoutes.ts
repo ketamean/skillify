@@ -1,5 +1,7 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import { getQuizStats, addQuizzAttemp } from "../controllers/quizzController";
+import supabase from "../config/database/supabase";
+import { error } from "console";
 
 const router = express.Router();
 
