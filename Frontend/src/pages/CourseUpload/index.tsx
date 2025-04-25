@@ -11,6 +11,7 @@ import CourseEditorMainArea from '../CourseEdit/CourseEditorMainArea'
 import { axiosForm } from "@/config/axios";
 import { toast } from "sonner";
 import { supabase } from "@/supabaseClient";
+import { getVideoDuration } from "../CourseEdit/handlers";
 
 export default function CourseUpload() {
 	const [courseName, setCourseName] = useState<string>('')
@@ -265,7 +266,8 @@ export default function CourseUpload() {
 													}
 													return {
 														...video,
-														link: data? data.path : ''
+														link: data? data.path : '',
+														duration: await getVideoDuration(video.file as File)
 													}
 												}))
 											}
@@ -328,7 +330,7 @@ export default function CourseUpload() {
 													videos: sec.content.map((video) => {
 														return {
 															title: video.title,
-															duration: '1',//video.duration,
+															duration: video.duration,
 															description: video.description,
 															link: video.link,
 															isPublic: video.isPublic,

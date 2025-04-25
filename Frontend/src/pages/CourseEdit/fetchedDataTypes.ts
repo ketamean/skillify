@@ -1,7 +1,7 @@
 export interface FetchedVideo {
     id: number,
     title: string,
-    link: string,
+    path: string,
     duration: string,
     description: string,
 
@@ -34,7 +34,7 @@ export interface FetchedDocument {
     id: number,
     title: string,
     description: string,
-    link: string
+    path: string
 }
 
 export interface FetchedCourse {

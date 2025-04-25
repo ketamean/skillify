@@ -36,6 +36,11 @@ interface AddFileDialogProps {
     setFile: Dispatch<SetStateAction<File | null>>
 
     additionalBody?: ReactElement
+
+    aiText: string,
+    setAIText: (s: string) => void
+
+    aiLoadingText?: string
 }
 
 export default function AddFileDialog(props: AddFileDialogProps) {
@@ -66,10 +71,6 @@ export default function AddFileDialog(props: AddFileDialogProps) {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="w-full flex flex-col gap-y-2">
-                    {/* AI Autofill button */}
-                    <div className="ml-auto">
-                        <AIAutoFillButton onClick={props.onClickAIAutoFill} />
-                    </div>
                     {/* Title */}
                     <div className="w-full flex flex-col gap-y-2">
                         <label htmlFor="main-edit-title">Title</label>
@@ -84,7 +85,19 @@ export default function AddFileDialog(props: AddFileDialogProps) {
 
                     {/* Description */}
                     <div className="w-full flex flex-col gap-y-1">
-                        <label htmlFor="main-edit-description">Description</label>
+                        <div className="flex flex-row items-end">
+                            <label htmlFor="main-edit-description">Description</label>
+                            {/* AI Autofill button */}
+                            <div className="ml-auto">
+                                <AIAutoFillButton
+                                    text={props.aiText as string}
+                                    setText={props.setAIText}
+                                    loadingText={props.aiLoadingText as string}
+                                    onClick={props.onClickAIAutoFill}
+                                />
+                            </div>
+                        </div>
+                        
                         <textarea
                             className="px-2 py-1 border border-gray-300 rounded-sm resize-none"
                             name="main-edit-description" id="main-edit-description"
