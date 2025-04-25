@@ -43,6 +43,11 @@ export default function CoursePage() {
   const [fee, setFee] = useState<number>(0);
 
   useEffect(() => {
+    console.log(videoSections)
+  }, [videoSections])
+
+  useEffect(() => {
+    (async() => {})();
     supabase
       .from("courses")
       .select(
@@ -60,6 +65,7 @@ export default function CoursePage() {
             `
       )
       .eq("id", course_id as unknown as number)
+      .eq('status', 'Published')
       .then((res) => {
         if (res.error) {
           console.log("1", res.error);
@@ -69,7 +75,8 @@ export default function CoursePage() {
         setLoading(false);
         const data = res.data;
         setTitle(data[0].name);
-        setImageLink(data[0].image_link);
+        if (data[0].image_link) setImageLink(data[0].image_link);
+        else setImageLink('https://placehold.co/300x200?text=Thumbnail')
         setShortDescription(
           res.data[0].short_description ? res.data[0].short_description : ""
         );
@@ -151,8 +158,17 @@ export default function CoursePage() {
         }
         if (!res.data || res.data.length === 0) return;
         setLoading(false);
-        setVideoSections(res.data);
-      });
+        setVideoSections(res.data.map((videoSection: VideoSection) => ({
+          sectionName: videoSection.sectionName,
+          videos: videoSection.videos.map((video) => ({
+            ...video,
+            link: !video.link ? 'www.google.com' : supabase.storage.from('coursevideospublic').getPublicUrl(video.link).data.publicUrl
+          }))
+        })))
+      })
+
+        // get public videos link
+
   }, [course_id]);
   return (
     <>

@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../supabaseClient";
 import { CourseCard } from "../../components";
 import Footer from "../../components/Footer";
+import { Link } from "react-router-dom";
 
 interface Course {
   id: number;
@@ -89,9 +90,14 @@ export default function InstructorDashboard(): ReactElement {
       <main className="container mx-auto px-[4%] py-8 flex-grow">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-deepteal">My Courses</h1>
-          <button className="bg-deepteal hover:bg-blurple text-white py-2 px-4 rounded-lg transition">
-            Create New Course
-          </button>
+          <Link
+            to={'/instructor/upload'}
+          >
+            <button className="bg-deepteal hover:bg-green-400 hover:text-black cursor-pointer font-bold text-white py-2 px-4 rounded-lg transition">
+              Create New Course
+            </button>
+          </Link>
+
         </div>
 
         {loading ? (
@@ -120,7 +126,7 @@ export default function InstructorDashboard(): ReactElement {
                 title={course.name}
                 imageUrl={
                   course.image_link ||
-                  "https://via.placeholder.com/300x200?text=Course+Thumbnail"
+                  'https://placehold.co/300x200?text=Thumbnail'
                 }
                 price={course.fee}
                 instructorName={user.fname + " " + user.lname}

@@ -78,7 +78,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
 
     const { data: course, error: courseError } = await supabase
       .from("courses")
-      .select("id, name, short_description, created_at, fee, instructor_id")
+      .select("id, name, short_description, created_at, image_link, fee, instructor_id, status")
       .eq("id", course_id)
       .single();
 
@@ -239,8 +239,6 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         };
       });
 
-        
-
     res.json({
       course_id: course.id,
       title: course.name,
@@ -251,7 +249,9 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       documents: documents,
       quizzes: formattedQuizzes,
       comments: formattedComments,
-      quizResults: quizResults 
+      quizResults: quizResults,
+      status: course.status,
+      image_link: course.image_link
     });
 
   } catch (error) {
@@ -262,32 +262,35 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
 
 export const setCourseContent = async (req: Request, res: Response): Promise<void> => {
   const course: ICourse = req.body;
+  const originCourseId = course.course_id
   try {
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
     // check whether current user is instructor of the course
-    const { data: courseData, error: courseError } = await supabase
+    if (originCourseId != -1) {
+      const { data: courseData, error: courseError } = await supabase
       .from("courses")
       .select("instructor_id")
       .eq("id", course.course_id)
       .single()
-    if (courseError) {
-      throw {
-        error: Error("Cannot get course"),
-        code: 500
+      if (courseError) {
+        throw {
+          error: Error("Cannot get course"),
+          code: 500
+        }
       }
-    }
-    if (!courseData) {
-      throw {
-        error: Error("Course does not exist"),
-        code: 404
+      if (!courseData) {
+        throw {
+          error: Error("Course does not exist"),
+          code: 404
+        }
       }
-    }
-    const instructorId = courseData.instructor_id;
-    if (instructorId !== req.user.id) {
-      throw {
-        error: Error("You are not the instructor of this course"),
-        code: 403
+      const instructorId = courseData.instructor_id;
+      if (instructorId !== req.user.id) {
+        throw {
+          error: Error("You are not the instructor of this course"),
+          code: 403
+        }
       }
     }
     ////////////////////////////////////////////////////////////
@@ -384,32 +387,59 @@ export const setCourseContent = async (req: Request, res: Response): Promise<voi
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
     // set course metadata
-    const { error: courseUpdateError } = await supabase
+    if (originCourseId != -1) {
+      const { error: courseUpdateError } = await supabase
       .from("courses")
       .update({
         name: course.title,
         short_description: course.short_description,
         fee: course.fee,
+        image_link: course.image_link
       })
       .eq("id", course.course_id);
-    if (courseUpdateError) {
-      console.log(courseUpdateError)
-      throw {
-        error: Error("Failed to update course metadata"),
-        code: 500
+      if (courseUpdateError) {
+        console.log(courseUpdateError)
+        throw {
+          error: Error("Failed to update course metadata"),
+          code: 500
+        }
       }
+    } else {
+      const { data: courseInsertData, error: courseInsertError } = await supabase
+        .from('courses')
+        .insert({
+          name: course.title || '',
+          image_link: course.image_link || '',
+          status: 'InReview',
+          fee: course.fee || 0,
+          short_description: course.short_description || 0,
+          instructor_id: req.user.id
+        })
+        .select('id')
+        .single()
+
+      if (courseInsertError) {
+        console.log(courseInsertError, courseInsertData)
+        throw {
+          error: Error("Failed to insert course metadata"),
+          code: 500
+        }
+      }
+      course.course_id = courseInsertData?.id
     }
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
     // delete old course descriptions list
-    const { error: deleteCourseDescriptionListError } = await supabase
-      .from("coursedescriptions")
-      .delete()
-      .eq("course_id", course.course_id);
-    if (deleteCourseDescriptionListError) {
-      throw {
-        error: Error("Failed to delete old descriptions"),
-        code: 500
+    if (originCourseId != -1) {
+      const { error: deleteCourseDescriptionListError } = await supabase
+        .from("coursedescriptions")
+        .delete()
+        .eq("course_id", course.course_id);
+      if (deleteCourseDescriptionListError) {
+        throw {
+          error: Error("Failed to delete old descriptions"),
+          code: 500
+        }
       }
     }
     ////////////////////////////////////////////////////////////
@@ -424,6 +454,7 @@ export const setCourseContent = async (req: Request, res: Response): Promise<voi
       order: index
     })))
     if (setCourseDescriptionListError) {
+      console.log(setCourseDescriptionListError)
       throw {
         error: Error("Failed to delete old descriptions"),
         code: 500
@@ -431,14 +462,43 @@ export const setCourseContent = async (req: Request, res: Response): Promise<voi
     }
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
-    // delete meterials by course_id: call function delete_materials_by_course_id
-    const { error: deleteMaterialsError } = await supabase
-      .rpc("delete_materials_by_courseid", { courseid: course.course_id })
-    if (deleteMaterialsError) {
-      console.log(deleteMaterialsError)
+    // delete old related topics
+    if (originCourseId != -1) {
+      const { error: deleteTopicsError } = await supabase.from('courserelatedtopics').delete().in('topic_id', course.topics.map(tp => tp.id))
+      if (deleteTopicsError) {
+        console.log(deleteTopicsError)
+        throw {
+          error: Error("Failed to delete old related topics"),
+          code: 500
+        }
+      }
+    }
+    ////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////
+    // set new related topics
+    const { error: setNewRelTopicsError } = await supabase.from('courserelatedtopics').insert(course.topics.map(tp => ({
+      course_id: course.course_id,
+      topic_id: tp.id
+    })));
+    if (setNewRelTopicsError) {
+      console.log(setNewRelTopicsError)
       throw {
-        error: Error("Failed to delete old materials"),
+        error: Error("Failed to set new related topics"),
         code: 500
+      }
+    }
+    ////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////
+    // delete meterials by course_id: call function delete_materials_by_course_id
+    if (originCourseId != -1) {
+      const { error: deleteMaterialsError } = await supabase
+        .rpc("delete_materials_by_courseid", { courseid: course.course_id })
+      if (deleteMaterialsError) {
+        console.log(deleteMaterialsError)
+        throw {
+          error: Error("Failed to delete old materials"),
+          code: 500
+        }
       }
     }
     ////////////////////////////////////////////////////////////
@@ -503,14 +563,16 @@ export const setCourseContent = async (req: Request, res: Response): Promise<voi
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
     // delete old course sections (cascaded to `coursevideos` --> cascaded to `coursevideos_public` and `coursevideos_private`)
-    const { error: deleteSectionsError } = await supabase
-      .from("coursesections")
-      .delete()
-      .eq("course_id", course.course_id);
-    if (deleteSectionsError) {
-      throw {
-        error: Error("Failed to delete old sections"),
-        code: 500
+    if (originCourseId != -1) {
+      const { error: deleteSectionsError } = await supabase
+        .from("coursesections")
+        .delete()
+        .eq("course_id", course.course_id);
+      if (deleteSectionsError) {
+        throw {
+          error: Error("Failed to delete old sections"),
+          code: 500
+        }
       }
     }
     ////////////////////////////////////////////////////////////

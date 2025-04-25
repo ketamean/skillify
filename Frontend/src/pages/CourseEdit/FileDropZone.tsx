@@ -1,6 +1,6 @@
 import {fileTypeFromBlob} from 'file-type'
 import { toast } from "sonner"
-import { useState, DragEvent, ChangeEvent, Dispatch, SetStateAction } from "react"
+import { useState, DragEvent, ChangeEvent, Dispatch, SetStateAction, ReactElement } from "react"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFile, faUpload, faRemove, faDownload } from '@fortawesome/free-solid-svg-icons'
 
@@ -8,6 +8,7 @@ interface FileDropZoneProps {
     accept: string
     file: File | null,
     setFile: Dispatch<SetStateAction<File | null>>
+    header?: string | ReactElement
 }
 
 export default function FileDropZone(props: FileDropZoneProps) {
@@ -65,7 +66,7 @@ export default function FileDropZone(props: FileDropZoneProps) {
     return (
         <>
             <div className="flex flex-row gap-x-2 items-center">
-                <label htmlFor="fileinput">File</label>
+                <label htmlFor="fileinput">{props.header ? props.header : "File"}</label>
                 {
                     props.file?
                         <div className='ml-auto flex flex-row gap-x-2 items-center'>

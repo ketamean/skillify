@@ -9,6 +9,7 @@ export interface Course {
     sections: Section[],
     image: File | null,
     status: string,
+    topics: CourseTopic[]
 }
 
 export interface Section {
@@ -48,6 +49,11 @@ export interface Quiz extends Material {
 export interface Document extends Material {
     type: 'document',
     file: File | null
+}
+
+export interface CourseTopic {
+    id: number,
+    name: string
 }
 
 export interface QuizQuestion {
@@ -98,5 +104,7 @@ export interface SendAPICourse {
     sections: SendAPISection[];
     documents: SendAPIDocument[]
     quizzes: SendAPIQuiz[]
-    fee: number
+    fee: number,
+    topics: {id: number}[],
+    image_link: string
 }
