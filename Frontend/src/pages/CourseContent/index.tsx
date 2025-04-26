@@ -431,18 +431,6 @@ export default function CourseContentPage() {
                   controls
                   crossOrigin="anonymous"
                   preload="metadata"
-                  onError={e => {
-                    // e.currentTarget là <video> chứ không phải <source>
-                    const videoEl = e.currentTarget as HTMLVideoElement;
-                    const err = videoEl.error;
-                    if (err) {
-                      console.error('Video Error Code:', err.code);
-                      // Một số browser hỗ trợ message, bạn có thể log thử
-                      console.error('MediaError message:', (err as any).message || 'n/a');
-                    } else {
-                      console.error('Unknown video error', e);
-                    }
-                  }}
                 >
                   <source
                     src={
@@ -454,7 +442,7 @@ export default function CourseContentPage() {
                   />
                   Trình duyệt của bạn không hỗ trợ thẻ video.
                 </video>
-
+                  
                 <button
                   className="absolute right-0 bg-gray-700 text-white px-3 py-2 rounded-r disabled:opacity-50"
                   onClick={handleNextVideo}

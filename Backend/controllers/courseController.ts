@@ -129,31 +129,33 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         return;
       }
       const rawPath = (videoLinks[0]?.link || "").trim();
+
       if (video.is_public) {
-        // v2: getPublicUrl() chỉ trả về data
         const { data } = supabase
           .storage
           .from("coursevideospublic")
           .getPublicUrl(rawPath);
-        // trực tiếp lấy publicUrl mà không check error
         videoLinkMap[video.id] = data.publicUrl;
       } else {
-        // createSignedUrl vẫn trả về { data, error }
-        const { data: signedUrlData, error: signedUrlError } = await supabase
+        // const { data: signedUrlData, error: signedUrlError } = await supabase
+        //   .storage
+        //   .from("coursevideosprivate")
+        //   .createSignedUrl(rawPath, 3600, { download: false });
+        
+        const { data } = supabase
           .storage
           .from("coursevideosprivate")
-          .createSignedUrl(rawPath, 3600, { download: false });
-      
-        if (signedUrlError) {
-          console.error(signedUrlError);
-          res.status(500).json({ error: "Lỗi tạo signed URL cho video private" });
-          return;
-        }
-      
-        videoLinkMap[video.id] = signedUrlData.signedUrl;
+          .getPublicUrl(rawPath);
+        videoLinkMap[video.id] = data.publicUrl;
+        // if (signedUrlError) {
+        //   console.error(signedUrlError);
+        //   res.status(500).json({ error: "Lỗi tạo signed URL cho video private" });
+        //   return;
+        // }
+        videoLinkMap[video.id] = data.publicUrl;
       }
     }
-
+    console.log(videoLinkMap);
     // const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
     const formattedSections = sections.map((section) => ({
       id: section.id,
