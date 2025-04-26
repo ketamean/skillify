@@ -390,11 +390,11 @@ export default function CourseEdit() {
 										const videoPublicBucket = 'coursevideospublic'
 										const videoPrivateBucket = 'coursevideosprivate'
 	
-										const newSections = await Promise.all(sections.map(async (section) => {
+										const newSections = await Promise.all(sections.map(async (section, secIndex) => {
 											return {
 												...section,
-												content: await Promise.all(section.content.map(async (video) => {
-													const filePath = `${Date.now()}` // -${video.file?.name}
+												content: await Promise.all(section.content.map(async (video, vidIndex) => {
+													const filePath = `${secIndex}-${vidIndex}-${Date.now()}` // -${video.file?.name}
 													let bucketName = ''
 													if (video.isPublic) {
 														bucketName = videoPublicBucket
@@ -422,8 +422,8 @@ export default function CourseEdit() {
 											}
 										}))
 	
-										const newDocuments = await Promise.all(documents.map(async (document) => {
-											const filePath = `${Date.now()}` // -${document.file?.name}
+										const newDocuments = await Promise.all(documents.map(async (document, docIndex) => {
+											const filePath = `${docIndex}-${Date.now()}` // -${document.file?.name}
 											const { data: documentUploadData, error: documentUploadError } = await supabase
 												.storage
 												.from('coursedocuments')

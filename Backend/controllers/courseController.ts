@@ -129,26 +129,35 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         res.status(500).json({ error: "Lỗi lấy link video" });
         return;
       }
-      videoPathMap[video.id] = videoLinks[0].link
+      const rawPath = (videoLinks[0]?.link || "").trim();
+      videoPathMap[video.id] = videoLinks[0]?.link
       if (video.is_public) {
-        const fileName = encodeURIComponent(videoLinks[0]?.link);
-        videoLinkMap[video.id] = `https://qlgqwskmctxlhulicvrw.supabase.co/storage/v1/object/public/coursevideospublic/${fileName}`;
-      };
-      if (!video.is_public) {
-        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        const { data } = supabase
+          .storage
+          .from("coursevideospublic")
+          .getPublicUrl(rawPath);
+        videoLinkMap[video.id] = data.publicUrl;
+      } else {
+        // const { data: signedUrlData, error: signedUrlError } = await supabase
+        //   .storage
+        //   .from("coursevideosprivate")
+        //   .createSignedUrl(rawPath, 3600, { download: false });
+        
+        const { data } = supabase
+          .storage
           .from("coursevideosprivate")
-          .createSignedUrl(videoLinks[0]?.link, 3600);
-    
-        if (signedUrlError) {
-          console.log(signedUrlError);
-          res.status(500).json({ error: "Lỗi tạo signed URL cho video private" });
-          return;
-        }
-        videoLinkMap[video.id] = signedUrlData?.signedUrl || ""; 
+          .getPublicUrl(rawPath);
+        videoLinkMap[video.id] = data.publicUrl;
+        // if (signedUrlError) {
+        //   console.error(signedUrlError);
+        //   res.status(500).json({ error: "Lỗi tạo signed URL cho video private" });
+        //   return;
+        // }
+        videoLinkMap[video.id] = data.publicUrl;
       }
     }
+    console.log(videoLinkMap);
     // const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
-
     const formattedSections = sections.map((section) => ({
       id: section.id,
       title: section.name,
@@ -165,7 +174,6 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
           path: videoPathMap[video.id] || ""
         })),
     }));
-    
     const signedDocuments = [];
 
     for (const doc of documents) {
