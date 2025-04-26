@@ -151,6 +151,7 @@ export default function CourseContentPage() {
       
         const data = response.data;
         setCourseData(data);
+        console.log(data);
         setComments(data.comments || []);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu khóa học:", error);
@@ -428,12 +429,32 @@ export default function CourseContentPage() {
                 <video
                   className="w-full h-full"
                   controls
-                  src={
-                    !videos[currentVideoIndex]?.isPublic
-                      ? videos[currentVideoIndex]?.signedUrl
-                      : videos[currentVideoIndex]?.link
-                  }
-                />
+                  crossOrigin="anonymous"
+                  preload="metadata"
+                  onError={e => {
+                    // e.currentTarget là <video> chứ không phải <source>
+                    const videoEl = e.currentTarget as HTMLVideoElement;
+                    const err = videoEl.error;
+                    if (err) {
+                      console.error('Video Error Code:', err.code);
+                      // Một số browser hỗ trợ message, bạn có thể log thử
+                      console.error('MediaError message:', (err as any).message || 'n/a');
+                    } else {
+                      console.error('Unknown video error', e);
+                    }
+                  }}
+                >
+                  <source
+                    src={
+                      !videos[currentVideoIndex]?.isPublic
+                        ? videos[currentVideoIndex]?.signedUrl
+                        : videos[currentVideoIndex]?.link
+                    }
+                    type="video/mp4"
+                  />
+                  Trình duyệt của bạn không hỗ trợ thẻ video.
+                </video>
+
                 <button
                   className="absolute right-0 bg-gray-700 text-white px-3 py-2 rounded-r disabled:opacity-50"
                   onClick={handleNextVideo}

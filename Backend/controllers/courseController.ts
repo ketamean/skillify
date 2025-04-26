@@ -128,25 +128,33 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         res.status(500).json({ error: "Lỗi lấy link video" });
         return;
       }
+      const rawPath = (videoLinks[0]?.link || "").trim();
       if (video.is_public) {
-        const fileName = encodeURIComponent(videoLinks[0]?.link);
-        videoLinkMap[video.id] = `https://qlgqwskmctxlhulicvrw.supabase.co/storage/v1/object/public/coursevideospublic/${fileName}`;
-      };
-      if (!video.is_public) {
-        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        // v2: getPublicUrl() chỉ trả về data
+        const { data } = supabase
+          .storage
+          .from("coursevideospublic")
+          .getPublicUrl(rawPath);
+        // trực tiếp lấy publicUrl mà không check error
+        videoLinkMap[video.id] = data.publicUrl;
+      } else {
+        // createSignedUrl vẫn trả về { data, error }
+        const { data: signedUrlData, error: signedUrlError } = await supabase
+          .storage
           .from("coursevideosprivate")
-          .createSignedUrl(videoLinks[0]?.link, 3600);
-    
+          .createSignedUrl(rawPath, 3600, { download: false });
+      
         if (signedUrlError) {
-          console.log(signedUrlError);
+          console.error(signedUrlError);
           res.status(500).json({ error: "Lỗi tạo signed URL cho video private" });
           return;
         }
-        videoLinkMap[video.id] = signedUrlData?.signedUrl || ""; 
+      
+        videoLinkMap[video.id] = signedUrlData.signedUrl;
       }
     }
-    // const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
 
+    // const videoLinkMap = Object.fromEntries(videoLinks.map(v => [v.id, v.link]));
     const formattedSections = sections.map((section) => ({
       id: section.id,
       title: section.name,
@@ -162,7 +170,6 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
           isPublic: video.is_public
         })),
     }));
-    
     const signedDocuments = [];
 
     for (const doc of documents) {
