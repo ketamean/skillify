@@ -5,8 +5,9 @@ import { useParams } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import axios from "axios";
 import NavBar from "@/components/NavBar";
+import VideoPlayer from "@/components/VideoPlayer";
 import { axiosForm } from "@/config/axios";
-
+import ReactPlayer from 'react-player';
 export default function CourseContentPage() {
   const [activeTab, setActiveTab] = useState("Overview");
   const [expandedSections, setExpandedSections] = useState<{
@@ -401,22 +402,12 @@ export default function CourseContentPage() {
                   ❮ Prev
                 </button>
 
-                <video
+                <VideoPlayer
                   className="w-full h-full"
-                  controls
-                  crossOrigin="anonymous"
-                  preload="metadata"
-                >
-                  <source
-                    src={
-                      !videos[currentVideoIndex]?.isPublic
-                        ? videos[currentVideoIndex]?.signedUrl
-                        : videos[currentVideoIndex]?.link
-                    }
-                    type="video/mp4"
-                  />
-                  Trình duyệt của bạn không hỗ trợ thẻ video.
-                </video>
+                  src={videos[currentVideoIndex].link}
+                />
+
+
                   
                 <button
                   className="absolute right-0 bg-gray-700 text-white px-3 py-2 rounded-r disabled:opacity-50"
