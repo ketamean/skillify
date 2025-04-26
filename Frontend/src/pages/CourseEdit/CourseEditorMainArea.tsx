@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react"
 import { useItemPortalContext } from "./context"
 import SectionContentList from "./SectionContentList"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft, faCheck, faPlus, faTrash, faVideo } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faCheck, faPlus, faRemove, faTrash, faVideo } from '@fortawesome/free-solid-svg-icons'
 import { getItemPositionById, getNewId } from './handlers'
 import AIAutoFillButton from './AIAutoFillButton'
 import { Quiz, Section, Video, QuizQuestion, Document } from "./types"
@@ -12,7 +12,9 @@ import { DialogClose } from "@/components/ui/dialog"
 import Divider from "@/components/Divider"
 import { Switch } from "@/components/ui/switch"
 
-import { genPromptsForDescription } from '../../utils/genPrompts'
+import axios from "axios"
+import { supabase } from "@/supabaseClient"
+import { axiosForm } from "@/config/axios"
 
 // interface CourseEditorMainAreaProps {}
 
@@ -23,7 +25,51 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
     const [documentFile, setDocumentFile] = useState<File | null>(null)
 
     const [questions, setQuestions] = useState<QuizQuestion[]>([])
-    
+
+    const [aiText, setAIText] = useState('')
+
+    const [aiLoadingText, setAILoadingText] = useState('')
+
+    async function handleAIDocument() {
+        // no file provided
+        const fileToDo = (tempChangedSelectedItem as Document).file
+        if (!fileToDo) return;
+        // get user id
+        setAILoadingText('Processing files')
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            throw {
+                error: 'Please log in'
+            }
+        }
+        const { data: uploadFile, error: errorUploadFile } = await supabase.storage.from('aiautofill').upload(`/${session.user.id}`, fileToDo, {
+            cacheControl: '3600',
+            upsert: true
+        })
+
+        if (errorUploadFile || !uploadFile) {
+            console.log(errorUploadFile)
+            return;
+        }
+        const documentToSend = {
+            title: (tempChangedSelectedItem as Document).title,
+            description: (tempChangedSelectedItem as Document).description,
+            link: uploadFile.path
+        }
+
+        try {
+            setAILoadingText('Getting description')
+            const axiosRes = await axios.post('/api/ai/fill/document', { document: documentToSend })
+            console.log(axiosRes)
+            if (axiosRes.data.reply) {
+                setAIText(axiosRes.data.reply)
+            }
+        } catch (_) {
+            setAILoadingText('An error occurs')
+            return;
+        }
+    }
+
     useEffect(() => {
         if (!tempChangedSelectedItem || !currentSelectedItem || currentSelectedItem.type !== 'quiz' || (tempChangedSelectedItem as Quiz).type !== 'quiz') return;
         setQuestions((tempChangedSelectedItem as Quiz).content)
@@ -76,7 +122,7 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                         </button>
 
                         {/* Save */}
-                        <button className={`ml-auto p-auto w-12 h-12 rounded-full bg-green-100 text-green-400 hover:bg-green-200 hover:text-green-500 hover:cursor-pointer`}
+                        <button className={`ml-auto p-auto w-12 aspect-square rounded-full bg-green-300 text-green-600 hover:bg-green-700 hover:text-white hover:cursor-pointer`}
                             onClick={() => {
                                 if (!currentSelectedItem || !itemList || !itemSetter ) return;
                                 const idx = getItemPositionById<typeof tempChangedSelectedItem>(currentSelectedItem.id, itemList)
@@ -111,39 +157,18 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                         {/* AI Autofill button on Main Area for Document, Quiz, or Description */}
                         <div className="flex flex-row items-center">
                             <label htmlFor="main-edit-description">Description</label>
-                            {currentSelectedItem?.type === 'section' ? <></> :
+                            {currentSelectedItem?.type !== 'document' ? <></> :
                             <div className="ml-auto">
-                                <AIAutoFillButton onClick={() => {
-                                    switch(currentSelectedItem?.type) {
-                                        // case 'description':
-                                        //     if (!tempChangedSelectedItem.title) {
-                                        //         alert('Please provide title')
-                                        //         return;
-                                        //     }
-                                        //     const quizInfo = quizzes.map((quiz) => ({
-                                        //         title: quiz.title,
-                                        //         description: quiz.description
-                                        //     }))
-                                        //     const documentInfo = documents.map((doc) => ({
-                                        //         title: doc.title,
-                                        //         description: doc.description
-                                        //     }))
-                                        //     const sectionInfo = sections.map((sec) => ({
-                                        //         title: sec.title,
-                                        //         description: sec.description,
-                                        //         videos: sec.content.map((vid) => ({
-                                        //             title: vid.title,
-                                        //             description: vid.description
-                                        //         }))
-                                        //     }))
-                                        //     const prompt = genPromptsForDescription(tempChangedSelectedItem.title, )
-                                        case 'quiz':
-                                            break
-                                        case 'document':
-                                            const prompt = `
-
-                                            `
-                                    }
+                                <AIAutoFillButton
+                                    text={aiText}
+                                    loadingText={aiLoadingText}
+                                    setText={setAIText}
+                                    onClick={async () => {
+                                        switch(currentSelectedItem?.type) {
+                                            case 'document':
+                                                handleAIDocument()
+                                                break;
+                                        }
                                 }} />
                             </div>}
                         </div>
@@ -169,11 +194,13 @@ export default function CourseEditorMainArea() { // props: CourseEditorMainAreaP
                     {
                         !tempChangedSelectedItem || !currentSelectedItem || currentSelectedItem.type !== 'quiz' || (tempChangedSelectedItem as Quiz).type !== 'quiz' ? <></> :
                         <div className="w-full flex flex-col gap-y-2">
-                            <label htmlFor="main-edit-title">Duration<span className="text-xl font-bold text-red-600">*</span></label>
-                            <input className=" px-2 h-10 border border-gray-300 rounded-sm" type="text" name="main-edit-title" id="main-edit-title"
+                            <label htmlFor="main-edit-title">Duration (minutes)<span className="text-xl font-bold text-red-600">*</span></label>
+                            <input className=" px-2 h-10 border border-gray-300 rounded-sm" type="number" name="main-edit-title" id="main-edit-title"
                                 value={(tempChangedSelectedItem as Quiz).duration as number}
                                 onChange={(e) => {
-                                    const duration = Number(e.target.value)
+                                    let duration = Number(e.target.value)
+                                    if (isNaN(duration)) return;
+                                    if (duration > 120) duration = 120
                                     if (tempChangedSelectedItem) {
                                         setTempChangedSelectedItem({
                                             ...tempChangedSelectedItem as Quiz,
@@ -238,20 +265,23 @@ interface QuizQuestionItemProps {
 function QuizQuestionItem(props: QuizQuestionItemProps) {
     const [answers, setAnswers] = useState<string[]>(props.content.answers || []);
     const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(props.content.key);
+    const [question, setQuestion] = useState<string>(props.content.question)
 
     useEffect(() => {
         setAnswers(props.content.answers || []);
         setCorrectAnswerIndex(props.content.key);
+        setQuestion(props.content.question)
     }, [props.content])
 
     // Update parent component when answers or correct answer change
     useEffect(() => {
         props.onUpdate?.({
             ...props.content,
+            question,
             answers,
             key: correctAnswerIndex
         });
-    }, [answers, correctAnswerIndex]);
+    }, [question, answers, correctAnswerIndex]);
 
 
     const handleAddAnswer = () => {
@@ -298,12 +328,9 @@ function QuizQuestionItem(props: QuizQuestionItemProps) {
                     type="text" 
                     name={`quiz-question-${props.content.id}`} 
                     id={`quiz-question-${props.content.id}`}
-                    value={props.content.question}
+                    value={question}
                     onChange={(e) => {
-                        props.onUpdate?.({
-                            ...props.content,
-                            question: e.target.value
-                        });
+                        setQuestion(e.target.value)
                     }}
                     placeholder="Enter your question here"
                 />
@@ -344,10 +371,7 @@ function QuizQuestionItem(props: QuizQuestionItemProps) {
                                     className="text-zinc-400 hover:text-red-500 p-1"
                                     aria-label="Remove answer"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
+                                    <FontAwesomeIcon icon={faRemove}/>
                                 </button>
                             </li>
                         ))}
@@ -430,10 +454,10 @@ function QuizQuestionList(props: QuizQuestionListProps) {
                         )) : <p className="text-center">No questions added</p>
                     }
                 </ul>
-                <button className="ml-auto flex items-center justify-center cursor-pointer aspect-square w-8 p-2 bg-green-200 hover:bg-green-300 rounded-lg"
+                <button className="ml-auto flex gap-x-2 items-center justify-center cursor-pointer p-2 bg-green-200 hover:bg-green-300 rounded-lg"
                     onClick={() => handleAddQuestion()}
                 >
-                    <FontAwesomeIcon icon={faPlus}/>
+                    <FontAwesomeIcon icon={faPlus}/> <span>Add question</span>
                 </button>
             </div>
     )
@@ -449,6 +473,51 @@ function AddVideoDialog() {
     const [isPublic, setIsPublic] = useState(false)
 
     const [flagChanged, setFlagChanged] = useState(false)
+
+    const [aiLoadingText, setAILoadingText] = useState('')
+    const [aiText, setAIText] = useState('')
+
+    async function handleAIVideo() {
+        // no file provided
+        const fileToDo = file
+        if (!fileToDo) return;
+        // get user id
+        setAILoadingText('Processing files')
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            throw {
+                error: 'Please log in'
+            }
+        }
+        console.log(1)
+        const { data: uploadFile, error: errorUploadFile } = await supabase.storage.from('aiautofill').upload(`/${session.user.id}`, fileToDo, {
+            cacheControl: '3600',
+            upsert: true
+        })
+
+        if (errorUploadFile || !uploadFile) {
+            console.log(errorUploadFile)
+            return;
+        }
+        console.log(2)
+        const videoToSend = {
+            title,
+            description,
+            link: uploadFile.path
+        }
+
+        try {
+            setAILoadingText('Getting description')
+            const axiosRes = await axiosForm.post('/api/ai/fill/video', { video: videoToSend })
+            console.log(axiosRes)
+            if (axiosRes.data.reply) {
+                setAIText(axiosRes.data.reply)
+            }
+        } catch (_) {
+            setAILoadingText('An error occurs')
+            return;
+        }
+    }
 
     useEffect(() => {
         if ( title === '' || description === '' || file === null ) {
@@ -485,6 +554,10 @@ function AddVideoDialog() {
 
     return (
         <AddFileDialog
+            aiText={aiText}
+            setAIText={setAIText}
+            aiLoadingText={aiLoadingText}
+
             trigger={
                 <div className="ml-auto text-green-700 bg-green-100 hover:bg-green-200 flex items-center p-2 gap-x-2 rounded-lg cursor-pointer">
                     <FontAwesomeIcon icon={faVideo}/> Add video
@@ -524,7 +597,7 @@ function AddVideoDialog() {
                 </div>
             }
 
-            onClickAIAutoFill={() => {}}
+            onClickAIAutoFill={() => handleAIVideo()}
 
             fileAcceptType="video/*"
 

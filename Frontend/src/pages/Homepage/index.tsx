@@ -41,7 +41,7 @@ export default function Homepage() {
         const formattedCourses = data.map((course) => ({
           id: course.id,
           title: course.name,
-          imageUrl: course.image_link,
+          imageUrl: course.image_link || 'https://placehold.co/300x200?text=Thumbnail',
           price: course.fee,
           level: "Beginner",
           instructorName:

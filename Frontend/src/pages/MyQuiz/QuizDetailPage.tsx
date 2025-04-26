@@ -2,6 +2,8 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import NavBar from "../../components/NavBar";
 import Footer from "../../components/Footer";
+import axios from "axios";
+import { supabase } from "../../supabaseClient";
 
 export default function QuizDetailPage() {
   const { quiz_id } = useParams();
@@ -10,10 +12,30 @@ export default function QuizDetailPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+    
+      if (!token) {
+        console.error("Không có token Supabase");
+        setLoading(false);
+        return;
+      }
+      
+      if (!token) {
+        console.error("Access token is missing");
+        setLoading(false);
+        return;
+      }
+
       try {
-        const res = await fetch(`http://localhost:3000/api/quizzes/${quiz_id}`);
-        const data = await res.json();
-        setStats(data);
+        const response = await axios.get(`http://localhost:3000/api/quizzes/${quiz_id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setStats(response.data); 
       } catch (err) {
         console.error("Failed to fetch quiz stats", err);
       } finally {

@@ -13,7 +13,6 @@ export const searchCourses = async (
   if (!searchQuery) {
     return res.status(400).json({ error: "Search query is required" });
   }
-  console.log("Received search query:", searchQuery);
   try {
     const queryEmbeddingResponse = await genAI.models.embedContent({
       model: "text-embedding-004",
@@ -88,7 +87,8 @@ export const searchCoursesByTopic = async (
       .in(
         "id",
         data.map((item) => item.course_id)
-      );
+      )
+      .limit(20);
     if (courseError) {
       console.error("Error fetching course data:", courseError);
       return res.status(500).json({ error: "Internal server error" });
@@ -98,4 +98,83 @@ export const searchCoursesByTopic = async (
     }
     return res.status(200).json(courseData);
   } catch (error) {}
+};
+
+export const searchCoursesByKeyword = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  const keyword = req.query.keyword as string;
+
+  if (!keyword) {
+    return res.status(400).json({ error: "Keyword is required" });
+  }
+
+  try {
+    // Search by keyword in course name and description using ilike for case-insensitive search
+    const { data, error } = await supabase
+      .from("courses")
+      .select(
+        `
+        id,
+        name,
+        short_description,
+        image_link,
+        fee,
+        instructor: instructor_id (
+          first_name,
+          last_name
+        )
+        `
+      )
+      .or(`name.ilike.%${keyword}%,short_description.ilike.%${keyword}%`)
+      .eq("status", "Published"); // Only return published courses
+
+    if (error) {
+      console.error("Error searching courses by keyword:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+
+    if (!data || data.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error in keyword search:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getTopicNameById = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  const topicId = req.params.topicId;
+
+  if (!topicId) {
+    return res.status(400).json({ error: "Topic ID is required" });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("topics")
+      .select("name")
+      .eq("id", topicId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching topic name:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+
+    if (!data) {
+      return res.status(404).json({ error: "Topic not found" });
+    }
+
+    return res.status(200).json({ name: data.name });
+  } catch (error) {
+    console.error("Error getting topic name:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };

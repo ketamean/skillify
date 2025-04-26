@@ -15,10 +15,6 @@ router.get("/:course_id/instructor",
             res.status(400).json({ error: "Cannot find course" });
             return;
         }
-        // else if (courseId === null) {
-        //     res.status(400).json({ error: "You are not the instructor of this course" });
-        //     return;
-        // }
         return next()
     },
     getCourseContent);

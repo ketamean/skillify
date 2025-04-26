@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/Profile";
 import MyLearningPage from "./pages/MyLearning";
 import SearchPage from "./pages/SearchPage";
+import TopicsPage from "./pages/TopicsPage";
 import MyQuizPage from "./pages/MyQuiz";
 import QuizDetailPage from "./pages/MyQuiz/QuizDetailPage";
 import InstructorDashboard from "./pages/Instructor/Dashboard";
@@ -38,6 +39,10 @@ const router = createBrowserRouter([
   {
     path: "/search",
     element: <SearchPage />,
+  },
+  {
+    path: "/topics",
+    element: <TopicsPage />,
   },
   {
     path: "/",

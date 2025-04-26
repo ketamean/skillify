@@ -5,6 +5,8 @@ import { useAuth } from "../../context/AuthContext";
 import NavBar from "../../components/NavBar";
 import CouponFormModal from "../../components/CouponFormModal";
 import Footer from "../../components/Footer";
+import { InstructorNavbar } from "../../components";
+
 interface Coupon {
   id: string;
   code: string;
@@ -66,12 +68,14 @@ const InstructorCouponPage: React.FC = () => {
     <div className="min-h-screen bg-custom-white">
       <NavBar />
 
+      <InstructorNavbar activeTab="coupons" />
+
       <div className="max-w-6xl mx-auto px-6 py-10">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <h1 className="text-3xl font-bold text-gray-800">My Coupons</h1>
           <button
-            className="bg-indigo-600 text-white px-5 py-2 rounded-md hover:bg-indigo-700 transition"
+            className="bg-deepteal text-white px-5 py-2 rounded-md hover:bg-vibrant-green hover:text-deepteal transition-colors"
             onClick={() => {
               setEditCoupon(null);
               setShowModal(true);
@@ -152,7 +156,7 @@ const InstructorCouponPage: React.FC = () => {
                             setEditCoupon(coupon);
                             setShowModal(true);
                           }}
-                          className="flex items-center gap-1 text-indigo-600 hover:underline text-sm"
+                          className="flex items-center gap-1 text-deepteal hover:underline text-sm"
                         >
                           <FiEdit /> Edit
                         </button>

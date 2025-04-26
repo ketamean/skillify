@@ -28,21 +28,11 @@ const requestNewAccessToken = async() => {
 axiosForm.interceptors.request.use(
     async (config) => {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-            toast.error("Please login to continue")
-            // redirect to login page
-            return Promise.reject(sessionError);
-        }
-    
-        if (!session) {
-            // Handle redirecting to login page '/login'
-            toast.error("Please login to continue")
-            return Promise.reject(new Error("No session found"));
-        }
-      
-        const token = session.access_token;
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        if (!sessionError && session) {
+            const token = session.access_token;
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
         }
         return config;
     }

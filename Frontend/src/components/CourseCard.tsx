@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { ReactElement, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 
 interface CourseCardProps {
@@ -13,6 +13,7 @@ interface CourseCardProps {
   level?: "Beginner" | "Intermediate" | "Advanced";
   is_Instructor?: boolean;
   studentCount?: number;
+  footer?: ReactElement,
 }
 
 export function CourseCard({
@@ -23,6 +24,7 @@ export function CourseCard({
   price,
   level,
   is_Instructor = false,
+  footer
 }: CourseCardProps) {
   return (
     <Link
@@ -48,6 +50,9 @@ export function CourseCard({
               </span>
             )}
           </div>
+          {
+            footer ? footer : <></>
+          }
         </div>
       </div>
     </Link>

@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
-import Footer from "../../components/Footer";
 import NavBar from "../../components/NavBar";
 import CourseEditHeader from "./CourseEditHeader";
 import CourseEditSideBar from './CourseEditSideBar'
 import { Quiz, Section, Video, Document, SendAPICourse, CourseDescription, CourseTopic } from "./types";
 import ItemPortalProvider, { CurrentSelectedItem } from "./context"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faCheck, faRotateLeft } from '@fortawesome/free-solid-svg-icons'
 import CourseEditorMainArea from './CourseEditorMainArea'
 import { axiosForm } from "@/config/axios";
 import { FetchedVideo, FetchedSection, FetchedQuiz, FetchedDocument, FetchedCourse, FetchedQuizQuestion } from './fetchedDataTypes'
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/supabaseClient";
+import { getVideoDuration } from "./handlers";
 
 export default function CourseEdit() {
 	const [courseName, setCourseName] = useState<string>('')
@@ -101,7 +101,6 @@ export default function CourseEdit() {
 				setCourseStatus(course.status || '')
 
 				// get course picture
-				console.log(course.image_link)
 				if (course.image_link) {
 					fetch(course.image_link)
 					.then((response) => {
@@ -125,7 +124,7 @@ export default function CourseEdit() {
 					setCoursePicture(null)
 				}
 				
-
+				// get section
 				Promise.all(course.sections.map(async (section: FetchedSection) => {
 					return {
 						id: section.id,
@@ -138,7 +137,7 @@ export default function CourseEdit() {
 							} else {
 								bucketName = 'coursevideosprivate'
 							}
-							const { data: fileData, error: videoFileError } = await supabase.storage.from(bucketName).download(video.link)
+							const { data: fileData, error: videoFileError } = await supabase.storage.from(bucketName).download(video.path)
 							let file: File | null = null
 							if (videoFileError) {
 								throw {
@@ -146,7 +145,7 @@ export default function CourseEdit() {
 								}
 							}
 							if (fileData) {
-								const filename = video.link.substring(video.link.indexOf('-') + 1);
+								const filename = video.path.substring(video.path.indexOf('-') + 1);
 								file = new File([fileData], filename, {
 									type: fileData.type,
 									lastModified: Date.now()
@@ -168,10 +167,10 @@ export default function CourseEdit() {
 				})
 
 				Promise.all(course.documents.map(async (document: FetchedDocument, docIndex: number) => {
-					const { data: documentFile } = await supabase.storage.from('coursedocuments').download(document.link)
+					const { data: documentFile } = await supabase.storage.from('coursedocuments').download(document.path)
 					let file: File | null = null
 					if (documentFile) {
-						const filename = document.link.substring(document.link.indexOf('-') + 1);
+						const filename = document.path.substring(document.path.indexOf('-') + 1);
 						file = new File([documentFile], filename, {
 							type: documentFile.type,
 							lastModified: Date.now()
@@ -307,8 +306,11 @@ export default function CourseEdit() {
 				setCourseTopics
 			}}>
 				{
-					isError ? <p className="text-red-600 p-4 text-2xl">{ errorMsg ? errorMsg : 'Error' }</p> : 
-					isLoading ? <p className="text-blue-500 p-4 text-xl">Loading...</p> :
+					isError ? <div className="flex flex-row gap-x-2 items-center p-4 text-2xl">
+						<button onClick={() => window.location.reload()}><FontAwesomeIcon icon={faRotateLeft}/></button>
+						<p className="text-red-600">{ errorMsg ? errorMsg : 'Error' }</p>
+					</div> : 
+					isLoading ? <div className="flex justify-center items-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-deepteal"></div></div> :
 						<div className="max-w-full flex flex-col text-black w-full lg:px-40 px-4 py-8 gap-y-4">
 							{/* header */}
 							<CourseEditHeader
@@ -334,6 +336,8 @@ export default function CourseEdit() {
 							{/* "Save" button */}
 							<button className="ml-auto bg-light-green flex-none font-semibold rounded-md w-fit px-2 hover:bg-mint p-2 flex flex-row items-center gap-x-2 cursor-pointer"
 								onClick={async () => {
+									const confirm = window.confirm("This action will overide your course and remove all quiz attemps")
+									if (!confirm) return;
 									setIsLoading(true)
 									try {
 										if (isError) {
@@ -366,8 +370,6 @@ export default function CourseEdit() {
 											}
 										})
 	
-										if (isError) return;
-	
 										// validates metadata
 										if (!courseName) {
 											throw {
@@ -384,7 +386,6 @@ export default function CourseEdit() {
 												error: 'Please enter course fee'
 											}
 										}
-										if (isError) return;
 										// upload files
 										const videoPublicBucket = 'coursevideospublic'
 										const videoPrivateBucket = 'coursevideosprivate'
@@ -393,7 +394,7 @@ export default function CourseEdit() {
 											return {
 												...section,
 												content: await Promise.all(section.content.map(async (video) => {
-													const filePath = `${Date.now()}-${video.file?.name}`
+													const filePath = `${Date.now()}` // -${video.file?.name}
 													let bucketName = ''
 													if (video.isPublic) {
 														bucketName = videoPublicBucket
@@ -414,14 +415,15 @@ export default function CourseEdit() {
 													}
 													return {
 														...video,
-														link: data? data.path : ''
+														link: data? data.path : '',
+														duration: await getVideoDuration(video.file as File)
 													}
 												}))
 											}
 										}))
 	
 										const newDocuments = await Promise.all(documents.map(async (document) => {
-											const filePath = `${Date.now()}-${document.file?.name}`
+											const filePath = `${Date.now()}` // -${document.file?.name}
 											const { data: documentUploadData, error: documentUploadError } = await supabase
 												.storage
 												.from('coursedocuments')
@@ -442,7 +444,7 @@ export default function CourseEdit() {
 
 										let coursePictureLink = ''
 										if (coursePicture) {
-											const filePath = `${Date.now()}-${coursePicture.name}`
+											const filePath = `${Date.now()}` // -${coursePicture.name}
 											const { error: pictureUploadError } = await supabase
 												.storage
 												.from('courseimages')
@@ -477,7 +479,7 @@ export default function CourseEdit() {
 													videos: sec.content.map((video) => {
 														return {
 															title: video.title,
-															duration: '1',//video.duration,
+															duration: video.duration,
 															description: video.description,
 															link: video.link,
 															isPublic: video.isPublic,
@@ -533,7 +535,7 @@ export default function CourseEdit() {
 						</div>
 				}
 			</ItemPortalProvider>
-			<Footer/>
+			{/* <Footer/> */}
 		</>
 	)
 }

@@ -308,7 +308,7 @@ const CouponFormModal: React.FC<CouponFormModalProps> = ({
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition"
+            className="w-full bg-vibrant-green text-deepteal py-2 rounded-md hover:bg-black hover:text-white transition-colors"
           >
             Submit
           </button>

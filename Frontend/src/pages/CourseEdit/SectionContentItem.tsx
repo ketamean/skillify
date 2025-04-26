@@ -9,6 +9,8 @@ import { DialogClose } from "@/components/ui/dialog"
 import { useItemPortalContext } from "./context"
 import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities"
 import { Switch } from "@/components/ui/switch"
+import { axiosForm } from "@/config/axios"
+import { supabase } from "@/supabaseClient"
 
 interface SectionContentItemProps {
     content: Video | Document,
@@ -50,6 +52,49 @@ export default function SectionContentItem(props: SectionContentItemProps) {
         }
     }, [tempTitle, tempFile])
 
+    const [aiLoadingText, setAILoadingText] = useState('')
+    const [aiText, setAIText] = useState('')
+
+    async function handleAIVideo() {
+        // no file provided
+        const fileToDo = tempFile
+        if (!fileToDo) return;
+        // get user id
+        setAILoadingText('Processing files')
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            throw {
+                error: 'Please log in'
+            }
+        }
+        const { data: uploadFile, error: errorUploadFile } = await supabase.storage.from('aiautofill').upload(`/${session.user.id}`, fileToDo, {
+            cacheControl: '3600',
+            upsert: true
+        })
+
+        if (errorUploadFile || !uploadFile) {
+            console.log(errorUploadFile)
+            return;
+        }
+        const videoToSend = {
+            title: tempTitle,
+            description: tempDescription,
+            link: uploadFile.path
+        }
+
+        try {
+            setAILoadingText('Getting description')
+            const axiosRes = await axiosForm.post('/api/ai/fill/video', { video: videoToSend })
+            console.log(axiosRes)
+            if (axiosRes.data.reply) {
+                setAIText(axiosRes.data.reply)
+            }
+        } catch (_) {
+            setAILoadingText('An error occurs')
+            return;
+        }
+    }
+
     return (
         <li className="w-full max-w-full flex flex-row gap-x-4 py-2" key={props.content.id}>
             {/* Drag icon */}
@@ -82,6 +127,9 @@ export default function SectionContentItem(props: SectionContentItemProps) {
             {/* Edit button */}
             <div className="ml-auto">
                 <AddFileDialog
+                    aiText={aiText}
+                    setAIText={setAIText}
+                    aiLoadingText={aiLoadingText}
                     trigger={
                         <div
                             className="cursor-pointer text-zinc-500"
@@ -119,7 +167,7 @@ export default function SectionContentItem(props: SectionContentItemProps) {
 
                     onCancel={ handleCancelEditting }
 
-                    onClickAIAutoFill={() => {}}
+                    onClickAIAutoFill={() => handleAIVideo()}
 
                     fileAcceptType="video/*"
 

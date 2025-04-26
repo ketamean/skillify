@@ -105,6 +105,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
     const quizzes = quizzesData.data || [];
     const quizDetails = quizDetailsData.data || [];
     const videoLinkMap: { [key: number] : string } = {}
+    const videoPathMap: { [key: number] : string } = {}
     const videoIds: number[] = videos.map((video) => video.id);
     for (const video of videos) {
       let tablename = '';
@@ -166,10 +167,11 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         .map((video) => ({
           id: video.id,
           title: video.title,
-          link: videoLinkMap[video.id] || "",  
+          link: videoLinkMap[video.id] || "",
           duration: video.duration,
           description: video.description,
-          isPublic: video.is_public
+          isPublic: video.is_public,
+          path: videoPathMap[video.id] || ""
         })),
     }));
     const signedDocuments = [];
@@ -190,6 +192,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
       signedDocuments.push({
         ...doc,
         link: signedUrlData?.signedUrl || "",
+        path: doc.link
       });
     }
 
