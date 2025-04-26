@@ -130,7 +130,7 @@ export const getCourseContent = async (req: Request, res: Response): Promise<voi
         return;
       }
       const rawPath = (videoLinks[0]?.link || "").trim();
-
+      videoPathMap[video.id] = videoLinks[0]?.link
       if (video.is_public) {
         const { data } = supabase
           .storage
